@@ -19,6 +19,7 @@
     <orderEntry type="library" name="jivesoftware:smack:3.2.1" level="project" />
     <orderEntry type="library" name="com.typesafe.akka:akka-actor_2.10:2.1.0" level="project" />
     <orderEntry type="library" name="jivesoftware:smackx:3.2.1" level="project" />
+    <orderEntry type="library" name="platonus-1.0.0-SNAPSHOT-standalone" level="project" />
   </component>
 </module>
 
