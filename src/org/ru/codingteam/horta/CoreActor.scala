@@ -33,6 +33,7 @@ class CoreActor extends Actor with ActorLogging {
         }
       })
       muc.join("horta hell")
+      muc.sendMessage("Muhahahaha!")
     }
   }
 }
