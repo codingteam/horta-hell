@@ -16,7 +16,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="scala-library" level="application" />
+    <orderEntry type="library" name="jivesoftware:smack:3.2.1" level="project" />
     <orderEntry type="library" name="com.typesafe.akka:akka-actor_2.10:2.1.0" level="project" />
+    <orderEntry type="library" name="jivesoftware:smackx:3.2.1" level="project" />
   </component>
 </module>
 
