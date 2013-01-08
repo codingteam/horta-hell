@@ -1,7 +1,7 @@
 package org.ru.codingteam.horta
 
-import akka.actor.{Props, ActorLogging, Actor}
-import messages.{UserMessage, JoinRoom}
+import akka.actor.{ActorRef, Props, ActorLogging, Actor}
+import messages.{Initialize, SendMessage, UserMessage, JoinRoom}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}
@@ -24,6 +24,8 @@ class CoreActor extends Actor with ActorLogging {
       log.info(s"JoinRoom($jid)")
       val actor = context.system.actorOf(Props[RoomActor], name = jid)
       val muc = new MultiUserChat(connection, jid)
+      actor ! Initialize(muc)
+
       muc.addMessageListener(new PacketListener {
         def processPacket(packet: Packet) {
           log.info(s"Packet received from $jid: $packet")
@@ -35,5 +37,7 @@ class CoreActor extends Actor with ActorLogging {
       muc.join("horta hell")
       muc.sendMessage("Muhahahaha!")
     }
+
+    case SendMessage(muc, message) => muc.sendMessage(message)
   }
 }
