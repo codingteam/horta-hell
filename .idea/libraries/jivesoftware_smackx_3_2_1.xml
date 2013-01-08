@@ -1,0 +1,14 @@
+<component name="libraryTable">
+  <library name="jivesoftware:smackx:3.2.1" type="repository">
+    <properties maven-id="jivesoftware:smackx:3.2.1" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../hortha-hell/lib/smackx-3.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../hortha-hell/lib/smack-3.2.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../hortha-hell/lib/smackx-3.2.1-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../hortha-hell/lib/smack-3.2.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
