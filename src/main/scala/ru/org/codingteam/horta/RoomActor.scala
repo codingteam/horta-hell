@@ -27,12 +27,22 @@ class RoomActor extends Actor with ActorLogging {
 
       if (message == "$say") {
         val phrase = network.doGenerate()
-        sender ! SendMessage(room, phrase)
+        sender ! SendMessage(room, prepareResponse(nick, phrase))
       } else {
         network.addPhrase(message)
       }
+
+      if (message == "/♥/") {
+        val network = networks.get("ForNeVeR")
+        if (network.isDefined) {
+          val phrase = network.get.doGenerate()
+          sender ! SendMessage(room, prepareResponse(nick, phrase))
+        }
+      }
     }
   }
+
+  def prepareResponse(nick: String, message: String) = s"$nick: $message"
 
   def nickByJid(jid: String) = {
     val args = jid.split('/')
