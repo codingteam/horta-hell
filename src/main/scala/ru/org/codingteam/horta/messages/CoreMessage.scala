@@ -1,4 +1,4 @@
-package org.ru.codingteam.horta.messages
+package ru.org.codingteam.horta.messages
 
 import org.jivesoftware.smackx.muc.MultiUserChat
 

@@ -1,4 +1,4 @@
-package org.ru.codingteam.horta
+package ru.org.codingteam.horta
 
 import java.util.Properties
 import java.io.FileInputStream
