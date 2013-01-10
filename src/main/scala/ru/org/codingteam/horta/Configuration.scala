@@ -19,7 +19,11 @@ object Configuration {
   lazy val login = properties.getProperty("login")
   lazy val password = properties.getProperty("password")
   lazy val server = properties.getProperty("server")
+
   lazy val rooms = {
     properties filterKeys (_.startsWith("room_"))
   }
+
+  lazy val logDirectory = properties.getProperty("log_directory")
+  lazy val logEncoding = properties.getProperty("log_encoding")
 }
