@@ -13,7 +13,17 @@ class RoomActor extends Actor with ActorLogging {
     case Initialize(muc) => room = muc
     case UserMessage(jid, message) => {
       val nick = nickByJid(jid)
-      val network = networks.getOrElse(nick, networkByNick(nick))
+
+      val networkOption = networks.get(nick)
+      val network = {
+        if (networkOption.isDefined) {
+          networkOption.get
+        } else {
+          val network = networkByNick(nick)
+          networks = networks.updated(nick, network)
+          network
+        }
+      }
 
       if (message == "$say") {
         val phrase = network.doGenerate()
@@ -24,12 +34,19 @@ class RoomActor extends Actor with ActorLogging {
     }
   }
 
-  def nickByJid(jid: String) = jid.split('/')(1)
+  def nickByJid(jid: String) = {
+    val args = jid.split('/')
+    if (args.length > 1) {
+      args(1)
+    } else {
+      args(0)
+    }
+  }
   def networkByNick(nick: String) = {
     log.info(s"Parsing log directory for $nick user.")
     Filesystem.scanDirectory(
-      Configuration.logDirectory,
       nick,
+      Configuration.logDirectory,
       Configuration.logEncoding)
   }
 }
