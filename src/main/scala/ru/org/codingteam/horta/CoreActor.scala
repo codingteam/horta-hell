@@ -1,7 +1,7 @@
-package org.ru.codingteam.horta
+package ru.org.codingteam.horta
 
-import akka.actor.{ActorRef, Props, ActorLogging, Actor}
-import messages.{Initialize, SendMessage, UserMessage, JoinRoom}
+import akka.actor.{Props, ActorLogging, Actor}
+import messages.{SendMessage, UserMessage, Initialize, JoinRoom}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}

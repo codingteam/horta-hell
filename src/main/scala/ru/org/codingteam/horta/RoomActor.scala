@@ -1,7 +1,7 @@
-package org.ru.codingteam.horta
+package ru.org.codingteam.horta
 
 import akka.actor.{Props, Actor, ActorLogging}
-import messages.{Initialize, SendMessage, UserMessage}
+import messages.{UserMessage, Initialize, SendMessage}
 import platonus.Network
 import org.jivesoftware.smackx.muc.MultiUserChat
 
