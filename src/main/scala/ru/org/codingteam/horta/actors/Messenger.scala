@@ -7,7 +7,7 @@ import org.jivesoftware.smack.packet.{Message, Packet}
 import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages.{SendMessage, UserMessage, Initialize, JoinRoom}
 
-class MessageActor extends Actor with ActorLogging {
+class Messenger extends Actor with ActorLogging {
   lazy val connection = {
     val server = Configuration.server
     log.info(s"Connecting to $server")
@@ -23,7 +23,7 @@ class MessageActor extends Actor with ActorLogging {
   def receive = {
     case JoinRoom(jid) => {
       log.info(s"JoinRoom($jid)")
-      val actor = context.system.actorOf(Props[RoomActor], name = jid)
+      val actor = context.system.actorOf(Props[Room], name = jid)
       val muc = new MultiUserChat(connection, jid)
       actor ! Initialize(muc)
 
