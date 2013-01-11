@@ -23,7 +23,7 @@ class Room extends Actor with ActorLogging {
     case UserMessage(jid, message) => {
       val nick = if (message == "/♥/") "ForNeVeR" else nickByJid(jid)
       val user = userByNick(nick)
-      if (message == "$say") {
+      if (message == "$say" || message == "/♥/") {
         user ! GeneratePhrase(nick)
       } else {
         user ! AddPhrase(message)
