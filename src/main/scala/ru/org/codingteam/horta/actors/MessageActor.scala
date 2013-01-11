@@ -1,10 +1,11 @@
-package ru.org.codingteam.horta
+package ru.org.codingteam.horta.actors
 
 import akka.actor.{Props, ActorLogging, Actor}
-import messages.{SendMessage, UserMessage, Initialize, JoinRoom}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}
+import ru.org.codingteam.horta.Configuration
+import ru.org.codingteam.horta.messages.{SendMessage, UserMessage, Initialize, JoinRoom}
 
 class MessageActor extends Actor with ActorLogging {
   lazy val connection = {

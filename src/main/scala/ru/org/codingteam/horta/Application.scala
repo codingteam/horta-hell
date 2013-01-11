@@ -1,5 +1,6 @@
 package ru.org.codingteam.horta
 
+import actors.MessageActor
 import akka.actor.{Props, ActorSystem}
 import messages.JoinRoom
 
