@@ -6,7 +6,7 @@ import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.messages.{SendMessage, UserMessage, Initialize}
 import ru.org.codingteam.horta.Configuration
 
-class RoomActor extends Actor with ActorLogging {
+class Room extends Actor with ActorLogging {
   var room: MultiUserChat = null
   var networks = Map[String, Network]()
 
