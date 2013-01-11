@@ -1,9 +1,10 @@
-package ru.org.codingteam.horta
+package ru.org.codingteam.horta.actors
 
 import akka.actor.{Props, Actor, ActorLogging}
-import messages.{UserMessage, Initialize, SendMessage}
 import platonus.{Filesystem, Network}
 import org.jivesoftware.smackx.muc.MultiUserChat
+import ru.org.codingteam.horta.messages.{SendMessage, UserMessage, Initialize}
+import ru.org.codingteam.horta.Configuration
 
 class RoomActor extends Actor with ActorLogging {
   var room: MultiUserChat = null
