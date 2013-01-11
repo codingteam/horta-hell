@@ -6,10 +6,6 @@ import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}
 import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.messages.Initialize
-import ru.org.codingteam.horta.messages.UserMessage
-import ru.org.codingteam.horta.messages.JoinRoom
-import ru.org.codingteam.horta.messages.SendMessage
 
 class Messenger extends Actor with ActorLogging {
   lazy val connection = {
@@ -24,6 +20,8 @@ class Messenger extends Actor with ActorLogging {
     connection
   }
 
+  var rooms = Map[String, MultiUserChat]()
+
   def receive = {
     case InitializePlugin(core, plugins) => {
       val self = context.self
@@ -32,9 +30,10 @@ class Messenger extends Actor with ActorLogging {
 
     case JoinRoom(jid) => {
       log.info(s"JoinRoom($jid)")
-      val actor = context.system.actorOf(Props[Room]())
+      val actor = context.system.actorOf(Props[Room])
+      actor ! InitializeRoom(jid, context.self)
       val muc = new MultiUserChat(connection, jid)
-      actor ! Initialize(muc)
+      rooms = rooms.updated(jid, muc)
 
       muc.addMessageListener(new PacketListener {
         def processPacket(packet: Packet) {
@@ -44,10 +43,17 @@ class Messenger extends Actor with ActorLogging {
           }
         }
       })
+
       muc.join("horta hell")
       muc.sendMessage("Muhahahaha!")
+
+      val parser = context.actorOf(Props[LogParser])
+      parser ! InitializeParser(jid, actor)
     }
 
-    case SendMessage(muc, message) => muc.sendMessage(message)
+    case SendMessage(room, message) => {
+      val muc = rooms.get(room).get
+      muc.sendMessage(message)
+    }
   }
 }
