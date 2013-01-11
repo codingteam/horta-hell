@@ -17,3 +17,9 @@ libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.1.0"
 libraryDependencies += "org.igniterealtime.smack" % "smack" % "3.2.1"
 
 libraryDependencies += "org.igniterealtime.smack" % "smackx" % "3.2.1"
+
+libraryDependencies += "javax.transaction" % "jta" % "1.1"
+
+libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.1"
+
+libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.1"

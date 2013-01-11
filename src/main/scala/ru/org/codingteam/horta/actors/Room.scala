@@ -1,45 +1,42 @@
 package ru.org.codingteam.horta.actors
 
-import akka.actor.{Props, Actor, ActorLogging}
+import akka.actor.{ActorRef, Props, Actor, ActorLogging}
 import platonus.{Filesystem, Network}
 import org.jivesoftware.smackx.muc.MultiUserChat
-import ru.org.codingteam.horta.messages.{SendMessage, UserMessage, Initialize}
-import ru.org.codingteam.horta.Configuration
+import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.{messages, Configuration}
+import ru.org.codingteam.horta.messages.AddPhrase
+import ru.org.codingteam.horta.messages.UserMessage
+import ru.org.codingteam.horta.messages.SendMessage
 
 class Room extends Actor with ActorLogging {
-  var room: MultiUserChat = null
-  var networks = Map[String, Network]()
+  var room: String = null
+  var messenger: ActorRef = null
+  var users = Map[String, ActorRef]()
 
   def receive = {
-    case Initialize(muc) => room = muc
+    case InitializeRoom(roomName, messengerRef) => {
+      room = roomName
+      messenger = messengerRef
+    }
+
     case UserMessage(jid, message) => {
-      val nick = nickByJid(jid)
-
-      val networkOption = networks.get(nick)
-      val network = {
-        if (networkOption.isDefined) {
-          networkOption.get
-        } else {
-          val network = networkByNick(nick)
-          networks = networks.updated(nick, network)
-          network
-        }
-      }
-
+      val nick = if (message == "/♥/") "ForNeVeR" else nickByJid(jid)
+      val user = userByNick(nick)
       if (message == "$say") {
-        val phrase = network.doGenerate()
-        sender ! SendMessage(room, prepareResponse(nick, phrase))
+        user ! GeneratePhrase(nick)
       } else {
-        network.addPhrase(message)
+        user ! AddPhrase(message)
       }
+    }
 
-      if (message == "/♥/") {
-        val network = networks.get("ForNeVeR")
-        if (network.isDefined) {
-          val phrase = network.get.doGenerate()
-          sender ! SendMessage(room, prepareResponse(nick, phrase))
-        }
-      }
+    case ParsedPhrase(nick, message) => {
+      val user = userByNick(nick)
+      user ! AddPhrase(message)
+    }
+
+    case GeneratedPhrase(forNick, phrase) => {
+      messenger ! SendMessage(room, prepareResponse(forNick, phrase))
     }
   }
 
@@ -53,11 +50,16 @@ class Room extends Actor with ActorLogging {
       args(0)
     }
   }
-  def networkByNick(nick: String) = {
-    log.info(s"Parsing log directory for $nick user.")
-    Filesystem.scanDirectory(
-      nick,
-      Configuration.logDirectory,
-      Configuration.logEncoding)
+
+  def userByNick(nick: String) = {
+    val user = users.get(nick)
+    user match {
+      case Some(u) => u
+      case None    => {
+        val user = context.actorOf(Props[RoomUser])
+        users = users.updated(nick, user)
+        user
+      }
+    }
   }
 }
