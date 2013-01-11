@@ -6,7 +6,7 @@ import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}
 
-class CoreActor extends Actor with ActorLogging {
+class MessageActor extends Actor with ActorLogging {
   lazy val connection = {
     val server = Configuration.server
     log.info(s"Connecting to $server")

@@ -5,7 +5,7 @@ import messages.JoinRoom
 
 object Application extends App {
   val system = ActorSystem("CodingteamSystem")
-  val core = system.actorOf(Props[CoreActor], name = "core")
+  val core = system.actorOf(Props[MessageActor], name = "core")
 
   Configuration.rooms foreach { case (roomName, jid) => core ! JoinRoom(jid) }
 }
