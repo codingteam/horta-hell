@@ -10,7 +10,11 @@ class RoomUser extends Actor with ActorLogging {
 
   def receive = {
     case InitializeUser(userNick) => nick = userNick
-    case AddPhrase(phrase) => network.addPhrase(phrase)
+    case AddPhrase(phrase) => {
+      if (!phrase.startsWith("$")) {
+        network.addPhrase(phrase)
+      }
+    }
     case GeneratePhrase(forNick) => sender ! GeneratedPhrase(forNick, network.doGenerate())
   }
 }
