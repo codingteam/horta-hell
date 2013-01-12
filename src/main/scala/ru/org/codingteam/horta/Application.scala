@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta
 
-import actors.Core
+import actors.core.Core
 import akka.actor.{Props, ActorSystem}
 
 object Application extends App {

@@ -8,6 +8,7 @@ import ru.org.codingteam.horta.{messages, Configuration}
 import ru.org.codingteam.horta.messages.AddPhrase
 import ru.org.codingteam.horta.messages.UserMessage
 import ru.org.codingteam.horta.messages.SendMessage
+import ru.org.codingteam.horta.security.User
 
 class Room extends Actor with ActorLogging {
   var room: String = null
@@ -21,12 +22,17 @@ class Room extends Actor with ActorLogging {
     }
 
     case UserMessage(jid, message) => {
-      val nick = if (message == "/♥/") "ForNeVeR" else nickByJid(jid)
+      val nick = nickByJid(jid)
       val user = userByNick(nick)
-      if (message == "$say" || message == "/♥/") {
-        user ! GeneratePhrase(nick)
-      } else {
-        user ! AddPhrase(message)
+      user ! AddPhrase(message)
+      messenger ! ProcessCommand(User.fromJid(jid, context.self), message)
+    }
+
+    case GenerateCommand(jid, command) => {
+      val nick = nickByJid(jid)
+      val user = userByNick(nick)
+      if (command == "say" || command == "♥") {
+        user ! GeneratePhrase(if (command != "♥") nick else "ForNeVeR")
       }
     }
 

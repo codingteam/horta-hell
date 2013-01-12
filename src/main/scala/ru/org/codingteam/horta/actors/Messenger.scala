@@ -1,11 +1,12 @@
 package ru.org.codingteam.horta.actors
 
-import akka.actor.{Props, ActorLogging, Actor}
+import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}
 import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.security.UnknownUser
 
 class Messenger extends Actor with ActorLogging {
   lazy val connection = {
@@ -20,12 +21,24 @@ class Messenger extends Actor with ActorLogging {
     connection
   }
 
+  var core: ActorRef = null
   var rooms = Map[String, MultiUserChat]()
 
   def receive = {
     case InitializePlugin(core, plugins) => {
+      this.core = core
+
       val self = context.self
       Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
+      core ! RegisterCommand("say", UnknownUser(), self)
+      core ! RegisterCommand("♥", UnknownUser(), self)
+    }
+
+    case ExecuteCommand(user, command, arguments) => {
+      val location = user.location
+      command match {
+        case "say" | "♥" => location ! GenerateCommand(user.jid, command)
+      }
     }
 
     case JoinRoom(jid) => {
@@ -54,6 +67,10 @@ class Messenger extends Actor with ActorLogging {
     case SendMessage(room, message) => {
       val muc = rooms.get(room).get
       muc.sendMessage(message)
+    }
+
+    case ProcessCommand(user, message) => {
+      core ! ProcessCommand(user, message)
     }
   }
 }
