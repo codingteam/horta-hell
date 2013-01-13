@@ -67,8 +67,11 @@ class Messenger extends Actor with ActorLogging {
     }
 
     case SendMessage(room, message) => {
-      val muc = rooms.get(room).get
-      muc.sendMessage(message)
+      val muc = rooms.get(room)
+      muc match {
+        case Some(muc) => muc.sendMessage(message)
+        case None =>
+      }
     }
 
     case ProcessCommand(user, message) => {
