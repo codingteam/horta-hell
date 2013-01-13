@@ -36,6 +36,24 @@ class Room extends Actor with ActorLogging {
       }
     }
 
+    case DiffCommand(jid, arguments) => {
+      val nick = nickByJid(jid)
+      if (arguments.length < 2) {
+        messenger ! SendMessage(room, prepareResponse(nick, "Wrong arguments."))
+      } else {
+        val nick1 = arguments(0)
+        val nick2 = arguments(1)
+        val user1 = users.get(nick1)
+        val user2 = users.get(nick2)
+
+        if (user1.isDefined && user2.isDefined) {
+          user1.get ! CalculateDiff(nick, nick1, nick2, user2.get)
+        } else {
+          messenger ! SendMessage(room, prepareResponse(nick, "User not found."))
+        }
+      }
+    }
+
     case ParsedPhrase(nick, message) => {
       val user = userByNick(nick)
       user ! AddPhrase(message)
@@ -43,6 +61,10 @@ class Room extends Actor with ActorLogging {
 
     case GeneratedPhrase(forNick, phrase) => {
       messenger ! SendMessage(room, prepareResponse(forNick, phrase))
+    }
+
+    case CalculateDiffResponse(forNick, nick1, nick2, diff) => {
+      messenger ! SendMessage(forNick, s"Difference between $nick1 and $nick2 is $diff.")
     }
   }
 
@@ -63,6 +85,7 @@ class Room extends Actor with ActorLogging {
       case Some(u) => u
       case None    => {
         val user = context.actorOf(Props[RoomUser])
+        user ! InitializeUser(context.self)
         users = users.updated(nick, user)
         user
       }

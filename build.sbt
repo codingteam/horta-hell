@@ -10,7 +10,7 @@ resolvers ++= Seq(
 	"clojars" at "http://clojars.org/repo/",
 	"clojure-releases" at "http://build.clojure.org/releases")
 
-libraryDependencies += "platonus" % "platonus" % "0.1.15"
+libraryDependencies += "platonus" % "platonus" % "0.1.16"
 
 libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.1.0"
 
