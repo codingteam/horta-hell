@@ -50,7 +50,7 @@ class Core extends Actor with ActorLogging {
     }
   }
 
-  val commandNameRegex = "^\\$([^\\s]+)".r
+  val commandNameRegex = "^\\$([^\\s]+).*?$".r
 
   def parseCommand(message: String) = {
     message match {
