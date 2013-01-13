@@ -15,6 +15,6 @@ class RoomUser extends Actor with ActorLogging {
         network.addPhrase(phrase)
       }
     }
-    case GeneratePhrase(forNick) => sender ! GeneratedPhrase(forNick, network.doGenerate())
+    case GeneratePhrase(forNick) => sender ! GeneratedPhrase(forNick, network.generate())
   }
 }
