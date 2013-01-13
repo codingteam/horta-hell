@@ -85,7 +85,6 @@ class Room extends Actor with ActorLogging {
       case Some(u) => u
       case None    => {
         val user = context.actorOf(Props[RoomUser])
-        user ! InitializeUser(context.self)
         users = users.updated(nick, user)
         user
       }
