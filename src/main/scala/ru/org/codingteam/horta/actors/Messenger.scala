@@ -45,7 +45,7 @@ class Messenger extends Actor with ActorLogging {
 
     case JoinRoom(jid) => {
       log.info(s"JoinRoom($jid)")
-      val actor = context.system.actorOf(Props[Room])
+      val actor = context.system.actorOf(Props[Room], jid)
       actor ! InitializeRoom(jid, context.self)
       val muc = new MultiUserChat(connection, jid)
       rooms = rooms.updated(jid, muc)
