@@ -32,12 +32,14 @@ class Messenger extends Actor with ActorLogging {
       Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
       core ! RegisterCommand("say", UnknownUser(), self)
       core ! RegisterCommand("♥", UnknownUser(), self)
+      core ! RegisterCommand("mdiff", UnknownUser(), self)
     }
 
     case ExecuteCommand(user, command, arguments) => {
       val location = user.location
       command match {
         case "say" | "♥" => location ! GenerateCommand(user.jid, command)
+        case "mdiff"     => location ! DiffCommand(user.jid, arguments)
       }
     }
 
