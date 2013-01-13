@@ -64,7 +64,7 @@ class Room extends Actor with ActorLogging {
     }
 
     case CalculateDiffResponse(forNick, nick1, nick2, diff) => {
-      messenger ! SendMessage(forNick, s"Difference between $nick1 and $nick2 is $diff.")
+      messenger ! SendMessage(room, prepareResponse(forNick, s"Difference between $nick1 and $nick2 is $diff."))
     }
   }
 
