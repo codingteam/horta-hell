@@ -54,7 +54,13 @@ class Messenger extends Actor with ActorLogging {
         def processPacket(packet: Packet) {
           log.info(s"Packet received from $jid: $packet")
           packet match {
-            case message: Message => actor ! UserMessage(message.getFrom, message.getBody)
+            case message: Message => {
+              // Little trick to ignore historical messages:
+              val extension = message.getExtension("delay", "urn:xmpp:delay")
+              if (extension == null) {
+                actor ! UserMessage(message.getFrom, message.getBody)
+              }
+            }
           }
         }
       })
