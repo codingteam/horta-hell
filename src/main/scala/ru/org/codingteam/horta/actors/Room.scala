@@ -12,6 +12,7 @@ import ru.org.codingteam.horta.security.User
 
 class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) extends Actor with ActorLogging {
   var users = Map[String, ActorRef]()
+  var pet = context.actorOf(Props(new Pet(messenger, room)))
 
   override def preStart() = {
     parser ! DoParsing(room)
@@ -49,6 +50,10 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
           messenger ! SendMessage(room, prepareResponse(nick, "User not found."))
         }
       }
+    }
+    
+    case PetCommand(command) => {
+      pet ! PetCommand(command)
     }
 
     case ParsedPhrase(nick, message) => {
