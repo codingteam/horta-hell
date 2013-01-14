@@ -34,6 +34,8 @@ class LogParser extends Actor with ActorLogging {
           scanner.close()
         }
       }
+
+      context.stop(context.self)
     }
   }
 }
