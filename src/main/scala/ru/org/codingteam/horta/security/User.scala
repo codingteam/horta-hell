@@ -9,6 +9,6 @@ class User(val jid: String, val role: UserRole, val location: ActorRef) {
 object User {
   def fromJid(jid: String, location: ActorRef) = {
     // TODO: add known users
-    new User(jid, UnknownUser(), location)
+    new User(jid, UnknownUser, location)
   }
 }

@@ -36,9 +36,9 @@ class Core extends Actor with ActorLogging {
 
   def accessGranted(user: User, role: UserRole) = {
     role match {
-      case BotOwner()    => user.role == BotOwner()
-      case KnownUser()   => user.role == BotOwner() || user.role == KnownUser()
-      case UnknownUser() => user.role == BotOwner() || user.role == KnownUser() || user.role == UnknownUser()
+      case BotOwner    => user.role == BotOwner
+      case KnownUser   => user.role == BotOwner || user.role == KnownUser
+      case UnknownUser => user.role == BotOwner || user.role == KnownUser || user.role == UnknownUser
     }
   }
 
