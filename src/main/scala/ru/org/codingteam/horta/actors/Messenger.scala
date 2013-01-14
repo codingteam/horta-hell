@@ -22,9 +22,9 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     log.info("Login succeed")
 
     Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
-    core ! RegisterCommand("say", UnknownUser, self)
-    core ! RegisterCommand("♥", UnknownUser, self)
-    core ! RegisterCommand("mdiff", UnknownUser, self)
+    // core ! RegisterCommand("say", UnknownUser, self)
+    // core ! RegisterCommand("♥", UnknownUser, self)
+    // core ! RegisterCommand("mdiff", UnknownUser, self)
     core ! RegisterCommand("pet", UnknownUser, self)
 
     parser = context.actorOf(Props[LogParser])
