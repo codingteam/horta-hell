@@ -25,6 +25,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     core ! RegisterCommand("say", UnknownUser, self)
     core ! RegisterCommand("♥", UnknownUser, self)
     core ! RegisterCommand("mdiff", UnknownUser, self)
+    core ! RegisterCommand("pet", UnknownUser, self)
 
     parser = context.actorOf(Props[LogParser])
   }
@@ -37,6 +38,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
       command match {
         case "say" | "♥" => location ! GenerateCommand(user.jid, command)
         case "mdiff"     => location ! DiffCommand(user.jid, arguments)
+        case "pet"       => location ! PetCommand(arguments)
       }
     }
 
