@@ -8,33 +8,30 @@ import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
 
-class Messenger extends Actor with ActorLogging {
-  lazy val connection = {
+class Messenger(val core: ActorRef) extends Actor with ActorLogging {
+  var connection: XMPPConnection = null
+  var parser: ActorRef = null
+
+  override def preStart() = {
     val server = Configuration.server
     log.info(s"Connecting to $server")
 
-    val connection = new XMPPConnection(server)
+    connection = new XMPPConnection(server)
     connection.connect()
     connection.login(Configuration.login, Configuration.password)
     log.info("Login succeed")
 
-    connection
+    Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
+    core ! RegisterCommand("say", UnknownUser(), self)
+    core ! RegisterCommand("♥", UnknownUser(), self)
+    core ! RegisterCommand("mdiff", UnknownUser(), self)
+
+    parser = context.actorOf(Props[LogParser])
   }
 
-  var core: ActorRef = null
   var rooms = Map[String, MultiUserChat]()
 
   def receive = {
-    case InitializePlugin(core, plugins) => {
-      this.core = core
-
-      val self = context.self
-      Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
-      core ! RegisterCommand("say", UnknownUser(), self)
-      core ! RegisterCommand("♥", UnknownUser(), self)
-      core ! RegisterCommand("mdiff", UnknownUser(), self)
-    }
-
     case ExecuteCommand(user, command, arguments) => {
       val location = user.location
       command match {
@@ -45,8 +42,8 @@ class Messenger extends Actor with ActorLogging {
 
     case JoinRoom(jid) => {
       log.info(s"JoinRoom($jid)")
-      val actor = context.system.actorOf(Props[Room], jid)
-      actor ! InitializeRoom(jid, context.self)
+
+      val actor = context.system.actorOf(Props(new Room(self, parser, jid)), jid)
       val muc = new MultiUserChat(connection, jid)
       rooms = rooms.updated(jid, muc)
 
@@ -67,9 +64,6 @@ class Messenger extends Actor with ActorLogging {
 
       muc.join(Configuration.nickname)
       muc.sendMessage("Muhahahaha!")
-
-      val parser = context.actorOf(Props[LogParser])
-      parser ! InitializeParser(jid, actor)
     }
 
     case SendMessage(room, message) => {
