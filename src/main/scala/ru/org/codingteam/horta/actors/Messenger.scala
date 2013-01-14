@@ -59,7 +59,7 @@ class Messenger extends Actor with ActorLogging {
         }
       })
 
-      muc.join("horta hell")
+      muc.join(Configuration.nickname)
       muc.sendMessage("Muhahahaha!")
 
       val parser = context.actorOf(Props[LogParser])

@@ -19,6 +19,7 @@ object Configuration {
   lazy val login = properties.getProperty("login")
   lazy val password = properties.getProperty("password")
   lazy val server = properties.getProperty("server")
+  lazy val nickname = properties.getProperty("nickname")
 
   lazy val rooms = {
     properties filterKeys (_.startsWith("room_"))
