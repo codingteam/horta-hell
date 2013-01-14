@@ -1,10 +1,16 @@
 package ru.org.codingteam.horta.actors
 
-import akka.actor.{ActorRef, ActorLogging, Actor}
+import akka.actor.{ActorLogging, Actor}
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
 import platonus.Network
 import ru.org.codingteam.horta.messages._
+import scala.concurrent.duration._
 
 class RoomUser extends Actor with ActorLogging {
+  import context.dispatcher
+  implicit val timeout = Timeout(60 seconds)
+
   val network = new Network()
 
   def receive = {
@@ -19,12 +25,12 @@ class RoomUser extends Actor with ActorLogging {
     }
 
     case CalculateDiff(forNick, nick1, nick2, roomUser2) => {
-      roomUser2 ! CalculateDiffRequest(sender, forNick, nick1, nick2, network)
+      (roomUser2 ? CalculateDiffRequest(forNick, nick1, nick2, network)) pipeTo sender
     }
 
-    case CalculateDiffRequest(room, forNick, nick1, nick2, network2) => {
+    case CalculateDiffRequest( forNick, nick1, nick2, network2) => {
       val diff = network.diff(network2)
-      room ! CalculateDiffResponse(forNick, nick1, nick2, diff)
+      sender ! CalculateDiffResponse(forNick, nick1, nick2, diff)
     }
   }
 }
