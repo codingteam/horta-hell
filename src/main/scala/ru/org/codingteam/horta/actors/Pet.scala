@@ -2,13 +2,20 @@ package ru.org.codingteam.horta.actors
 
 import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 import ru.org.codingteam.horta.messages._
+import scala.concurrent.duration._
 
 class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorLogging {
+  import context.dispatcher
+
   var nickname = "Наркоман"
   var alive = true
   var health = 100
   var hunger = 100
-  
+
+  override def preStart() = {
+    context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
+  }
+
   def receive = {
     case PetCommand(command: Array[String]) => {
       command match {
@@ -23,7 +30,6 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
     }
 
     case PetTick => {
-      // TODO: this message should be sent periodically to modify stats
       health -= 1
       hunger -= 2
     }
