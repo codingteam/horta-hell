@@ -1,27 +1,19 @@
 package ru.org.codingteam.horta.actors.core
 
-import akka.actor.{Props, ActorLogging, Actor}
+import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.actors.Messenger
 import ru.org.codingteam.horta.security._
-import ru.org.codingteam.horta.messages.InitializePlugin
-import ru.org.codingteam.horta.security.KnownUser
-import ru.org.codingteam.horta.security.BotOwner
-import ru.org.codingteam.horta.messages.ExecuteCommand
 import scala.Some
-import ru.org.codingteam.horta.security.UnknownUser
 
 class Core extends Actor with ActorLogging {
-  val plugins = {
-    val messenger = context.actorOf(Props[Messenger](), "messenger")
-    Map("messenger" -> messenger)
-  }
-
-  for (plugin <- plugins.values) {
-    plugin ! InitializePlugin(context.self, plugins)
-  }
-
   var commands = Map[String, Command]()
+  var plugins: Map[String, ActorRef] = null
+
+  override def preStart() = {
+    val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
+    plugins = Map("messenger" -> messenger)
+  }
 
   def receive = {
     case RegisterCommand(command, role, receiver) => {

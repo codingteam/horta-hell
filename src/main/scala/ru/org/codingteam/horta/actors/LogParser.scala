@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.actors
 
 import akka.actor.{ActorLogging, Actor}
-import ru.org.codingteam.horta.messages.{ParsedPhrase, InitializeParser}
+import ru.org.codingteam.horta.messages.{ParsedPhrase, DoParsing}
 import ru.org.codingteam.horta.Configuration
 import java.io.File
 import scalax.file.Path
@@ -12,7 +12,7 @@ class LogParser extends Actor with ActorLogging {
   val regex = "^\\[.*?\\] \\* (.*?)(?: \\*|:) (.*?)$".r
 
   def receive = {
-    case InitializeParser(roomName, roomActor) => {
+    case DoParsing(roomName) => {
       val directory = Path.fromString(Configuration.logDirectory) / roomName
       log.info(s"Reading directoty $directory")
 
@@ -26,7 +26,7 @@ class LogParser extends Actor with ActorLogging {
           while (scanner.hasNext) {
             val string = scanner.next()
             string match {
-              case regex(nick, message) => roomActor ! ParsedPhrase(nick, message)
+              case regex(nick, message) => sender ! ParsedPhrase(nick, message)
               case _ =>
             }
           }
@@ -34,8 +34,6 @@ class LogParser extends Actor with ActorLogging {
           scanner.close()
         }
       }
-
-      context.stop(context.self)
     }
   }
 }

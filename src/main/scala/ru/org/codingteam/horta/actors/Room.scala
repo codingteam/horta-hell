@@ -10,22 +10,19 @@ import ru.org.codingteam.horta.messages.UserMessage
 import ru.org.codingteam.horta.messages.SendMessage
 import ru.org.codingteam.horta.security.User
 
-class Room extends Actor with ActorLogging {
-  var room: String = null
-  var messenger: ActorRef = null
+class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) extends Actor with ActorLogging {
   var users = Map[String, ActorRef]()
 
-  def receive = {
-    case InitializeRoom(roomName, messengerRef) => {
-      room = roomName
-      messenger = messengerRef
-    }
+  override def preStart() = {
+    parser ! DoParsing(room)
+  }
 
+  def receive = {
     case UserMessage(jid, message) => {
       val nick = nickByJid(jid)
       val user = userByNick(nick)
       user ! AddPhrase(message)
-      messenger ! ProcessCommand(User.fromJid(jid, context.self), message)
+      messenger ! ProcessCommand(User.fromJid(jid, self), message)
     }
 
     case GenerateCommand(jid, command) => {
