@@ -43,7 +43,7 @@ class Core extends Actor with ActorLogging {
   }
 
   val dollarCommandNameRegex = "^\\$([^\\s]+).*?$".r
-  val slashCommandNameRegex = "^/(^\\s)/.*?$".r
+  val slashCommandNameRegex = "^([^\\s]+?)/.*?$".r
 
   def parseCommand(message: String) = {
     message match {
@@ -71,6 +71,6 @@ class Core extends Actor with ActorLogging {
   }
 
   def parseSlashArguments(message: String) = {
-    message.split('/').drop(2)
+    message.split('/').tail
   }
 }
