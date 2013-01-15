@@ -16,14 +16,14 @@ class Core extends Actor with ActorLogging {
   }
 
   def receive = {
-    case RegisterCommand(command, role, receiver) => {
-      commands = commands.updated(command, new Command(command, role, receiver))
+    case RegisterCommand(mode, command, role, receiver) => {
+      commands = commands.updated(command, Command(mode, command, role, receiver))
     }
 
     case ProcessCommand(user, message) => {
       val arguments = parseCommand(message)
       arguments match {
-        case Some(CommandArguments(Command(name, role, target), args)) => {
+        case Some(CommandArguments(Command(mode, name, role, target), args)) => {
           if (accessGranted(user, role)) {
             target ! ExecuteCommand(user, name, args)
           }
@@ -42,22 +42,35 @@ class Core extends Actor with ActorLogging {
     }
   }
 
-  val commandNameRegex = "^\\$([^\\s]+).*?$".r
+  val dollarCommandNameRegex = "^\\$([^\\s]+).*?$".r
+  val slashCommandNameRegex = "^/(^\\s)/.*?$".r
 
   def parseCommand(message: String) = {
     message match {
-      case commandNameRegex(command) => {
+      case dollarCommandNameRegex(command) => {
         commands.get(command) match {
-          case Some(command) => Some(CommandArguments(command, parseArguments(message)))
+          case Some(command) => Some(CommandArguments(command, parseDollarArguments(message)))
           case None          => None
         }
       }
+
+      case slashCommandNameRegex(command) => {
+        commands.get(command) match {
+          case Some(command) => Some(CommandArguments(command, parseSlashArguments(message)))
+          case None          => None
+        }
+      }
+
       case _ => None
     }
   }
 
-  def parseArguments(message: String) = {
+  def parseDollarArguments(message: String) = {
     // TODO: Advanced parser with quote syntax
     message.split(' ').tail
+  }
+
+  def parseSlashArguments(message: String) = {
+    message.split('/').drop(2)
   }
 }
