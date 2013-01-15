@@ -5,6 +5,7 @@ import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.actors.Messenger
 import ru.org.codingteam.horta.security._
 import scala.Some
+import scala.util.matching.Regex.MatchData
 
 class Core extends Actor with ActorLogging {
   var commands = Map[String, Command]()
@@ -66,13 +67,11 @@ class Core extends Actor with ActorLogging {
   }
 
   def parseDollarArguments(message: String) = {
-    message.split("\"").zipWithIndex flatMap {
-      case (value, index) =>
-        if (index % 2 == 0)
-          value.trim.split("\\s+")      // not quoted
-        else
-          Array(value)                  // quoted
-    } tail
+    val matches = ("\"([^\"]*)\"|(\\S+)".r findAllIn message).matchData
+    val chooseGroup = {
+      m: MatchData => if (m.group(1) != null) m.group(1) else m.group(2)
+    }
+    (matches map chooseGroup).toArray.tail
   }
 
   def parseSlashArguments(message: String) = {
