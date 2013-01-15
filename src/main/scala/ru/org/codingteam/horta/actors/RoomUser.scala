@@ -16,8 +16,9 @@ class RoomUser extends Actor with ActorLogging {
 
   def receive = {
     case UserPhrase(message) => {
-      addPhrase(message)
-      lastMessage = Some(message)
+      if (addPhrase(message)) {
+        lastMessage = Some(message)
+      }
     }
 
     case AddPhrase(phrase) => {
@@ -45,9 +46,12 @@ class RoomUser extends Actor with ActorLogging {
     }
   }
 
-  def addPhrase(phrase: String) {
-    if (!phrase.startsWith("$")) {
+  def addPhrase(phrase: String) = {
+    if (!phrase.startsWith("$") && !phrase.startsWith("s/")) {
       network.addPhrase(phrase)
+      true
+    } else {
+      false
     }
   }
 }
