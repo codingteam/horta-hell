@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.actors
 
 import akka.actor.{ActorRef, Props, ActorLogging, Actor}
+import core.Dollar
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}
@@ -22,10 +23,10 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     log.info("Login succeed")
 
     Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
-    core ! RegisterCommand("say", UnknownUser, self)
-    core ! RegisterCommand("♥", UnknownUser, self)
-    core ! RegisterCommand("mdiff", UnknownUser, self)
-    core ! RegisterCommand("pet", UnknownUser, self)
+    core ! RegisterCommand(Dollar, "say", UnknownUser, self)
+    core ! RegisterCommand(Dollar, "♥", UnknownUser, self)
+    core ! RegisterCommand(Dollar, "mdiff", UnknownUser, self)
+    core ! RegisterCommand(Dollar, "pet", UnknownUser, self)
 
     parser = context.actorOf(Props[LogParser])
   }
