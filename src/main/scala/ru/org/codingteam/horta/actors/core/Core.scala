@@ -66,8 +66,13 @@ class Core extends Actor with ActorLogging {
   }
 
   def parseDollarArguments(message: String) = {
-    // TODO: Advanced parser with quote syntax
-    message.split(' ').tail
+    message.split("\"").zipWithIndex flatMap {
+      case (value, index) =>
+        if (index % 2 == 0)
+          value.trim.split("\\s+")      // not quoted
+        else
+          Array(value)                  // quoted
+    } tail
   }
 
   def parseSlashArguments(message: String) = {
