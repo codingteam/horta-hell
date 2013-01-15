@@ -62,6 +62,8 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
     response("%s и так жив. Зачем его воскрешать?".format(nickname))
   } else {
     alive = true
+    health = 100
+    hunger = 100
     response("Вы воскресили питомца этой конфы! Это ли не чудо?!")
   }
 
