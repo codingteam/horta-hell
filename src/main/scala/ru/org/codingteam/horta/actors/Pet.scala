@@ -25,17 +25,23 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
         case Array("resurrect", _*) => resurrect
         case Array("feed", _*) => feed
         case Array("heal", _*) => heal
-        case _ => messenger ! SendMessage(room, "Попробуйте $pet help.")
+        case Array("change", "nick", newNickname, _*) => changeNickname(newNickname)
+        case _ => messenger ! response("Попробуйте $pet help.")
       }
     }
 
-    case PetTick => {
+    case PetTick => if (alive) {
       health -= 1
       hunger -= 2
+
+      if(hunger <= 0 || health <= 0)  {
+        alive = false
+        response("%s умер в забвении".format(nickname))
+      }
     }
   }
 
-  def help = messenger ! SendMessage(room, "Доступные команды: help, stats, kill, resurrect, feed, heal")
+  def help = messenger ! SendMessage(room, "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick")
 
   def stats = if (alive) {
     val message = """
@@ -56,6 +62,8 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
     response("%s и так жив. Зачем его воскрешать?".format(nickname))
   } else {
     alive = true
+    health = 100
+    hunger = 100
     response("Вы воскресили питомца этой конфы! Это ли не чудо?!")
   }
 
@@ -70,6 +78,14 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
     response("%s здоров".format(nickname))
   } else
     response("Невозможно вылечить мертвого питомца.")
+
+  def changeNickname(newNickname: String) = {
+    nickname = newNickname
+    if(alive)
+      response("Теперь нашего питомца зовут %s.".format(nickname))
+    else 
+      response("Выяснилось, что нашего питомца при жизни звали %s.".format(nickname))
+  }
 
   def response(message : String) = messenger ! SendMessage(room, message)
 }
