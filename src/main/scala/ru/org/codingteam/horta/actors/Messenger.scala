@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.actors
 
 import akka.actor.{ActorRef, Props, ActorLogging, Actor}
-import core.Dollar
+import core.{Slash, Dollar}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import org.jivesoftware.smack.packet.{Message, Packet}
@@ -25,6 +25,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
     core ! RegisterCommand(Dollar, "say", UnknownUser, self)
     core ! RegisterCommand(Dollar, "♥", UnknownUser, self)
+    core ! RegisterCommand(Slash, "s", UnknownUser, self)
     core ! RegisterCommand(Dollar, "mdiff", UnknownUser, self)
     core ! RegisterCommand(Dollar, "pet", UnknownUser, self)
 
@@ -38,6 +39,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
       val location = user.location
       command match {
         case "say" | "♥" => location ! GenerateCommand(user.jid, command)
+        case "s"         => location ! ReplaceCommand(user.jid, arguments)
         case "mdiff"     => location ! DiffCommand(user.jid, arguments)
         case "pet"       => location ! PetCommand(arguments)
       }

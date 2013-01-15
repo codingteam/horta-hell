@@ -1,16 +1,16 @@
 package ru.org.codingteam.horta.actors
 
 import akka.actor.{ActorRef, Props, Actor, ActorLogging}
-import platonus.{Filesystem, Network}
-import org.jivesoftware.smackx.muc.MultiUserChat
+import akka.pattern.ask
+import akka.util.Timeout
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.{messages, Configuration}
-import ru.org.codingteam.horta.messages.AddPhrase
-import ru.org.codingteam.horta.messages.UserMessage
-import ru.org.codingteam.horta.messages.SendMessage
 import ru.org.codingteam.horta.security.User
+import scala.concurrent.duration._
 
 class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) extends Actor with ActorLogging {
+  import context.dispatcher
+  implicit val timeout = Timeout(60 seconds)
+
   var users = Map[String, ActorRef]()
   var pet = context.actorOf(Props(new Pet(messenger, room)))
 
@@ -22,7 +22,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
     case UserMessage(jid, message) => {
       val nick = nickByJid(jid)
       val user = userByNick(nick)
-      user ! AddPhrase(message)
+      user ! UserPhrase(message)
       messenger ! ProcessCommand(User.fromJid(jid, self), message)
     }
 
@@ -31,6 +31,20 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
       val user = userByNick(nick)
       if (command == "say" || command == "♥") {
         user ! GeneratePhrase(if (command != "♥") nick else "ForNeVeR")
+      }
+    }
+
+    case ReplaceCommand(jid, arguments) => {
+      val nick = nickByJid(jid)
+      if (arguments.length != 2) {
+        sender ! prepareResponse(nick, "Wrong arguments.")
+      } else {
+        val user = userByNick(nick)
+        for {
+          responseFromUser <- user ? ReplaceRequest(arguments(0), arguments(1))
+        } yield responseFromUser match {
+            case ReplaceResponse(message) => messenger ! SendMessage(room, prepareResponse(nick, message))
+          }
       }
     }
 
