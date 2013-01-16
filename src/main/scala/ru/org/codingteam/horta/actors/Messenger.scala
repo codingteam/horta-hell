@@ -1,10 +1,10 @@
 package ru.org.codingteam.horta.actors
 
-import akka.actor.{ActorRef, Props, ActorLogging, Actor}
-import core.{Slash, Dollar}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import core.{Dollar, Slash}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
+import org.jivesoftware.smack.packet.{Packet, Presence, Message}
 import org.jivesoftware.smackx.muc.MultiUserChat
-import org.jivesoftware.smack.packet.{Message, Packet}
 import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
@@ -62,6 +62,16 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
               if (extension == null) {
                 actor ! UserMessage(message.getFrom, message.getBody)
               }
+            }
+          }
+        }
+      })
+
+      muc.addParticipantListener(new PacketListener {
+        def processPacket(packet: Packet) {
+          packet match {
+            case presence: Presence => {
+              actor ! UserPresence(presence)
             }
           }
         }
