@@ -36,15 +36,19 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
 
     case ReplaceCommand(jid, arguments) => {
       val nick = nickByJid(jid)
-      if (arguments.length != 2) {
-        sender ! prepareResponse(nick, "Wrong arguments.")
-      } else {
-        val user = userByNick(nick)
-        for {
-          responseFromUser <- user ? ReplaceRequest(arguments(0), arguments(1))
-        } yield responseFromUser match {
-            case ReplaceResponse(message) => messenger ! SendMessage(room, prepareResponse(nick, message))
-          }
+      arguments match {
+        case Array(from, to, _*) => {
+          val user = userByNick(nick)
+          for {
+            responseFromUser <- user ? ReplaceRequest(arguments(0), arguments(1))
+          } yield responseFromUser match {
+              case ReplaceResponse(message) => messenger ! SendMessage(room, prepareResponse(nick, message))
+            }
+        }
+
+        case _ => {
+          sender ! SendMessage(room, prepareResponse(nick, "Wrong arguments."))
+        }
       }
     }
 
