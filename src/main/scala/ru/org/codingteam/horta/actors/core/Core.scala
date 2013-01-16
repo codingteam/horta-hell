@@ -98,6 +98,6 @@ class Core extends Actor with ActorLogging {
   }
 
   def parseSlashArguments(message: String) = {
-    message.split('/').tail
+    message.split("/", -1).tail
   }
 }
