@@ -3,13 +3,17 @@ package ru.org.codingteam.horta.actors
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import core.{Dollar, Slash}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
+import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.{Packet, Presence, Message}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
+import scala.concurrent.duration._
 
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
+  import context.dispatcher
+
   var connection: XMPPConnection = null
   var parser: ActorRef = null
 
@@ -46,21 +50,20 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     }
 
     case JoinRoom(jid) => {
-      log.info(s"JoinRoom($jid)")
-
+      log.info(s"Joining room $jid")
       val actor = context.system.actorOf(Props(new Room(self, parser, jid)), jid)
       val muc = new MultiUserChat(connection, jid)
       rooms = rooms.updated(jid, muc)
 
       muc.addMessageListener(new PacketListener {
         def processPacket(packet: Packet) {
-          log.info(s"Packet received from $jid: $packet")
+          log.info(s"Packet received from $jid")
           packet match {
             case message: Message => {
               // Little trick to ignore historical messages:
               val extension = message.getExtension("delay", "urn:xmpp:delay")
               if (extension == null) {
-                actor ! UserMessage(message.getFrom, message.getBody)
+                actor ! UserMessage(message)
               }
             }
           }
@@ -76,6 +79,28 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
           }
         }
       })
+
+      val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
+      connection.addPacketListener(
+        new PacketListener {
+          def processPacket(packet: Packet) {
+            packet match {
+              case message: Message => {
+                val error = packet.getError
+                if (error != null && error.getCondition == "resource-constraint") {
+                  val body = message.getBody
+                  context.system.scheduler.scheduleOnce(1 second) {
+                    self ! SendMessage(jid, "[Re]" + body)
+                  }
+
+                  // Sleep to create reasonable pause:
+                  Thread.sleep((1 second).toMillis)
+                }
+              }
+            }
+          }
+        },
+        filter)
 
       muc.join(Configuration.nickname)
       muc.sendMessage("Muhahahaha!")

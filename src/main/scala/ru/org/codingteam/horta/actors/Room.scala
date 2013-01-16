@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.actors
 
-import akka.actor.{ActorRef, Props, Actor, ActorLogging}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.packet.Presence
@@ -13,18 +13,22 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
   implicit val timeout = Timeout(60 seconds)
 
   var users = Map[String, ActorRef]()
-  var pet = context.actorOf(Props(new Pet(messenger, room)))
+  var pet = context.actorOf(Props(new Pet(self)))
+  var lastMessage: Option[String] = None
 
-  override def preStart() = {
+  override def preStart() {
     parser ! DoParsing(room)
   }
 
   def receive = {
-    case UserMessage(jid, message) => {
+    case UserMessage(message) => {
+      val jid = message.getFrom
+      val text = message.getBody
+
       val nick = nickByJid(jid)
       val user = userByNick(nick)
-      user ! UserPhrase(message)
-      messenger ! ProcessCommand(User.fromJid(jid, self), message)
+      user ! UserPhrase(text)
+      messenger ! ProcessCommand(User.fromJid(jid, self), text)
     }
 
     case UserPresence(presence) => {
@@ -33,7 +37,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
       val presenceType = presence.getType
       log.info(s"User $nick presence of type $presenceType")
       if (nick == "zxc" && presenceType == Presence.Type.available) {
-         messenger ! SendMessage(room, if (Math.random() > 0.5) ".z" else "zxc: осечка!")
+        sendMessage(if (Math.random() > 0.5) ".z" else "zxc: осечка!")
       }
     }
 
@@ -58,7 +62,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
         }
 
         case _ => {
-          sender ! SendMessage(room, prepareResponse(nick, "Wrong arguments."))
+          sendMessage(prepareResponse(nick, "Wrong arguments."))
         }
       }
     }
@@ -66,7 +70,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
     case DiffCommand(jid, arguments) => {
       val nick = nickByJid(jid)
       if (arguments.length < 2) {
-        messenger ! SendMessage(room, prepareResponse(nick, "Wrong arguments."))
+        sendMessage(prepareResponse(nick, "Wrong arguments."))
       } else {
         val nick1 = arguments(0)
         val nick2 = arguments(1)
@@ -76,7 +80,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
         if (user1.isDefined && user2.isDefined) {
           user1.get ! CalculateDiff(nick, nick1, nick2, user2.get)
         } else {
-          messenger ! SendMessage(room, prepareResponse(nick, "User not found."))
+          sendMessage(prepareResponse(nick, "User not found."))
         }
       }
     }
@@ -91,12 +95,20 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
     }
 
     case GeneratedPhrase(forNick, phrase) => {
-      messenger ! SendMessage(room, prepareResponse(forNick, phrase))
+      sendMessage(prepareResponse(forNick, phrase))
     }
 
     case CalculateDiffResponse(forNick, nick1, nick2, diff) => {
-      messenger ! SendMessage(room, prepareResponse(forNick, s"Difference between $nick1 and $nick2 is $diff."))
+      sendMessage(prepareResponse(forNick, s"Difference between $nick1 and $nick2 is $diff."))
     }
+
+    case PetResponse(message) => {
+      sendMessage(message)
+    }
+  }
+
+  def sendMessage(message: String) {
+    messenger ! SendMessage(room, message)
   }
 
   def prepareResponse(nick: String, message: String) = s"$nick: $message"
