@@ -5,7 +5,8 @@ import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.actors.Messenger
 import ru.org.codingteam.horta.security._
 import scala.Some
-import scala.util.matching.Regex.MatchData
+import scala.util.parsing.combinator._
+import scala.util.matching.Regex
 
 class Core extends Actor with ActorLogging {
   var commands = Map[String, Command]()
@@ -66,12 +67,34 @@ class Core extends Actor with ActorLogging {
     }
   }
 
-  def parseDollarArguments(message: String) = {
-    val matches = ("\"([^\"]*)\"|(\\S+)".r findAllIn message).matchData
-    val chooseGroup = {
-      m: MatchData => if (m.group(1) != null) m.group(1) else m.group(2)
+  def parseDollarArguments(message: String) : Array[String] = {
+    val parser = new RegexParsers {
+      override type Elem = Char
+      def command_name = regexMatch("^(\\$[^\\s]+)".r) ^^ {m => m.group(1)}
+      def regular_arg = regexMatch("([^\\s]+)".r) ^^ {m => m.group(1)}
+      def quoted_arg = regexMatch("\"(.*?(?<!\\\\)(\\\\\\\\)*)\"".r) ^^ {m => m.group(1)}
+      def command = command_name ~ ((quoted_arg | regular_arg) *) ^^ {case name~arguments => arguments}
+
+      /* http://stackoverflow.com/questions/1815716/accessing-scala-parser-regular-expression-match-data */
+      def regexMatch(r: Regex): Parser[Regex.Match] = new Parser[Regex.Match] {
+        def apply(in: Input) = {
+          val source = in.source
+          val offset = in.offset
+          val start = handleWhiteSpace(source, offset)
+          (r findPrefixMatchOf (source.subSequence(start, source.length))) match {
+            case Some(matched) =>
+              Success(matched, in.drop(start + matched.end - offset))
+            case None =>
+              Failure("string matching regex `"+r+"' expected but `"+in.first+"' found", in.drop(start - offset))
+          }
+        }
+      }
     }
-    (matches map chooseGroup).toArray.tail
+    
+    parser.parse(parser.command, message) match {
+      case parser.Success(arguments, _) => arguments toArray
+      case _ => Array()
+    }
   }
 
   def parseSlashArguments(message: String) = {
