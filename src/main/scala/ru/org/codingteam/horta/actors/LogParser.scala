@@ -1,12 +1,11 @@
 package ru.org.codingteam.horta.actors
 
-import akka.actor.{ActorLogging, Actor}
-import ru.org.codingteam.horta.messages.{ParsedPhrase, DoParsing}
-import ru.org.codingteam.horta.Configuration
+import akka.actor.{Actor, ActorLogging}
 import java.io.File
-import scalax.file.Path
 import java.util.Scanner
-
+import ru.org.codingteam.horta.Configuration
+import ru.org.codingteam.horta.messages.{DoParsing, ParsedPhrase}
+import scalax.file.Path
 
 class LogParser extends Actor with ActorLogging {
   val regex = "^\\[.*?\\] \\* (.*?)(?: \\*|:) (.*?)$".r
@@ -18,7 +17,6 @@ class LogParser extends Actor with ActorLogging {
 
       for (path <- directory.descendants(depth = 1)) {
         val filename = path.path
-        log.info(s"Reading file $filename")
 
         val file = new File(filename)
         val scanner = new Scanner(file, Configuration.logEncoding).useDelimiter("\\r\\n")
@@ -34,6 +32,8 @@ class LogParser extends Actor with ActorLogging {
           scanner.close()
         }
       }
+
+      log.info(s"Finished reading $directory")
     }
   }
 }
