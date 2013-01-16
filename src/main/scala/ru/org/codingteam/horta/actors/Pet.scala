@@ -1,10 +1,10 @@
 package ru.org.codingteam.horta.actors
 
-import akka.actor.{ActorRef, Props, ActorLogging, Actor}
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import ru.org.codingteam.horta.messages._
 import scala.concurrent.duration._
 
-class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorLogging {
+class Pet(val room : ActorRef) extends Actor with ActorLogging {
   import context.dispatcher
 
   var nickname = "Наркоман"
@@ -26,7 +26,7 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
         case Array("feed", _*) => feed
         case Array("heal", _*) => heal
         case Array("change", "nick", newNickname, _*) => changeNickname(newNickname)
-        case _ => messenger ! response("Попробуйте $pet help.")
+        case _ => response("Попробуйте $pet help.")
       }
     }
 
@@ -41,7 +41,7 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
     }
   }
 
-  def help = messenger ! SendMessage(room, "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick")
+  def help = response("Доступные команды: help, stats, kill, resurrect, feed, heal, change nick")
 
   def stats = if (alive) {
     val message = """
@@ -87,5 +87,5 @@ class Pet(val messenger : ActorRef, val room : String) extends Actor with ActorL
       response("Выяснилось, что нашего питомца при жизни звали %s.".format(nickname))
   }
 
-  def response(message : String) = messenger ! SendMessage(room, message)
+  def response(message : String) = room ! PetResponse(message)
 }
