@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.actors
 import akka.actor.{ActorRef, Props, Actor, ActorLogging}
 import akka.pattern.ask
 import akka.util.Timeout
+import org.jivesoftware.smack.packet.Presence
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.User
 import scala.concurrent.duration._
@@ -24,6 +25,16 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
       val user = userByNick(nick)
       user ! UserPhrase(message)
       messenger ! ProcessCommand(User.fromJid(jid, self), message)
+    }
+
+    case UserPresence(presence) => {
+      val jid = presence.getFrom
+      val nick = nickByJid(jid)
+      val presenceType = presence.getType
+      log.info(s"User $nick presence of type $presenceType")
+      if (nick == "zxc" && presenceType == Presence.Type.available) {
+         messenger ! SendMessage(room, if (Math.random() > 0.5) ".z" else "zxc: осечка!")
+      }
     }
 
     case GenerateCommand(jid, command) => {
