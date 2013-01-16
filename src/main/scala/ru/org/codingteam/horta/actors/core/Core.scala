@@ -92,7 +92,7 @@ class Core extends Actor with ActorLogging {
     }
     
     parser.parse(parser.command, message) match {
-      case parser.Success(arguments, _) => arguments toArray
+      case parser.Success(arguments, _) => (arguments map {x => x.replace("\\\\", "\\").replace("\\\"", "\"")}).toArray
       case _ => Array()
     }
   }
