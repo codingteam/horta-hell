@@ -1,7 +1,6 @@
-package ru.org.codingteam.horta.actors
+package ru.org.codingteam.horta.actors.messenger
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import core.{Dollar, Slash}
 import org.jivesoftware.smack.{PacketListener, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.{Packet, Presence, Message}
@@ -10,6 +9,8 @@ import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
 import scala.concurrent.duration._
+import ru.org.codingteam.horta.actors.core.{Slash, Dollar}
+import ru.org.codingteam.horta.actors.LogParser
 
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
   import context.dispatcher
