@@ -1,20 +1,18 @@
 package ru.org.codingteam.horta.actors.messenger
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import org.jivesoftware.smack.{PacketListener, XMPPConnection}
-import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketFilter, PacketTypeFilter}
-import org.jivesoftware.smack.packet.{Packet, Presence, Message}
+import org.jivesoftware.smack.XMPPConnection
+import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
+import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.Configuration
+import ru.org.codingteam.horta.actors.core.{Dollar, Slash}
+import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
 import scala.concurrent.duration._
-import ru.org.codingteam.horta.actors.core.{Slash, Dollar}
-import ru.org.codingteam.horta.actors.LogParser
 
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
-  import context.dispatcher
-
   var connection: XMPPConnection = null
   var parser: ActorRef = null
 
@@ -56,51 +54,12 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
       val muc = new MultiUserChat(connection, jid)
       rooms = rooms.updated(jid, muc)
 
-      muc.addMessageListener(new PacketListener {
-        def processPacket(packet: Packet) {
-          log.info(s"Packet received from $jid")
-          packet match {
-            case message: Message => {
-              // Little trick to ignore historical messages:
-              val extension = message.getExtension("delay", "urn:xmpp:delay")
-              if (extension == null) {
-                actor ! UserMessage(message)
-              }
-            }
-          }
-        }
-      })
-
-      muc.addParticipantListener(new PacketListener {
-        def processPacket(packet: Packet) {
-          packet match {
-            case presence: Presence => {
-              actor ! UserPresence(presence)
-            }
-          }
-        }
-      })
+      muc.addMessageListener(new MucMessageListener(jid, actor, log))
+      muc.addParticipantListener(new MucParticipantListener(actor))
 
       val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
       connection.addPacketListener(
-        new PacketListener {
-          def processPacket(packet: Packet) {
-            packet match {
-              case message: Message => {
-                val error = packet.getError
-                if (error != null && error.getCondition == "resource-constraint") {
-                  val body = message.getBody
-                  context.system.scheduler.scheduleOnce(1 second) {
-                    self ! SendMessage(jid, "[Re]" + body)
-                  }
-
-                  // Sleep to create reasonable pause:
-                  Thread.sleep((1 second).toMillis)
-                }
-              }
-            }
-          }
-        },
+        new MessageAutoRepeater(self, context.system.scheduler, jid, context.dispatcher),
         filter)
 
       muc.join(Configuration.nickname)
@@ -113,6 +72,9 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
         case Some(muc) => muc.sendMessage(message)
         case None =>
       }
+
+      // Sleep to create reasonable pause after sending:
+      Thread.sleep((1 second).toMillis)
     }
 
     case ProcessCommand(user, message) => {
