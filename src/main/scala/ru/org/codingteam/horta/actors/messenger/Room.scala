@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors
+package ru.org.codingteam.horta.actors.messenger
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
@@ -7,6 +7,7 @@ import org.jivesoftware.smack.packet.Presence
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.User
 import scala.concurrent.duration._
+import ru.org.codingteam.horta.actors.Pet
 
 class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) extends Actor with ActorLogging {
   import context.dispatcher

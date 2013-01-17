@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors
+package ru.org.codingteam.horta.actors.messenger
 
 import akka.actor.{ActorLogging, Actor}
 import akka.pattern.{ask, pipe}

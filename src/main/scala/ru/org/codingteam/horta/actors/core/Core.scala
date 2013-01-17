@@ -2,11 +2,11 @@ package ru.org.codingteam.horta.actors.core
 
 import akka.actor.{ActorRef, Props, ActorLogging, Actor}
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.actors.Messenger
 import ru.org.codingteam.horta.security._
 import scala.Some
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
+import ru.org.codingteam.horta.actors.messenger.Messenger
 
 class Core extends Actor with ActorLogging {
   var commands = Map[String, Command]()
