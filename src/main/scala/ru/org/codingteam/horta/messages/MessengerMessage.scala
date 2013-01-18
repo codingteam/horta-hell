@@ -1,6 +1,10 @@
 package ru.org.codingteam.horta.messages
 
-abstract class MessengerMessage
+import org.jivesoftware.smack.Chat
+
+sealed class MessengerMessage
 case class JoinRoom(roomJID: String) extends MessengerMessage
-case class SendMessage(roomName: String, message: String) extends MessengerMessage
+case class SendMucMessage(toJid: String, message: String) extends MessengerMessage
+case class SendChatMessage(toJid: String, message: String) extends MessengerMessage
+case class ChatOpened(chat: Chat) extends MessengerMessage
 

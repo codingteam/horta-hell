@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.actors.messenger
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import org.jivesoftware.smack.XMPPConnection
+import org.jivesoftware.smack.{Chat, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
@@ -15,8 +15,12 @@ import scala.concurrent.duration._
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
   var connection: XMPPConnection = null
   var parser: ActorRef = null
+  var privateHandler: ActorRef = null
 
   override def preStart() = {
+    parser = context.actorOf(Props[LogParser], "log_parser")
+    privateHandler = context.actorOf(Props(new PrivateHandler(self)), "private_handler")
+
     val server = Configuration.server
     log.info(s"Connecting to $server")
 
@@ -32,10 +36,11 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     core ! RegisterCommand(Dollar, "mdiff", UnknownUser, self)
     core ! RegisterCommand(Dollar, "pet", UnknownUser, self)
 
-    parser = context.actorOf(Props[LogParser])
+    connection.getChatManager.addChatListener(new ChatListener(self, privateHandler, context.system.dispatcher))
   }
 
   var rooms = Map[String, MultiUserChat]()
+  var chats = Map[String, Chat]()
 
   def receive = {
     case ExecuteCommand(user, command, arguments) => {
@@ -66,11 +71,27 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
       muc.sendMessage("Muhahahaha!")
     }
 
-    case SendMessage(room, message) => {
-      val muc = rooms.get(room)
+    case ChatOpened(chat) => {
+      chats = chats.updated(chat.getParticipant, chat)
+      sender ! PositiveReply
+    }
+
+    case SendMucMessage(jid, message) => {
+      val muc = rooms.get(jid)
       muc match {
         case Some(muc) => muc.sendMessage(message)
-        case None =>
+        case None      =>
+      }
+
+      // Sleep to create reasonable pause after sending:
+      Thread.sleep((1 second).toMillis)
+    }
+
+    case SendChatMessage(jid, message) => {
+      val chat = chats.get(jid)
+      chat match {
+        case Some(chat) => chat.sendMessage(message)
+        case None      =>
       }
 
       // Sleep to create reasonable pause after sending:
