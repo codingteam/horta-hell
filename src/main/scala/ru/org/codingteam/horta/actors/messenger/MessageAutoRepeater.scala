@@ -2,7 +2,7 @@ package ru.org.codingteam.horta.actors.messenger
 
 import org.jivesoftware.smack.PacketListener
 import org.jivesoftware.smack.packet.{Message, Packet}
-import ru.org.codingteam.horta.messages.SendMessage
+import ru.org.codingteam.horta.messages.SendMucMessage
 import akka.actor.{ActorRef, Scheduler}
 import scala.concurrent.duration._
 import concurrent.ExecutionContext
@@ -19,7 +19,7 @@ class MessageAutoRepeater(
         if (error != null && error.getCondition == "resource-constraint") {
           val body = message.getBody
           scheduler.scheduleOnce(1 second) {
-            messenger ! SendMessage(jid, "[Re]" + body)
+            messenger ! SendMucMessage(jid, "[Re]" + body)
           }
         }
       }

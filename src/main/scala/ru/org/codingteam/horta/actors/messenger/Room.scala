@@ -58,7 +58,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
           for {
             responseFromUser <- user ? ReplaceRequest(arguments(0), arguments(1))
           } yield responseFromUser match {
-              case ReplaceResponse(message) => messenger ! SendMessage(room, prepareResponse(nick, message))
+              case ReplaceResponse(message) => messenger ! SendMucMessage(room, prepareResponse(nick, message))
             }
         }
 
@@ -109,7 +109,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
   }
 
   def sendMessage(message: String) {
-    messenger ! SendMessage(room, message)
+    messenger ! SendMucMessage(room, message)
   }
 
   def prepareResponse(nick: String, message: String) = s"$nick: $message"
