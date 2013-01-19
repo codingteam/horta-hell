@@ -6,6 +6,8 @@ mainClass in (Compile, run) := Some("ru.org.codingteam.horta.Application")
 
 scalaVersion := "2.10.0"
 
+scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
+
 resolvers ++= Seq(
 	"clojars" at "http://clojars.org/repo/",
 	"clojure-releases" at "http://build.clojure.org/releases")
