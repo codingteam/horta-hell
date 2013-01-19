@@ -6,7 +6,6 @@ import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeF
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.Configuration
-import ru.org.codingteam.horta.actors.core.{Dollar, Slash}
 import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
@@ -30,11 +29,11 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     log.info("Login succeed")
 
     Configuration.rooms foreach { case (roomName, jid) => self ! JoinRoom(jid) }
-    core ! RegisterCommand(Dollar, "say", UnknownUser, self)
-    core ! RegisterCommand(Dollar, "♥", UnknownUser, self)
-    core ! RegisterCommand(Slash, "s", UnknownUser, self)
-    core ! RegisterCommand(Dollar, "mdiff", UnknownUser, self)
-    core ! RegisterCommand(Dollar, "pet", UnknownUser, self)
+    core ! RegisterCommand("say", UnknownUser, self)
+    core ! RegisterCommand("♥", UnknownUser, self)
+    core ! RegisterCommand("s", UnknownUser, self)
+    core ! RegisterCommand("mdiff", UnknownUser, self)
+    core ! RegisterCommand("pet", UnknownUser, self)
 
     connection.getChatManager.addChatListener(new ChatListener(self, privateHandler, context.system.dispatcher))
   }
