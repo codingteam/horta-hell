@@ -1,3 +1,5 @@
+package ru.org.codingteam.horta.actors.core
+
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex
 import scala.language.postfixOps
