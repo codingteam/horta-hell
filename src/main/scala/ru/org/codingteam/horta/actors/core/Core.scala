@@ -19,14 +19,14 @@ class Core extends Actor with ActorLogging {
   }
 
   def receive = {
-    case RegisterCommand(mode, command, role, receiver) => {
-      commands = commands.updated(command, Command(mode, command, role, receiver))
+    case RegisterCommand(command, role, receiver) => {
+      commands = commands.updated(command, Command(command, role, receiver))
     }
 
     case ProcessCommand(user, message) => {
       val arguments = parseCommand(message)
       arguments match {
-        case Some(CommandArguments(Command(mode, name, role, target), args)) => {
+        case Some(CommandArguments(Command(name, role, target), args)) => {
           if (accessGranted(user, role)) {
             target ! ExecuteCommand(user, name, args)
           }
