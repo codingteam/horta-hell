@@ -1,11 +1,17 @@
-package ru.org.codingteam.horta.actors
+package ru.org.codingteam.horta.actors.pet
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import ru.org.codingteam.horta.messages._
+import akka.pattern.ask
+import akka.util.Timeout
 import scala.concurrent.duration._
+import ru.org.codingteam.horta.actors.database.{StoreOkReply, StoreObject, ReadObject}
 
-class Pet(val room : ActorRef) extends Actor with ActorLogging {
+class Pet(val room : ActorRef, val roomName: String) extends Actor with ActorLogging {
   import context.dispatcher
+  implicit val timeout = Timeout(60 seconds)
+
+  val core = context.actorFor("/user/core")
 
   var nickname = "Наркоман"
   var alive = true
@@ -14,6 +20,18 @@ class Pet(val room : ActorRef) extends Actor with ActorLogging {
 
   override def preStart() = {
     context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
+    for (obj <- core ? ReadObject("messenger", roomName)) {
+      obj match {
+        case Some(PetStatus(nickname, alive, health, hunger)) => {
+          this.nickname = nickname
+          this.alive = alive
+          this.health = health
+          this.hunger = hunger
+        }
+
+        case None =>
+      }
+    }
   }
 
   def receive = {
@@ -38,6 +56,8 @@ class Pet(val room : ActorRef) extends Actor with ActorLogging {
         alive = false
         response("%s умер в забвении".format(nickname))
       }
+
+      savePet() // TODO: move to another place
     }
   }
 
@@ -88,4 +108,13 @@ class Pet(val room : ActorRef) extends Actor with ActorLogging {
   }
 
   def response(message : String) = room ! PetResponse(message)
+
+  def savePet() {
+    val state = PetStatus(nickname, alive, health, hunger)
+    for (reply <- core ? StoreObject("messenger", Some(roomName), state)) {
+      reply match {
+        case StoreOkReply =>
+      }
+    }
+  }
 }

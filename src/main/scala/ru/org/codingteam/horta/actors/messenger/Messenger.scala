@@ -10,6 +10,8 @@ import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
 import scala.concurrent.duration._
+import ru.org.codingteam.horta.actors.database.GetDAORequest
+import ru.org.codingteam.horta.actors.pet.PetDAO
 
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
   var connection: XMPPConnection = null
@@ -42,6 +44,10 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
   var chats = Map[String, Chat]()
 
   def receive = {
+    case GetDAORequest => {
+      sender ! new PetDAO()
+    }
+
     case ExecuteCommand(user, command, arguments) => {
       val location = user.location
       command match {

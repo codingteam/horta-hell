@@ -5,15 +5,24 @@ import ru.org.codingteam.horta.actors.messenger.Messenger
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security._
 import scala.Some
+import ru.org.codingteam.horta.actors.database.{StoreObject, ReadObject, PersistentStore}
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 class Core extends Actor with ActorLogging {
+  import context.dispatcher
+  implicit val timeout = Timeout(60 seconds)
+
   var commands = Map[String, Command]()
   var plugins: Map[String, ActorRef] = null
   val parsers = List(SlashParsers, DollarParsers)
+  var store: ActorRef = null
 
   override def preStart() = {
     val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
     plugins = Map("messenger" -> messenger)
+    store = context.actorOf(Props(new PersistentStore(plugins)), "persistent_store")
   }
 
   def receive = {
@@ -32,6 +41,14 @@ class Core extends Actor with ActorLogging {
 
         case None =>
       }
+    }
+
+    case ReadObject(plugin, id) => {
+      store.ask(ReadObject(plugin, id)).pipeTo(sender)
+    }
+
+    case StoreObject(plugin, id, obj) => {
+      store.ask(StoreObject(plugin, id, obj)).pipeTo(sender)
     }
   }
 

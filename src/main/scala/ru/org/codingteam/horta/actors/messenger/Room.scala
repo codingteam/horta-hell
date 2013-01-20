@@ -7,14 +7,15 @@ import org.jivesoftware.smack.packet.Presence
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.User
 import scala.concurrent.duration._
-import ru.org.codingteam.horta.actors.Pet
+import ru.org.codingteam.horta.actors.database.GetDAORequest
+import ru.org.codingteam.horta.actors.pet.{PetDAO, Pet}
 
 class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) extends Actor with ActorLogging {
   import context.dispatcher
   implicit val timeout = Timeout(60 seconds)
 
   var users = Map[String, ActorRef]()
-  var pet = context.actorOf(Props(new Pet(self)))
+  var pet = context.actorOf(Props(new Pet(self, room)))
   var lastMessage: Option[String] = None
 
   override def preStart() {

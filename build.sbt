@@ -25,3 +25,5 @@ libraryDependencies += "javax.transaction" % "jta" % "1.1"
 libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.1"
 
 libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.1"
+
+libraryDependencies += "com.h2database" % "h2" % "1.3.170"
