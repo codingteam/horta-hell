@@ -6,6 +6,7 @@ import akka.util.Timeout
 import platonus.Network
 import ru.org.codingteam.horta.messages._
 import scala.concurrent.duration._
+import java.util.Locale
 
 class RoomUser extends Actor with ActorLogging {
   import context.dispatcher
@@ -25,8 +26,9 @@ class RoomUser extends Actor with ActorLogging {
       addPhrase(phrase)
     }
 
-    case GeneratePhrase(forNick) => {
-      sender ! GeneratedPhrase(forNick, network.generate())
+    case GeneratePhrase(forNick, allCaps) => {
+      val phrase = network.generate()
+      sender ! GeneratedPhrase(forNick, if (allCaps) phrase.toUpperCase(Locale.ROOT) else phrase)
     }
 
     case ReplaceRequest(from, to) => {
