@@ -31,7 +31,7 @@ trait CommandParsers extends RegexParsers {
 object SlashParsers extends CommandParsers {
   override def skipWhitespace = false
 
-  def command_name = regexMatch("^(\\w+)/".r) ^^ {
+  def command_name = regexMatch("^([^\\s]+)/".r) ^^ {
     m => m.group(1)
   }
 
@@ -45,7 +45,7 @@ object SlashParsers extends CommandParsers {
 }
 
 object DollarParsers extends CommandParsers {
-  def command_name = regexMatch("^\\$(\\w+)".r) ^^ {
+  def command_name = regexMatch("^\\$([^\\s]+)".r) ^^ {
     m => m.group(1)
   }
 
