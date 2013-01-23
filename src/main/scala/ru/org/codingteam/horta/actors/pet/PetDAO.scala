@@ -5,11 +5,26 @@ import java.sql.Connection
 
 class PetDAO extends DAO {
   def isTableInitialized(connection: Connection): Boolean = {
-    false // TODO: do real check
+    val statement = connection.prepareStatement("select count(*) from information_schema.tables where table_name = ?")
+    try {
+      statement.setString(1, "PET")
+
+      val tables = statement.executeQuery()
+      try {
+        tables.next() && {
+          val count = tables.getInt(1)
+          count > 0
+        }
+      } finally {
+        tables.close()
+      }
+    } finally {
+      statement.close()
+    }
   }
 
   def initializeTable(connection: Connection) {
-    val statement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS pet (" +
+    val statement = connection.prepareStatement("CREATE TABLE pet (" +
       " room VARCHAR(255) PRIMARY KEY, " +
       " nickname VARCHAR(255), " +
       " alive BOOLEAN, " +
