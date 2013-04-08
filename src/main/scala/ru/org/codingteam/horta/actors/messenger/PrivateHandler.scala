@@ -15,7 +15,7 @@ class PrivateHandler(val messenger: ActorRef) extends Actor with ActorLogging {
       messenger ! ProcessCommand(User.fromKnownJid(jid, self), text)
     }
 
-    case GenerateCommand(jid, _) => {
+    case GenerateCommand(jid, _, _) => {
       messenger ! SendChatMessage(jid, "Sorry, no.")
     }
   }

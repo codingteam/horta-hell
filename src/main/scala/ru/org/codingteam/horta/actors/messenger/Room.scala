@@ -43,17 +43,27 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
       }
     }
 
-    case GenerateCommand(jid, command) => {
+    case GenerateCommand(jid, command, arguments) => {
+      val length = arguments match {
+        case Array(length, _*) =>
+          try {
+            length.toInt
+          } catch {
+            case _: NumberFormatException => 1
+          }
+        case _                 => 1
+      }
+
       val nick = nickByJid(jid)
       val user = userByNick(nick)
       if (command == "say" || command == "♥") {
         if (Math.random() < 0.01) {
           messenger ! SendMucMessage(room, prepareResponse(nick, "BLOOD GORE DESTROY"))
           for (i <- 1 to 10) {
-            user ! GeneratePhrase(nick, true)
+            user ! GeneratePhrase(nick, 1, true)
           }
         } else {
-          user ! GeneratePhrase(if (command != "♥") nick else "ForNeVeR", false)
+          user ! GeneratePhrase(if (command != "♥") nick else "ForNeVeR", length, false)
         }
       }
     }
