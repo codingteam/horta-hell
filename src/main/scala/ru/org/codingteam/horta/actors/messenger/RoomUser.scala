@@ -26,8 +26,8 @@ class RoomUser extends Actor with ActorLogging {
       addPhrase(phrase)
     }
 
-    case GeneratePhrase(forNick, allCaps) => {
-      val phrase = network.generate()
+    case GeneratePhrase(forNick, length, allCaps) => {
+      val phrase = generatePhrase(length)
       sender ! GeneratedPhrase(forNick, if (allCaps) phrase.toUpperCase(Locale.ROOT) else phrase)
     }
 
@@ -55,5 +55,16 @@ class RoomUser extends Actor with ActorLogging {
     } else {
       false
     }
+  }
+
+  def generatePhrase(length: Integer): String = {
+    for (i <- 1 to 25) {
+      val phrase = network.generate()
+      if (phrase.split(" ").length >= length) {
+        return phrase
+      }
+    }
+
+    "Requested phrase was not found, sorry."
   }
 }

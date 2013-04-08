@@ -51,7 +51,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
     case ExecuteCommand(user, command, arguments) => {
       val location = user.location
       command match {
-        case "say" | "♥" => location ! GenerateCommand(user.jid, command)
+        case "say" | "♥" => location ! GenerateCommand(user.jid, command, arguments)
         case "s"         => location ! ReplaceCommand(user.jid, arguments)
         case "mdiff"     => location ! DiffCommand(user.jid, arguments)
         case "pet"       => location ! PetCommand(arguments)
