@@ -9,6 +9,7 @@ import ru.org.codingteam.horta.security.User
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.pet.Pet
+import ru.org.codingteam.horta.plugins
 
 class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
 
