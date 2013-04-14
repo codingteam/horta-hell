@@ -38,6 +38,7 @@ class LogParser extends Actor with ActorLogging {
 
 			log.info(s"Finished reading $directory")
 			sender ! network
+			context.stop(self)
 		}
 	}
 }
