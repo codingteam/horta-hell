@@ -22,7 +22,7 @@ class Core extends Actor with ActorLogging {
 	val parsers = List(SlashParsers, DollarParsers)
 	var store: ActorRef = null
 
-	override def preStart() = {
+	override def preStart() {
 		val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
 		plugins = Map("messenger" -> messenger)
 		store = context.actorOf(Props(new PersistentStore(plugins)), "persistent_store")
