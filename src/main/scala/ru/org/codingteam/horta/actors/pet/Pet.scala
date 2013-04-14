@@ -7,114 +7,116 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import ru.org.codingteam.horta.actors.database.{StoreOkReply, StoreObject, ReadObject}
 
-class Pet(val room : ActorRef, val roomName: String) extends Actor with ActorLogging {
-  import context.dispatcher
-  implicit val timeout = Timeout(60 seconds)
+class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogging {
 
-  val core = context.actorFor("/user/core")
+	import context.dispatcher
 
-  var nickname = "Наркоман"
-  var alive = true
-  var health = 100
-  var hunger = 100
+	implicit val timeout = Timeout(60 seconds)
 
-  override def preStart() = {
-    context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
-    for (obj <- core ? ReadObject("messenger", roomName)) {
-      obj match {
-        case Some(PetStatus(nickname, alive, health, hunger)) => {
-          this.nickname = nickname
-          this.alive = alive
-          this.health = health
-          this.hunger = hunger
-        }
+	val core = context.actorFor("/user/core")
 
-        case None =>
-      }
-    }
-  }
+	var nickname = "Наркоман"
+	var alive = true
+	var health = 100
+	var hunger = 100
 
-  def receive = {
-    case PetCommand(command: Array[String]) => {
-      command match {
-        case Array("help", _*) => help
-        case Array("stats", _*) => stats
-        case Array("kill", _*) => kill
-        case Array("resurrect", _*) => resurrect
-        case Array("feed", _*) => feed
-        case Array("heal", _*) => heal
-        case Array("change", "nick", newNickname, _*) => changeNickname(newNickname)
-        case _ => response("Попробуйте $pet help.")
-      }
-    }
+	override def preStart() = {
+		context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
+		for (obj <- core ? ReadObject("messenger", roomName)) {
+			obj match {
+				case Some(PetStatus(nickname, alive, health, hunger)) => {
+					this.nickname = nickname
+					this.alive = alive
+					this.health = health
+					this.hunger = hunger
+				}
 
-    case PetTick => if (alive) {
-      health -= 1
-      hunger -= 2
+				case None =>
+			}
+		}
+	}
 
-      if(hunger <= 0 || health <= 0)  {
-        alive = false
-        response("%s умер в забвении".format(nickname))
-      }
+	def receive = {
+		case PetCommand(command: Array[String]) => {
+			command match {
+				case Array("help", _*) => help
+				case Array("stats", _*) => stats
+				case Array("kill", _*) => kill
+				case Array("resurrect", _*) => resurrect
+				case Array("feed", _*) => feed
+				case Array("heal", _*) => heal
+				case Array("change", "nick", newNickname, _*) => changeNickname(newNickname)
+				case _ => response("Попробуйте $pet help.")
+			}
+		}
 
-      savePet() // TODO: move to another place
-    }
-  }
+		case PetTick => if (alive) {
+			health -= 1
+			hunger -= 2
 
-  def help = response("Доступные команды: help, stats, kill, resurrect, feed, heal, change nick")
+			if (hunger <= 0 || health <= 0) {
+				alive = false
+				response("%s умер в забвении".format(nickname))
+			}
 
-  def stats = if (alive) {
-    val message = """
-                     |Кличка: %s
-                     |Здоровье: %d
-                     |Голод: %d""".stripMargin.format(nickname, health, hunger)
-    response(message)
-  } else
-    response("%s мертв. Какие еще статы?".format(nickname))
-  
-  def kill = if (alive) {
-    alive = false
-    response("Вы жестоко убили питомца этой конфы.")
-  } else
-    response("%s уже мертв. Но вам этого мало, да?".format(nickname))
-  
-  def resurrect = if (alive) {
-    response("%s и так жив. Зачем его воскрешать?".format(nickname))
-  } else {
-    alive = true
-    health = 100
-    hunger = 100
-    response("Вы воскресили питомца этой конфы! Это ли не чудо?!")
-  }
+			savePet() // TODO: move to another place
+		}
+	}
 
-  def feed = if (alive) {
-    hunger = 100
-    response("%s покормлен".format(nickname))
-  } else
-    response("Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует.")
+	def help = response("Доступные команды: help, stats, kill, resurrect, feed, heal, change nick")
 
-  def heal = if (alive) {
-    health = 100
-    response("%s здоров".format(nickname))
-  } else
-    response("Невозможно вылечить мертвого питомца.")
+	def stats = if (alive) {
+		val message = """
+						|Кличка: %s
+						|Здоровье: %d
+						|Голод: %d""".stripMargin.format(nickname, health, hunger)
+		response(message)
+	} else
+		response("%s мертв. Какие еще статы?".format(nickname))
 
-  def changeNickname(newNickname: String) = {
-    nickname = newNickname
-    if(alive)
-      response("Теперь нашего питомца зовут %s.".format(nickname))
-    else 
-      response("Выяснилось, что нашего питомца при жизни звали %s.".format(nickname))
-  }
+	def kill = if (alive) {
+		alive = false
+		response("Вы жестоко убили питомца этой конфы.")
+	} else
+		response("%s уже мертв. Но вам этого мало, да?".format(nickname))
 
-  def response(message : String) = room ! PetResponse(message)
+	def resurrect = if (alive) {
+		response("%s и так жив. Зачем его воскрешать?".format(nickname))
+	} else {
+		alive = true
+		health = 100
+		hunger = 100
+		response("Вы воскресили питомца этой конфы! Это ли не чудо?!")
+	}
 
-  def savePet() {
-    val state = PetStatus(nickname, alive, health, hunger)
-    for (reply <- core ? StoreObject("messenger", Some(roomName), state)) {
-      reply match {
-        case StoreOkReply =>
-      }
-    }
-  }
+	def feed = if (alive) {
+		hunger = 100
+		response("%s покормлен".format(nickname))
+	} else
+		response("Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует.")
+
+	def heal = if (alive) {
+		health = 100
+		response("%s здоров".format(nickname))
+	} else
+		response("Невозможно вылечить мертвого питомца.")
+
+	def changeNickname(newNickname: String) = {
+		nickname = newNickname
+		if (alive)
+			response("Теперь нашего питомца зовут %s.".format(nickname))
+		else
+			response("Выяснилось, что нашего питомца при жизни звали %s.".format(nickname))
+	}
+
+	def response(message: String) = room ! PetResponse(message)
+
+	def savePet() {
+		val state = PetStatus(nickname, alive, health, hunger)
+		for (reply <- core ? StoreObject("messenger", Some(roomName), state)) {
+			reply match {
+				case StoreOkReply =>
+			}
+		}
+	}
 }

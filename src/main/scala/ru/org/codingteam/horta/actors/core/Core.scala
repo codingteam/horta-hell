@@ -11,66 +11,68 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 
 class Core extends Actor with ActorLogging {
-  import context.dispatcher
-  implicit val timeout = Timeout(60 seconds)
 
-  var commands = Map[String, Command]()
-  var plugins: Map[String, ActorRef] = null
-  val parsers = List(SlashParsers, DollarParsers)
-  var store: ActorRef = null
+	import context.dispatcher
 
-  override def preStart() = {
-    val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
-    plugins = Map("messenger" -> messenger)
-    store = context.actorOf(Props(new PersistentStore(plugins)), "persistent_store")
-  }
+	implicit val timeout = Timeout(60 seconds)
 
-  def receive = {
-    case RegisterCommand(command, role, receiver) => {
-      commands = commands.updated(command, Command(command, role, receiver))
-    }
+	var commands = Map[String, Command]()
+	var plugins: Map[String, ActorRef] = null
+	val parsers = List(SlashParsers, DollarParsers)
+	var store: ActorRef = null
 
-    case ProcessCommand(user, message) => {
-      val arguments = parseCommand(message)
-      arguments match {
-        case Some(CommandArguments(Command(name, role, target), args)) => {
-          if (accessGranted(user, role)) {
-            target ! ExecuteCommand(user, name, args)
-          }
-        }
+	override def preStart() = {
+		val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
+		plugins = Map("messenger" -> messenger)
+		store = context.actorOf(Props(new PersistentStore(plugins)), "persistent_store")
+	}
 
-        case None =>
-      }
-    }
+	def receive = {
+		case RegisterCommand(command, role, receiver) => {
+			commands = commands.updated(command, Command(command, role, receiver))
+		}
 
-    case ReadObject(plugin, id) => {
-      store.ask(ReadObject(plugin, id)).pipeTo(sender)
-    }
+		case ProcessCommand(user, message) => {
+			val arguments = parseCommand(message)
+			arguments match {
+				case Some(CommandArguments(Command(name, role, target), args)) => {
+					if (accessGranted(user, role)) {
+						target ! ExecuteCommand(user, name, args)
+					}
+				}
 
-    case StoreObject(plugin, id, obj) => {
-      store.ask(StoreObject(plugin, id, obj)).pipeTo(sender)
-    }
-  }
+				case None =>
+			}
+		}
 
-  def accessGranted(user: User, role: UserRole) = {
-    role match {
-      case BotOwner    => user.role == BotOwner
-      case KnownUser   => user.role == BotOwner || user.role == KnownUser
-      case UnknownUser => user.role == BotOwner || user.role == KnownUser || user.role == UnknownUser
-    }
-  }
+		case ReadObject(plugin, id) => {
+			store.ask(ReadObject(plugin, id)).pipeTo(sender)
+		}
 
-  def parseCommand(message: String) : Option[CommandArguments] = {
-    for(p <- parsers) {
-      p.parse(p.command, message) match {
-        case p.Success((name, arguments), _) => commands.get(name) match {
-          case Some(command) => return Some(CommandArguments(command, arguments))
-          case None => 
-        }
-        case _ =>
-      }
-    }
+		case StoreObject(plugin, id, obj) => {
+			store.ask(StoreObject(plugin, id, obj)).pipeTo(sender)
+		}
+	}
 
-    None
-  }
+	def accessGranted(user: User, role: UserRole) = {
+		role match {
+			case BotOwner => user.role == BotOwner
+			case KnownUser => user.role == BotOwner || user.role == KnownUser
+			case UnknownUser => user.role == BotOwner || user.role == KnownUser || user.role == UnknownUser
+		}
+	}
+
+	def parseCommand(message: String): Option[CommandArguments] = {
+		for (p <- parsers) {
+			p.parse(p.command, message) match {
+				case p.Success((name, arguments), _) => commands.get(name) match {
+					case Some(command) => return Some(CommandArguments(command, arguments))
+					case None =>
+				}
+				case _ =>
+			}
+		}
+
+		None
+	}
 }
