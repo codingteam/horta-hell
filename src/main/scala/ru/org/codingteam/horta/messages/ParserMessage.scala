@@ -1,4 +1,4 @@
 package ru.org.codingteam.horta.messages
 
-abstract class ParserMessage
-case class DoParsing(roomName: String) extends ParserMessage
+abstract sealed class ParserMessage
+case class DoParsing(roomName: String, userName: String) extends ParserMessage
