@@ -1,70 +1,141 @@
 package ru.org.codingteam.horta.actors.messenger
 
-import akka.actor.{ActorLogging, Actor}
+import akka.actor.{Props, ActorLogging, Actor}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import platonus.Network
 import ru.org.codingteam.horta.messages._
 import scala.concurrent.duration._
-import java.util.Locale
+import scala.language.postfixOps
+import java.util.{Calendar, Locale}
+import scala.concurrent.Future
+import ru.org.codingteam.horta.actors.LogParser
 
-class RoomUser extends Actor with ActorLogging {
-  import context.dispatcher
-  implicit val timeout = Timeout(60 seconds)
+class RoomUser(val room: String, val nick: String) extends Actor with ActorLogging {
 
-  val network = new Network()
-  var lastMessage: Option[String] = None
+	import context.dispatcher
 
-  def receive = {
-    case UserPhrase(message) => {
-      if (addPhrase(message)) {
-        lastMessage = Some(message)
-      }
-    }
+	implicit val timeout = Timeout(60 seconds)
 
-    case AddPhrase(phrase) => {
-      addPhrase(phrase)
-    }
+	object Tick
+	val cacheTime = 5 minutes
 
-    case GeneratePhrase(forNick, length, allCaps) => {
-      val phrase = generatePhrase(length)
-      sender ! GeneratedPhrase(forNick, if (allCaps) phrase.toUpperCase(Locale.ROOT) else phrase)
-    }
+	var network: Option[Network] = None
+	var lastMessage: Option[String] = None
+	var lastNetworkTime: Option[Calendar] = None
 
-    case ReplaceRequest(from, to) => {
-      lastMessage match {
-        case Some(message) => sender ! ReplaceResponse(message.replace(from, to))
-        case None          => sender ! ReplaceResponse("No messages for you, sorry.")
-      }
-    }
+	override def preStart() {
+		context.system.scheduler.schedule(cacheTime, cacheTime, self, Tick)
+	}
 
-    case CalculateDiff(forNick, nick1, nick2, roomUser2) => {
-      (roomUser2 ? CalculateDiffRequest(forNick, nick1, nick2, network)) pipeTo sender
-    }
+	def receive = {
+		case SetNetwork(newNetwork) => {
+			network = Some(newNetwork)
+			lastNetworkTime = Some(Calendar.getInstance)
+		}
 
-    case CalculateDiffRequest( forNick, nick1, nick2, network2) => {
-      val diff = network.diff(network2)
-      sender ! CalculateDiffResponse(forNick, nick1, nick2, diff)
-    }
-  }
+		case UserPhrase(message) => {
+			if (addPhrase(message)) {
+				lastMessage = Some(message)
+			}
+		}
 
-  def addPhrase(phrase: String) = {
-    if (!phrase.startsWith("$") && !phrase.startsWith("s/")) {
-      network.addPhrase(phrase)
-      true
-    } else {
-      false
-    }
-  }
+		case AddPhrase(phrase) => {
+			addPhrase(phrase)
+		}
 
-  def generatePhrase(length: Integer): String = {
-    for (i <- 1 to 25) {
-      val phrase = network.generate()
-      if (phrase.split(" ").length >= length) {
-        return phrase
-      }
-    }
+		case GeneratePhrase(forNick, length, allCaps) => {
+			getNetwork() map {
+				case network => {
+					val phrase = generatePhrase(network, length)
+					GeneratedPhrase(forNick, if (allCaps) phrase.toUpperCase(Locale.ROOT) else phrase)
+				}
+			} pipeTo sender
+		}
 
-    "Requested phrase was not found, sorry."
-  }
+		case ReplaceRequest(from, to) => {
+			lastMessage match {
+				case Some(message) => sender ! ReplaceResponse(message.replace(from, to))
+				case None => sender ! ReplaceResponse("No messages for you, sorry.")
+			}
+		}
+
+		case CalculateDiff(forNick, nick1, nick2, roomUser2) => {
+			getNetwork() map {
+				case network => (roomUser2 ? CalculateDiffRequest(forNick, nick1, nick2, network))
+			} pipeTo sender
+		}
+
+		case CalculateDiffRequest(forNick, nick1, nick2, network2) => {
+			getNetwork() map {
+				case network => {
+					val diff = network.diff(network2)
+					CalculateDiffResponse(forNick, nick1, nick2, diff)
+				}
+			} pipeTo sender
+		}
+
+		case Tick => {
+			// Analyse and flush cache on tick.
+			lastNetworkTime match {
+				case Some(time) => {
+					val msDiff = Calendar.getInstance.getTimeInMillis - time.getTimeInMillis
+					if (msDiff > cacheTime.toMillis) {
+						flushNetwork()
+					}
+				}
+
+				case None =>
+			}
+		}
+	}
+
+	def getNetwork(): Future[Network] = {
+		network match {
+			case Some(network) => {
+				lastNetworkTime = Some(Calendar.getInstance)
+				Future.successful(network)
+			}
+
+			case None => {
+				val parser = context.actorOf(Props[LogParser])
+				val result = parser ? DoParsing(room, nick)
+				result map {
+					case network: Network =>
+						self ! SetNetwork(network)
+						network
+				}
+			}
+		}
+	}
+
+	def flushNetwork() {
+		if (!network.isEmpty) {
+			log.info(s"Flushing Markov network cache of user $nick")
+			network = None
+		}
+	}
+
+	def addPhrase(phrase: String) = {
+		if (!phrase.startsWith("$") && !phrase.startsWith("s/")) {
+			network match {
+				case Some(network) => network.addPhrase(phrase)
+				case None => // will add later on log parse
+			}
+			true
+		} else {
+			false
+		}
+	}
+
+	def generatePhrase(network: Network, length: Integer): String = {
+		for (i <- 1 to 25) {
+			val phrase = network.generate()
+			if (phrase.split(" ").length >= length) {
+				return phrase
+			}
+		}
+
+		"Requested phrase was not found, sorry."
+	}
 }

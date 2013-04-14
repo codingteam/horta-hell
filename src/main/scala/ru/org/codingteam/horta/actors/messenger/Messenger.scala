@@ -10,6 +10,7 @@ import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.database.GetDAORequest
 import ru.org.codingteam.horta.actors.pet.PetDAO
 
@@ -60,7 +61,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 
     case JoinRoom(jid) => {
       log.info(s"Joining room $jid")
-      val actor = context.system.actorOf(Props(new Room(self, parser, jid)), jid)
+      val actor = context.system.actorOf(Props(new Room(self, jid)), jid)
       val muc = new MultiUserChat(connection, jid)
       rooms = rooms.updated(jid, muc)
 

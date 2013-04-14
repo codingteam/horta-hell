@@ -7,20 +7,17 @@ import org.jivesoftware.smack.packet.Presence
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.User
 import scala.concurrent.duration._
-import ru.org.codingteam.horta.actors.database.GetDAORequest
-import ru.org.codingteam.horta.actors.pet.{PetDAO, Pet}
+import scala.language.postfixOps
+import ru.org.codingteam.horta.actors.pet.Pet
 
-class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) extends Actor with ActorLogging {
-  import context.dispatcher
-  implicit val timeout = Timeout(60 seconds)
+class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
+	import context.dispatcher
+
+	implicit val timeout = Timeout(60 seconds)
 
   var users = Map[String, ActorRef]()
   var pet = context.actorOf(Props(new Pet(self, room)))
   var lastMessage: Option[String] = None
-
-  override def preStart() {
-    parser ! DoParsing(room)
-  }
 
   def receive = {
     case UserMessage(message) => {
@@ -57,7 +54,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
       val nick = nickByJid(jid)
       val user = userByNick(nick)
       if (command == "say" || command == "♥") {
-        if (Math.random() > 0.95) {
+        if (Math.random() > 0.99) {
           messenger ! SendMucMessage(room, "пффффш")
           messenger ! SendMucMessage(room, "шпфффф")
           messenger ! SendMucMessage(room, prepareResponse(nick, "я твой Хортец!"))
@@ -150,7 +147,7 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
     user match {
       case Some(u) => u
       case None    => {
-        val user = context.actorOf(Props[RoomUser])
+        val user = context.actorOf(Props(new RoomUser(room, nick)))
         users = users.updated(nick, user)
         user
       }

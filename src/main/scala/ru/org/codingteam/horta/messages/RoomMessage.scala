@@ -2,7 +2,7 @@ package ru.org.codingteam.horta.messages
 
 import org.jivesoftware.smack.packet.{Message, Presence}
 
-abstract class RoomMessage
+abstract sealed class RoomMessage
 case class UserMessage(message: Message) extends RoomMessage
 case class UserPresence(presence: Presence) extends RoomMessage
 case class ParsedPhrase(nick: String, message: String) extends RoomMessage
