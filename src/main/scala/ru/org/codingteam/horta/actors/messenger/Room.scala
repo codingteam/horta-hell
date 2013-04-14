@@ -57,7 +57,11 @@ class Room(val messenger: ActorRef, val parser: ActorRef, val room: String) exte
       val nick = nickByJid(jid)
       val user = userByNick(nick)
       if (command == "say" || command == "♥") {
-        if (Math.random() < 0.01) {
+        if (Math.random() > 0.95) {
+          messenger ! SendMucMessage(room, "пффффш")
+          messenger ! SendMucMessage(room, "шпфффф")
+          messenger ! SendMucMessage(room, prepareResponse(nick, "я твой Хортец!"))
+        } else if (Math.random() < 0.01) {
           messenger ! SendMucMessage(room, prepareResponse(nick, "BLOOD GORE DESTROY"))
           for (i <- 1 to 10) {
             user ! GeneratePhrase(nick, 1, true)
