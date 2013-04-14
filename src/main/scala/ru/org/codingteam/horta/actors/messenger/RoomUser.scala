@@ -18,6 +18,7 @@ class RoomUser(val room: String, val nick: String) extends Actor with ActorLoggi
 	implicit val timeout = Timeout(60 seconds)
 
 	object Tick
+
 	val cacheTime = 5 minutes
 
 	var network: Option[Network] = None

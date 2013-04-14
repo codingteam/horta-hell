@@ -9,68 +9,75 @@ import scala.concurrent.duration._
 import concurrent.Await
 
 case object GetDAORequest
+
 case object StoreOkReply
 
 case class StoreObject(plugin: String, id: Option[Any], obj: Any)
+
 case class ReadObject(plugin: String, id: Any)
 
 trait DAO {
-  def initializeTable(connection: Connection)
-  def isTableInitialized(connection: Connection) : Boolean
-  def store(connection: Connection, id: Option[Any], obj: Any): Any
-  def read(connection: Connection, id: Any): Option[Any]
+	def initializeTable(connection: Connection)
+
+	def isTableInitialized(connection: Connection): Boolean
+
+	def store(connection: Connection, id: Option[Any], obj: Any): Any
+
+	def read(connection: Connection, id: Any): Option[Any]
 }
 
 class PersistentStore(val plugins: Map[String, ActorRef]) extends Actor with ActorLogging {
-  import context.dispatcher
-  implicit val timeout = Timeout(60 seconds)
 
-  var connection: Connection = null
-  var daos = Map[String, DAO]()
+	import context.dispatcher
 
-  override def preStart() {
-    val pool = JdbcConnectionPool.create("jdbc:h2:hell;DB_CLOSE_DELAY=-1", "sa", "")
-    connection = pool.getConnection()
+	implicit val timeout = Timeout(60 seconds)
 
-    plugins map(pair => pair match {
-      case (key, actor) => {
-        val dao = Await.result(actor ? GetDAORequest, timeout.duration)
-        daos += key -> dao.asInstanceOf[DAO]
-      }
-    })
-  }
+	var connection: Connection = null
+	var daos = Map[String, DAO]()
 
-  def receive() = {
-    case StoreObject(plugin, id, obj) => {
-      daos.get(plugin) match {
-        case Some(dao) => {
-          if (!dao.isTableInitialized(connection)) {
-            dao.initializeTable(connection)
-          }
-          dao.store(connection, id, obj)
-          sender ! StoreOkReply
-        }
+	override def preStart() {
+		val pool = JdbcConnectionPool.create("jdbc:h2:hell;DB_CLOSE_DELAY=-1", "sa", "")
+		connection = pool.getConnection()
 
-        case None => {
-          log.info(s"Cannot store object $obj for plugin $plugin")
-        }
-      }
-    }
+		plugins map (pair => pair match {
+			case (key, actor) => {
+				val dao = Await.result(actor ? GetDAORequest, timeout.duration)
+				daos += key -> dao.asInstanceOf[DAO]
+			}
+		})
+	}
 
-    case ReadObject(plugin, id) => {
-      daos.get(plugin) match {
-        case Some(dao) => {
-          if (!dao.isTableInitialized(connection)) {
-            dao.initializeTable(connection)
-          }
-          sender ! dao.read(connection, id)
-          sender ! StoreOkReply
-        }
+	def receive() = {
+		case StoreObject(plugin, id, obj) => {
+			daos.get(plugin) match {
+				case Some(dao) => {
+					if (!dao.isTableInitialized(connection)) {
+						dao.initializeTable(connection)
+					}
+					dao.store(connection, id, obj)
+					sender ! StoreOkReply
+				}
 
-        case None => {
-          log.info(s"Cannot read object $id for plugin $plugin")
-        }
-      }
-    }
-  }
+				case None => {
+					log.info(s"Cannot store object $obj for plugin $plugin")
+				}
+			}
+		}
+
+		case ReadObject(plugin, id) => {
+			daos.get(plugin) match {
+				case Some(dao) => {
+					if (!dao.isTableInitialized(connection)) {
+						dao.initializeTable(connection)
+					}
+					sender ! dao.read(connection, id)
+					sender ! StoreOkReply
+				}
+
+				case None => {
+					log.info(s"Cannot read object $id for plugin $plugin")
+				}
+			}
+		}
+	}
 }
