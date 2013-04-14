@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.actors.core
 
 import akka.actor.{ActorRef, Props, ActorLogging, Actor}
+import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.messenger.Messenger
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security._

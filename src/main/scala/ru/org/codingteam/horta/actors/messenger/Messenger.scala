@@ -5,7 +5,7 @@ import org.jivesoftware.smack.{Chat, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
-import ru.org.codingteam.horta.Configuration
+import ru.org.codingteam.horta.{plugins, Configuration}
 import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
