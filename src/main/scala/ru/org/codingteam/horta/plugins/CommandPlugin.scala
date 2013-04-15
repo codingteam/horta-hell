@@ -17,7 +17,7 @@ abstract class CommandPlugin extends Actor with ActorLogging {
 	 * A collection of (token -> scope) pairs, where token defines command token and scope - its scope.
 	 * @return collection.
 	 */
-	def commandDefinitions: Map[Any, Scope]
+	def commandDefinitions: List[(Any, Scope)]
 
 	/**
 	 * Process a command.

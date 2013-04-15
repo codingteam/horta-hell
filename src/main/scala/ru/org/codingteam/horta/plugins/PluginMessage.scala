@@ -8,8 +8,8 @@ import ru.org.codingteam.horta.security.{CommandContext, Scope}
 abstract sealed class PluginMessage
 
 /**
- * This is the first message for plugin to respond. Must be responded with Map[Any, Scope] - map of command tokens and
- * its scopes.
+ * This is the first message for plugin to respond. Must be responded with List[(Any, Scope)] - collection of command
+ * tokens and corresponding scopes.
  */
 case class StartPlugin() extends PluginMessage
 
