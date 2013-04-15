@@ -10,6 +10,9 @@ import ru.org.codingteam.horta.actors.database.{StoreObject, ReadObject, Persist
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import scala.concurrent.duration._
+import ru.org.codingteam.horta.plugins.{CommandDefinition, GetCommands}
+import akka.dispatch.Futures
+import scala.concurrent.{Future, Await}
 
 class Core extends Actor with ActorLogging {
 
@@ -17,20 +20,35 @@ class Core extends Actor with ActorLogging {
 
 	implicit val timeout = Timeout(60 seconds)
 
-	var commands = Map[String, Command]()
-	var plugins: Map[String, ActorRef] = null
+	/**
+	 * List of plugin props to be started.
+	 */
+	val plugins: List[Props] = List()
+
+	/**
+	 * List of registered commands.
+	 */
+	var commands = Map[String, List[(ActorRef, CommandDefinition)]]()
+
+	@Deprecated
+	var commandMap = Map[String, Command]()
+
+	@Deprecated
+	var pluginMap: Map[String, ActorRef] = null
 	val parsers = List(SlashParsers, DollarParsers)
 	var store: ActorRef = null
 
 	override def preStart() {
+		commands = commandDefinitions()
+
 		val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
-		plugins = Map("messenger" -> messenger)
-		store = context.actorOf(Props(new PersistentStore(plugins)), "persistent_store")
+		pluginMap = Map("messenger" -> messenger)
+		store = context.actorOf(Props(new PersistentStore(pluginMap)), "persistent_store")
 	}
 
 	def receive = {
 		case RegisterCommand(command, role, receiver) => {
-			commands = commands.updated(command, Command(command, role, receiver))
+			commandMap = commandMap.updated(command, Command(command, role, receiver))
 		}
 
 		case ProcessCommand(user, message) => {
@@ -55,6 +73,24 @@ class Core extends Actor with ActorLogging {
 		}
 	}
 
+	private def commandDefinitions(): Map[String, List[(ActorRef, CommandDefinition)]] = {
+		val commandRequests = Future.sequence(
+			for (plugin <- plugins) yield {
+				val actor = context.actorOf(plugin)
+				ask(actor, GetCommands()).mapTo[List[CommandDefinition]].map(
+					definitions => definitions.map(
+						definition => (actor, definition)))
+			})
+
+		val results = Await.result(commandRequests, 60 seconds)
+		val definitions = results.flatten
+		val groups = definitions.groupBy {
+			case (_, CommandDefinition(_, name, _)) => name
+		}
+
+		groups
+	}
+
 	def accessGranted(user: User, role: UserRole) = {
 		role match {
 			case BotOwner => user.role == BotOwner
@@ -66,7 +102,7 @@ class Core extends Actor with ActorLogging {
 	def parseCommand(message: String): Option[CommandArguments] = {
 		for (p <- parsers) {
 			p.parse(p.command, message) match {
-				case p.Success((name, arguments), _) => commands.get(name) match {
+				case p.Success((name, arguments), _) => commandMap.get(name) match {
 					case Some(command) => return Some(CommandArguments(command, arguments))
 					case None =>
 				}

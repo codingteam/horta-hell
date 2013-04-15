@@ -8,7 +8,7 @@ import ru.org.codingteam.horta.security.{Scope, CommandContext}
  */
 abstract class CommandPlugin extends Actor with ActorLogging {
 	def receive = {
-		case StartPlugin() => sender ! commandDefinitions
+		case GetCommands() => sender ! commandDefinitions
 		case ProcessCommand(token, scope, context, arguments) =>
 			sender ! processCommand(token, scope, context, arguments)
 	}
@@ -17,7 +17,7 @@ abstract class CommandPlugin extends Actor with ActorLogging {
 	 * A collection of (token -> scope) pairs, where token defines command token and scope - its scope.
 	 * @return collection.
 	 */
-	def commandDefinitions: List[(Any, Scope)]
+	def commandDefinitions: List[CommandDefinition]
 
 	/**
 	 * Process a command.
