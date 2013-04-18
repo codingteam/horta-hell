@@ -1,18 +1,17 @@
 package ru.org.codingteam.horta.actors.core
 
-import akka.actor.{ActorRef, Props, ActorLogging, Actor}
-import scala.language.postfixOps
-import ru.org.codingteam.horta.actors.messenger.Messenger
-import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security._
-import scala.Some
-import ru.org.codingteam.horta.actors.database.{StoreObject, ReadObject, PersistentStore}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
+import ru.org.codingteam.horta.actors.database.{StoreObject, ReadObject, PersistentStore}
+import ru.org.codingteam.horta.actors.messenger.Messenger
+import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.plugins.{TestPlugin, CommandDefinition, GetCommands}
+import ru.org.codingteam.horta.security._
 import scala.concurrent.duration._
-import ru.org.codingteam.horta.plugins.{CommandDefinition, GetCommands}
-import akka.dispatch.Futures
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Await, Future}
+import scala.language.postfixOps
+import scala.Some
 
 class Core extends Actor with ActorLogging {
 
@@ -23,7 +22,7 @@ class Core extends Actor with ActorLogging {
 	/**
 	 * List of plugin props to be started.
 	 */
-	val plugins: List[Props] = List()
+	val plugins: List[Props] = List(Props[TestPlugin])
 
 	/**
 	 * List of registered commands.
@@ -40,6 +39,7 @@ class Core extends Actor with ActorLogging {
 
 	override def preStart() {
 		commands = commandDefinitions()
+		commands foreach (command => log.info(s"Registered command: $command"))
 
 		val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
 		pluginMap = Map("messenger" -> messenger)
