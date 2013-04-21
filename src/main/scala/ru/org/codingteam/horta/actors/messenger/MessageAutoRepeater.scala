@@ -18,7 +18,7 @@ class MessageAutoRepeater(
 				val error = packet.getError
 				if (error != null && error.getCondition == "resource-constraint") {
 					val body = message.getBody
-					scheduler.scheduleOnce(1 second) {
+					scheduler.scheduleOnce(1.5 seconds) {
 						messenger ! SendMucMessage(jid, "[Re]" + body)
 					}
 				}
