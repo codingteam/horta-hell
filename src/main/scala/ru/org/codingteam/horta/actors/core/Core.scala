@@ -6,7 +6,7 @@ import akka.util.Timeout
 import ru.org.codingteam.horta.actors.database.{StoreObject, ReadObject, PersistentStore}
 import ru.org.codingteam.horta.actors.messenger.Messenger
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.plugins.{TestPlugin, CommandDefinition, GetCommands}
+import ru.org.codingteam.horta.plugins.{TestPlugin, FortunePlugin, CommandDefinition, GetCommands}
 import ru.org.codingteam.horta.security._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -22,7 +22,7 @@ class Core extends Actor with ActorLogging {
 	/**
 	 * List of plugin props to be started.
 	 */
-	val plugins: List[Props] = List(Props[TestPlugin])
+	val plugins: List[Props] = List(Props[TestPlugin], Props[FortunePlugin])
 
 	/**
 	 * List of registered commands.
