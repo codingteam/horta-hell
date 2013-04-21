@@ -22,6 +22,9 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 	var lastMessage: Option[String] = None
 
 	def receive = {
+		case GetJID() =>
+			sender ! room
+
 		case UserMessage(message) => {
 			val jid = message.getFrom
 			val text = message.getBody

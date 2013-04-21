@@ -52,14 +52,18 @@ class Core extends Actor with ActorLogging {
 		}
 
 		case ProcessCommand(user, message) => {
-			val arguments = parseCommand(message)
-			arguments match {
-				case Some(CommandArguments(Command(name, role, target), args)) => {
-					if (accessGranted(user, role)) {
-						target ! ExecuteCommand(user, name, args)
-					}
-				}
+			val command = parseCommand(message)
+			command match {
+				case Some((name, arguments)) =>
+					val scope = GlobalScope // TODO: properly determine scope.
+					executeCommand(sender, scope, user, name, arguments)
 
+					// TODO: Remove this deprecated mechanism:
+					commandMap.get(name) match {
+						case Some(Command(name, role, target)) if (accessGranted(user, role)) =>
+							target ! ExecuteCommand(user, name, arguments)
+						case None =>
+					}
 				case None =>
 			}
 		}
@@ -91,7 +95,7 @@ class Core extends Actor with ActorLogging {
 		groups
 	}
 
-	def accessGranted(user: User, role: UserRole) = {
+	private def accessGranted(user: User, role: UserRole) = {
 		role match {
 			case BotOwner => user.role == BotOwner
 			case KnownUser => user.role == BotOwner || user.role == KnownUser
@@ -99,17 +103,51 @@ class Core extends Actor with ActorLogging {
 		}
 	}
 
-	def parseCommand(message: String): Option[CommandArguments] = {
+	private def parseCommand(message: String): Option[(String, Array[String])] = {
 		for (p <- parsers) {
 			p.parse(p.command, message) match {
-				case p.Success((name, arguments), _) => commandMap.get(name) match {
-					case Some(command) => return Some(CommandArguments(command, arguments))
-					case None =>
-				}
+				case p.Success((name, arguments), _) => return Some((name.asInstanceOf[String], arguments.asInstanceOf[Array[String]]))
 				case _ =>
 			}
 		}
 
 		None
+	}
+
+	/**
+	 * Executes the command.
+	 * @param scope scope in which the command was received. May differ from the execution scope.
+	 * @param user user that has sent the command.
+	 * @param name command name.
+	 * @param arguments command arguments.
+	 */
+	private def executeCommand(sender: ActorRef, scope: Scope, user: User, name: String, arguments: Array[String]) {
+		val executors = commands.get(name)
+		executors match {
+			case Some(executors) =>
+				executors foreach {
+					case (plugin, CommandDefinition(commandScope, _, token)) =>
+						val executionScope = commandScope // TODO: determine proper scope.
+						val executionContext = CommandContext(self) // TODO: get proper execution context
+						val request = ru.org.codingteam.horta.plugins.ProcessCommand(
+								token,
+								executionScope,
+								executionContext,
+								arguments)
+						val roomFuture = ask(user.location, GetJID()).mapTo[String]
+						val messageFuture = ask(plugin, request).mapTo[Option[String]].filter(_.isDefined)
+
+						// Send the messages.
+						for {
+							room <- roomFuture
+							message <- messageFuture
+						} {
+							val response = SendMucMessage(room, message.get) // TODO: More general response type.
+							sender ! response
+						}
+				}
+			case None =>
+		}
+
 	}
 }
