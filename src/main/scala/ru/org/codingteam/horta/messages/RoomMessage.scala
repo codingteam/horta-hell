@@ -4,6 +4,11 @@ import org.jivesoftware.smack.packet.{Message, Presence}
 
 abstract sealed class RoomMessage
 
+/**
+ * Returns room JID as string.
+ */
+case class GetJID() extends RoomMessage
+
 case class UserMessage(message: Message) extends RoomMessage
 
 case class UserPresence(presence: Presence) extends RoomMessage
