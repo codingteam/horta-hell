@@ -7,9 +7,28 @@ import scala.io.Source
 class FortunePlugin extends CommandPlugin {
 	private object FortuneCommand
 
+	// see: http://www.iheartquotes.com/api
+	private val apiCommand = "http://www.iheartquotes.com/api/v1/random"
 	private val maxCharacters = 100
-	private val fortuneUrl =
-		s"http://www.iheartquotes.com/api/v1/random?max_characters=${maxCharacters}&format=json"
+	private val sources = List(
+		"esr",
+		"humorix_misc",
+		"humorix_stories",
+		"joel_on_software",
+		"macintosh",
+		"math",
+		"mav_flame",
+		"osp_rules",
+		"paul_graham",
+		"prog_style",
+		"subversion"
+	).mkString("+")
+	private val arguments = List(
+		s"max_characters=${maxCharacters}",
+		s"format=json",
+		s"source=${sources}"
+	).mkString("&")
+	private val fortuneUrl = s"${apiCommand}?${arguments}"
 
 	def commandDefinitions: List[CommandDefinition] =
 		List(CommandDefinition(GlobalScope, "fortune", FortuneCommand))
@@ -29,7 +48,7 @@ class FortunePlugin extends CommandPlugin {
 			} catch {
 				case e: Exception => {
 					e.printStackTrace()
-					Some("Что-то не так.")
+					Some("[ERROR] Something's wrong!")
 				}
 			}
 
