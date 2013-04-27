@@ -9,13 +9,11 @@ class FortunePlugin extends CommandPlugin {
 
 	// see: http://www.iheartquotes.com/api
 	private val apiCommand = "http://www.iheartquotes.com/api/v1/random"
-	private val maxCharacters = 100
+	private val maxCharacters = 256
 	private val sources = List(
 		"esr",
-		"humorix_misc",
 		"humorix_stories",
 		"joel_on_software",
-		"macintosh",
 		"math",
 		"mav_flame",
 		"osp_rules",
@@ -44,7 +42,12 @@ class FortunePlugin extends CommandPlugin {
 				val rawText = Source.fromURL(fortuneUrl).mkString
 				val json = JSON.parseFull(rawText)
 				val map = json.get.asInstanceOf[Map[String, Any]]
-				map.get("quote").map(_.asInstanceOf[String])
+				val source = map.get("source").map(_.asInstanceOf[String])
+				val quote = map.get("quote").map(_.asInstanceOf[String])
+				(source, quote) match {
+					case (Some(s), Some(q)) => Some(s"$q [$s]")
+					case _ => Some("Something is not good.")
+				}
 			} catch {
 				case e: Exception => {
 					e.printStackTrace()
