@@ -1,19 +1,17 @@
 package ru.org.codingteam.horta.actors.messenger
 
-import org.jivesoftware.smack.ConnectionListener
+import org.jivesoftware.smack.{XMPPConnection, ConnectionListener}
 import akka.actor.ActorRef
 import ru.org.codingteam.horta.messages.Reconnect
 
 /**
  * XMPP connection listener.
  */
-class XMPPConnectionListener(val messenger: ActorRef) extends ConnectionListener {
-	def connectionClosed () {
-		messenger ! Reconnect()
-	}
+class XMPPConnectionListener(val messenger: ActorRef, connection: XMPPConnection) extends ConnectionListener {
+	def connectionClosed () {}
 
 	def connectionClosedOnError (e: Exception) {
-		messenger ! Reconnect()
+		messenger ! Reconnect(connection)
 	}
 
 	def reconnectingIn (seconds: Int) {}
