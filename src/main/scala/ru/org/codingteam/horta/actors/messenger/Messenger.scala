@@ -1,25 +1,27 @@
 package ru.org.codingteam.horta.actors.messenger
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import org.jivesoftware.smack.{Chat, XMPPConnection}
+import org.jivesoftware.smack.{ConnectionConfiguration, Chat, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
-import ru.org.codingteam.horta.{plugins, Configuration}
+import ru.org.codingteam.horta.actors.database.GetDAORequest
+import ru.org.codingteam.horta.actors.pet.PetDAO
 import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.UnknownUser
+import ru.org.codingteam.horta.Configuration
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.actors.database.GetDAORequest
-import ru.org.codingteam.horta.actors.pet.PetDAO
 
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
+	import context.dispatcher
+
 	var connection: XMPPConnection = null
 	var parser: ActorRef = null
 	var privateHandler: ActorRef = null
 
-	override def preStart() = {
+	override def preStart() {
 		parser = context.actorOf(Props[LogParser], "log_parser")
 		privateHandler = context.actorOf(Props(new PrivateHandler(self)), "private_handler")
 
@@ -30,6 +32,10 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		core ! RegisterCommand("s", UnknownUser, self)
 		core ! RegisterCommand("mdiff", UnknownUser, self)
 		core ! RegisterCommand("pet", UnknownUser, self)
+	}
+
+	override def postStop() {
+		disconnect()
 	}
 
 	var rooms = Map[String, MultiUserChat]()
@@ -50,18 +56,18 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 			}
 		}
 
-		case Reconnect() =>
-			if (connection != null) {
-				log.info("Disconnecting")
-				connection.disconnect()
-				log.info("Disconnected")
-			}
-
+		case Reconnect(closedConnection) if connection == closedConnection =>
+			disconnect()
+            context.children.foreach(context.stop)
 			connection = connect()
+
+		case Reconnect(otherConnection) =>
+			log.info(s"Ignored reconnect request from connection $otherConnection")
 
 		case JoinRoom(jid) => {
 			log.info(s"Joining room $jid")
-			val actor = context.system.actorOf(Props(new Room(self, jid)), jid)
+			val actor = context.system.actorOf(Props(new Room(self, jid)))
+
 			val muc = new MultiUserChat(connection, jid)
 			rooms = rooms.updated(jid, muc)
 
@@ -113,12 +119,22 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		val server = Configuration.server
 		log.info(s"Connecting to $server")
 
-		val connection = new XMPPConnection(server)
+		val configuration = new ConnectionConfiguration(server)
+		configuration.setReconnectionAllowed(false)
+
+		val connection = new XMPPConnection(configuration)
 		val chatManager = connection.getChatManager
 
-		connection.connect()
+		try {
+			connection.connect()
+		} catch {
+			case e: Throwable =>
+				log.error(e, "Error while connecting")
+				context.system.scheduler.scheduleOnce(10 seconds, self, Reconnect(connection))
+				return connection
+		}
 
-		connection.addConnectionListener(new XMPPConnectionListener(self))
+		connection.addConnectionListener(new XMPPConnectionListener(self, connection))
 		chatManager.addChatListener(new ChatListener(self, privateHandler, context.system.dispatcher))
 
 		connection.login(Configuration.login, Configuration.password)
@@ -129,5 +145,13 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		}
 
 		connection
+	}
+
+	private def disconnect() {
+		if (connection != null && connection.isConnected) {
+			log.info("Disconnecting")
+			connection.disconnect()
+			log.info("Disconnected")
+		}
 	}
 }

@@ -1,10 +1,14 @@
 package ru.org.codingteam.horta.messages
 
-import org.jivesoftware.smack.Chat
+import org.jivesoftware.smack.{XMPPConnection, Chat}
 
 abstract sealed class MessengerMessage
 
-case class Reconnect() extends MessengerMessage
+/**
+ * Reconnect request.
+ * @param connection connection that was closed.
+ */
+case class Reconnect(connection: XMPPConnection) extends MessengerMessage
 
 case class JoinRoom(roomJID: String) extends MessengerMessage
 
