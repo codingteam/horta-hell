@@ -8,7 +8,6 @@ import ru.org.codingteam.horta.messages.UserMessage
 
 class MucMessageListener(val jid: String, val roomActor: ActorRef, log: LoggingAdapter) extends PacketListener {
 	def processPacket(packet: Packet) {
-		log.info(s"Packet received from $jid")
 		packet match {
 			case message: Message => {
 				// Little trick to ignore historical messages:

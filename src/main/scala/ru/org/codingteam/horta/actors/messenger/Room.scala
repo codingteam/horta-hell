@@ -9,7 +9,6 @@ import ru.org.codingteam.horta.security.User
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.pet.Pet
-import ru.org.codingteam.horta.plugins
 
 class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
 
@@ -39,7 +38,6 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 			val jid = presence.getFrom
 			val nick = nickByJid(jid)
 			val presenceType = presence.getType
-			log.info(s"User $nick presence of type $presenceType")
 			if (nick == "zxc" && presenceType == Presence.Type.available) {
 				sendMessage(if (Math.random() > 0.5) ".z" else "zxc: осечка!")
 			}
