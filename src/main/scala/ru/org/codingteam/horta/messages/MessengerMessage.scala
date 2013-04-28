@@ -2,7 +2,9 @@ package ru.org.codingteam.horta.messages
 
 import org.jivesoftware.smack.Chat
 
-sealed class MessengerMessage
+abstract sealed class MessengerMessage
+
+case class Reconnect() extends MessengerMessage
 
 case class JoinRoom(roomJID: String) extends MessengerMessage
 
