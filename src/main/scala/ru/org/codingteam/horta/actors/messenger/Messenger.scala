@@ -23,24 +23,13 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		parser = context.actorOf(Props[LogParser], "log_parser")
 		privateHandler = context.actorOf(Props(new PrivateHandler(self)), "private_handler")
 
-		val server = Configuration.server
-		log.info(s"Connecting to $server")
+		connection = connect()
 
-		connection = new XMPPConnection(server)
-		connection.connect()
-		connection.login(Configuration.login, Configuration.password)
-		log.info("Login succeed")
-
-		Configuration.rooms foreach {
-			case (roomName, jid) => self ! JoinRoom(jid)
-		}
 		core ! RegisterCommand("say", UnknownUser, self)
 		core ! RegisterCommand("♥", UnknownUser, self)
 		core ! RegisterCommand("s", UnknownUser, self)
 		core ! RegisterCommand("mdiff", UnknownUser, self)
 		core ! RegisterCommand("pet", UnknownUser, self)
-
-		connection.getChatManager.addChatListener(new ChatListener(self, privateHandler, context.system.dispatcher))
 	}
 
 	var rooms = Map[String, MultiUserChat]()
@@ -60,6 +49,15 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 				case "pet" => location ! PetCommand(arguments)
 			}
 		}
+
+		case Reconnect() =>
+			if (connection != null) {
+				log.info("Disconnecting")
+				connection.disconnect()
+				log.info("Disconnected")
+			}
+
+			connection = connect()
 
 		case JoinRoom(jid) => {
 			log.info(s"Joining room $jid")
@@ -109,5 +107,27 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		case ProcessCommand(user, message) => {
 			core ! ProcessCommand(user, message)
 		}
+	}
+
+	private def connect(): XMPPConnection = {
+		val server = Configuration.server
+		log.info(s"Connecting to $server")
+
+		val connection = new XMPPConnection(server)
+		val chatManager = connection.getChatManager
+
+		connection.connect()
+
+		connection.addConnectionListener(new XMPPConnectionListener(self))
+		chatManager.addChatListener(new ChatListener(self, privateHandler, context.system.dispatcher))
+
+		connection.login(Configuration.login, Configuration.password)
+		log.info("Login succeed")
+
+		Configuration.rooms foreach {
+			case (roomName, jid) => self ! JoinRoom(jid)
+		}
+
+		connection
 	}
 }
