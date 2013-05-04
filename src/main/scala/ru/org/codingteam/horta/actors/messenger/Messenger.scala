@@ -113,6 +113,15 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		case ProcessCommand(user, message) => {
 			core ! ProcessCommand(user, message)
 		}
+
+		case IncrementTopic(room) =>
+			rooms.get(room) match {
+				case Some(muc) =>
+					val topic = muc.getSubject()
+					val incremented = incrementTopic(topic)
+					muc.changeSubject(incremented)
+				case None =>
+			}
 	}
 
 	private def connect(): XMPPConnection = {
@@ -152,6 +161,24 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 			log.info("Disconnecting")
 			connection.disconnect()
 			log.info("Disconnected")
+		}
+	}
+
+	private def incrementTopic(topic: String) = {
+		try {
+			val regex = "(?s).*?0x(..).*".r
+			topic match {
+				case regex(currentDate) =>
+					val date = Integer.parseInt(currentDate)
+					val newDate = Integer.toHexString((date + 1))
+					topic.replace(currentDate, newDate)
+				case _ =>
+					topic
+			}
+		} catch {
+			case error: Throwable =>
+				log.error(error, "Error while parsing")
+				topic
 		}
 	}
 }
