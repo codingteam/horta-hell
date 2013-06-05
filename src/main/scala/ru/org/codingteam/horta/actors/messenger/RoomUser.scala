@@ -56,7 +56,10 @@ class RoomUser(val room: String, val nick: String) extends Actor with ActorLoggi
 
 		case ReplaceRequest(from, to) => {
 			lastMessage match {
-				case Some(message) => sender ! ReplaceResponse(message.replace(from, to))
+				case Some(message) =>
+					val newMessage = message.replace(from, to)
+					lastMessage = Some(newMessage)
+					sender ! ReplaceResponse(newMessage)
 				case None => sender ! ReplaceResponse("No messages for you, sorry.")
 			}
 		}

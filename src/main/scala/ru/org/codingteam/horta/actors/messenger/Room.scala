@@ -11,6 +11,7 @@ import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.pet.Pet
 import java.util.{Calendar, Date}
 import org.joda.time.{Interval, DateTimeZone, DateTime}
+import ru.org.codingteam.horta.Configuration
 
 class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
 
@@ -57,66 +58,77 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 		}
 
 		case GenerateCommand(jid, command, arguments) => {
-			val length = arguments match {
-				case Array(length, _*) =>
-					try {
-						length.toInt
-					} catch {
-						case _: NumberFormatException => 1
+			arguments match {
+				case Array(_) | Array() =>
+					val length = arguments match {
+						case Array(length, _*) =>
+							try {
+								length.toInt
+							} catch {
+								case _: NumberFormatException => 1
+							}
+						case _ => 1
 					}
-				case _ => 1
-			}
 
-			val nick = nickByJid(jid)
-			val user = userByNick(nick)
-			if (command == "say" || command == "♥") {
-				if (Math.random() > 0.99) {
-					messenger ! SendMucMessage(room, "пффффш")
-					messenger ! SendMucMessage(room, "шпфффф")
-					messenger ! SendMucMessage(room, prepareResponse(nick, "я твой Хортец!"))
-				} else if (Math.random() < 0.01) {
-					messenger ! SendMucMessage(room, prepareResponse(nick, "BLOOD GORE DESTROY"))
-					for (i <- 1 to 10) {
-						user ! GeneratePhrase(nick, 1, true)
+					val nick = nickByJid(jid)
+					if (nick != Configuration.nickname) {
+						val user = userByNick(nick)
+						if (command == "say" || command == "♥") {
+							if (Math.random() > 0.99) {
+								messenger ! SendMucMessage(room, "пффффш")
+								messenger ! SendMucMessage(room, "шпфффф")
+								messenger ! SendMucMessage(room, prepareResponse(nick, "я твой Хортец!"))
+							} else if (Math.random() < 0.01) {
+								messenger ! SendMucMessage(room, prepareResponse(nick, "BLOOD GORE DESTROY"))
+								for (i <- 1 to 10) {
+									user ! GeneratePhrase(nick, 1, true)
+								}
+							} else {
+								user ! GeneratePhrase(if (command != "♥") nick else "ForNeVeR", length, false)
+							}
+						}
 					}
-				} else {
-					user ! GeneratePhrase(if (command != "♥") nick else "ForNeVeR", length, false)
-				}
+
+				case _ =>
 			}
 		}
 
 		case ReplaceCommand(jid, arguments) => {
 			val nick = nickByJid(jid)
-			arguments match {
-				case Array(from, to, _*) if from != "" => {
-					val user = userByNick(nick)
-					for {
-						responseFromUser <- user ? ReplaceRequest(arguments(0), arguments(1))
-					} yield responseFromUser match {
-						case ReplaceResponse(message) => messenger ! SendMucMessage(room, prepareResponse(nick, message))
+			if (nick != Configuration.nickname) {
+				arguments match {
+					case Array(from, to, _*) if from != "" => {
+						val user = userByNick(nick)
+						for {
+							responseFromUser <- user ? ReplaceRequest(arguments(0), arguments(1))
+						} yield responseFromUser match {
+							case ReplaceResponse(message) => messenger ! SendMucMessage(room, prepareResponse(nick, message))
+						}
 					}
-				}
 
-				case _ => {
-					sendMessage(prepareResponse(nick, "Wrong arguments."))
+					case _ => {
+						sendMessage(prepareResponse(nick, "Wrong arguments."))
+					}
 				}
 			}
 		}
 
 		case DiffCommand(jid, arguments) => {
 			val nick = nickByJid(jid)
-			if (arguments.length < 2) {
-				sendMessage(prepareResponse(nick, "Wrong arguments."))
-			} else {
-				val nick1 = arguments(0)
-				val nick2 = arguments(1)
-				val user1 = users.get(nick1)
-				val user2 = users.get(nick2)
-
-				if (user1.isDefined && user2.isDefined) {
-					user1.get ! CalculateDiff(nick, nick1, nick2, user2.get)
+			if (nick != Configuration.nickname) {
+				if (arguments.length < 2) {
+					sendMessage(prepareResponse(nick, "Wrong arguments."))
 				} else {
-					sendMessage(prepareResponse(nick, "User not found."))
+					val nick1 = arguments(0)
+					val nick2 = arguments(1)
+					val user1 = users.get(nick1)
+					val user2 = users.get(nick2)
+
+					if (user1.isDefined && user2.isDefined) {
+						user1.get ! CalculateDiff(nick, nick1, nick2, user2.get)
+					} else {
+						sendMessage(prepareResponse(nick, "User not found."))
+					}
 				}
 			}
 		}
