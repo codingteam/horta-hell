@@ -7,26 +7,7 @@ import scala.io.Source
 class FortunePlugin extends CommandPlugin {
 	private object FortuneCommand
 
-	// see: http://www.iheartquotes.com/api
-	private val apiCommand = "http://www.iheartquotes.com/api/v1/random"
-	private val maxCharacters = 256
-	private val sources = List(
-		"esr",
-		"humorix_stories",
-		"joel_on_software",
-		"math",
-		"mav_flame",
-		"osp_rules",
-		"paul_graham",
-		"prog_style",
-		"subversion"
-	).mkString("+")
-	private val arguments = List(
-		s"max_characters=${maxCharacters}",
-		s"format=json",
-		s"source=${sources}"
-	).mkString("&")
-	private val fortuneUrl = s"${apiCommand}?${arguments}"
+	private val apiCommand = "http://rexim.me/api/random"
 
 	def commandDefinitions: List[CommandDefinition] =
 		List(CommandDefinition(GlobalScope, "fortune", FortuneCommand))
@@ -39,14 +20,14 @@ class FortunePlugin extends CommandPlugin {
 	): Option[String] = token match {
 		case FortuneCommand =>
 			try {
-				val rawText = Source.fromURL(fortuneUrl).mkString
+				val rawText = Source.fromURL(apiCommand).mkString
 				val json = JSON.parseFull(rawText)
 				val map = json.get.asInstanceOf[Map[String, Any]]
-				val source = map.get("source").map(_.asInstanceOf[String])
-				val quote = map.get("quote").map(_.asInstanceOf[String])
-				(source, quote) match {
-					case (Some(s), Some(q)) => Some(s"$q [$s]")
-					case _ => Some("Something is not good.")
+				val body = map.get("body").map(_.asInstanceOf[String])
+				val id = map.get("id").map(_.asInstanceOf[Double])
+				(id, body) match {
+					case (Some(id), Some(body)) => Some(s"#${id.toInt}\n$body")
+					case _ => Some("[ERROR] Wrong response from the service.")
 				}
 			} catch {
 				case e: Exception => {
