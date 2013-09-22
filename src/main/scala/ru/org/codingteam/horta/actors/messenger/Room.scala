@@ -22,9 +22,13 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 	implicit val timeout = Timeout(60 seconds)
 
 	var users = Map[String, ActorRef]()
-	var pet = context.actorOf(Props(new Pet(self, room)))
+	var pet: ActorRef
 	var lastMessage: Option[String] = None
 	var incrementEnabled = false
+
+	override def preStart() {
+		pet = context.actorOf(Props(new Pet(self, room)))
+	}
 
 	def receive = {
 		case GetJID() =>
