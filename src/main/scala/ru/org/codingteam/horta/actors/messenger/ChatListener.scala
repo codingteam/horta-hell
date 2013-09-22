@@ -7,6 +7,7 @@ import org.jivesoftware.smack.packet.Message
 import ru.org.codingteam.horta.messages.{ChatOpened, UserMessage}
 import akka.util.Timeout
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import concurrent.ExecutionContext
 
 class ChatListener(

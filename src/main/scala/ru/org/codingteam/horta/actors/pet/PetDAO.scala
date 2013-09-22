@@ -60,6 +60,8 @@ class PetDAO extends DAO {
 					select.close()
 				}
 			}
+
+			case None => throw new IllegalArgumentException("id should not be None")
 		}
 	}
 

@@ -6,6 +6,7 @@ import org.h2.jdbcx.JdbcConnectionPool
 import java.sql.Connection
 import akka.util.Timeout
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import concurrent.Await
 
 case object GetDAORequest
