@@ -18,7 +18,7 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 	implicit val timeout = Timeout(60 seconds)
 
 	var users = Map[String, ActorRef]()
-	var pet: ActorRef
+	var pet: ActorRef = null
 	var lastMessage: Option[String] = None
 
 	override def preStart() {
