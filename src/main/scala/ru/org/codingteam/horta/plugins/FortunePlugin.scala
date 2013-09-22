@@ -1,8 +1,8 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.security.{CommandContext, Scope, GlobalScope}
-import scala.util.parsing.json._
+import ru.org.codingteam.horta.security.{User, CommonAccess}
 import scala.io.Source
+import scala.util.parsing.json._
 
 class FortunePlugin extends CommandPlugin {
 	private object FortuneCommand
@@ -10,12 +10,11 @@ class FortunePlugin extends CommandPlugin {
 	private val apiCommand = "http://rexim.me/api/random"
 
 	def commandDefinitions: List[CommandDefinition] =
-		List(CommandDefinition(GlobalScope, "fortune", FortuneCommand))
+		List(CommandDefinition(CommonAccess, "fortune", FortuneCommand))
 
 	def processCommand (
+		user: User,
 		token: Any,
-		scope: Scope,
-		context: CommandContext,
 		arguments: Array[String]
 	): Option[String] = token match {
 		case FortuneCommand =>

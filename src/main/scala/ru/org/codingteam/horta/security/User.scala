@@ -1,16 +1,14 @@
 package ru.org.codingteam.horta.security
 
-import akka.actor.ActorRef
-
-class User(val jid: String, val role: UserRole, val location: ActorRef)
-
-object User {
-	def fromJid(jid: String, location: ActorRef) = {
-		// TODO: add known users
-		new User(jid, UnknownUser, location)
-	}
-
-	def fromKnownJid(jid: String, location: ActorRef) = {
-		new User(jid, KnownUser, location)
-	}
-}
+/**
+ * A user in command context.
+ * @param jid user identifier. May be None if unknown.
+ * @param room room name. May be None if command wasn't given in room context.
+ * @param roomNick room nick. May be None if command wasn't given in room context.
+ * @param roomPrivileges user room privileges. May be None if command wasn't given in room context.
+ */
+case class User (
+	jid: Option[String],
+	room: Option[String],
+	roomNick: Option[String],
+	roomPrivileges: Option[RoomPrivilegeLevel])

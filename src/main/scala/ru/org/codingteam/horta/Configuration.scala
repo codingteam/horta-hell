@@ -16,6 +16,7 @@ object Configuration {
 		properties
 	}
 
+	lazy val owner = properties.getProperty("owner")
 	lazy val login = properties.getProperty("login")
 	lazy val password = properties.getProperty("password")
 	lazy val server = properties.getProperty("server")

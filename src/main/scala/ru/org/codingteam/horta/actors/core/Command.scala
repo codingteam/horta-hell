@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.actors.core
 
-import ru.org.codingteam.horta.security.UserRole
 import akka.actor.ActorRef
+import ru.org.codingteam.horta.security.AccessLevel
 
 @Deprecated
-case class Command(name: String, role: UserRole, targetPlugin: ActorRef)
+case class Command(level: AccessLevel, name: String, targetPlugin: ActorRef)

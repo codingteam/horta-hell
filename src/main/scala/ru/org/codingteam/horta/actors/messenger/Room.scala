@@ -5,7 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.packet.Presence
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security.User
+import ru.org.codingteam.horta.security.{RoomVisitor, User}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.pet.Pet
@@ -22,7 +22,7 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 	implicit val timeout = Timeout(60 seconds)
 
 	var users = Map[String, ActorRef]()
-	var pet: ActorRef
+	var pet: ActorRef = null
 	var lastMessage: Option[String] = None
 	var incrementEnabled = false
 
@@ -49,7 +49,7 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 			}
 
 			user ! UserPhrase(text)
-			messenger ! ProcessCommand(User.fromJid(jid, self), text)
+			messenger ! ProcessCommand(getUserObject(jid), text)
 		}
 
 		case UserPresence(presence) => {
@@ -178,6 +178,12 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 		} else {
 			args(0)
 		}
+	}
+
+	def getUserObject(jid: String) = {
+		val realJid = None // TODO: Use admin access to know the real JID if possible.
+		val privileges = RoomVisitor // TODO: Get real room privileges.
+		User(realJid, Some(room), Some(nickByJid(jid)), Some(privileges))
 	}
 
 	def userByNick(nick: String) = {

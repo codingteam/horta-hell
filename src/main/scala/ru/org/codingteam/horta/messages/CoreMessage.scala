@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.messages
 
 import akka.actor.ActorRef
-import ru.org.codingteam.horta.security.{Scope, User, UserRole}
+import ru.org.codingteam.horta.security.{AccessLevel, User}
 
 /**
  * Message for the core actor.
@@ -10,7 +10,7 @@ import ru.org.codingteam.horta.security.{Scope, User, UserRole}
 abstract sealed class CoreMessage
 
 @Deprecated
-case class RegisterCommand(command: String, role: UserRole, receiver: ActorRef) extends CoreMessage
+case class RegisterCommand(level: AccessLevel, name: String, receiver: ActorRef) extends CoreMessage
 
 @Deprecated
 case class ProcessCommand(user: User, message: String) extends CoreMessage
