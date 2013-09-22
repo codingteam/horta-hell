@@ -5,6 +5,7 @@ import ru.org.codingteam.horta.messages._
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
+import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.database.{StoreOkReply, StoreObject, ReadObject}
 
 class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogging {
@@ -13,7 +14,7 @@ class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogg
 
 	implicit val timeout = Timeout(60 seconds)
 
-	val core = context.actorFor("/user/core")
+	val core = context.actorSelection("/user/core")
 
 	var nickname = "Наркоман"
 	var alive = true
