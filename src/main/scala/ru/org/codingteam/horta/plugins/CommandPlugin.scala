@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
 import akka.actor.{Actor, ActorLogging}
-import ru.org.codingteam.horta.security.{Scope, CommandContext}
+import ru.org.codingteam.horta.security.User
 
 /**
  * CommandPlugin trait used as base for all command plugins.
@@ -9,8 +9,8 @@ import ru.org.codingteam.horta.security.{Scope, CommandContext}
 abstract class CommandPlugin extends Actor with ActorLogging {
 	def receive = {
 		case GetCommands() => sender ! commandDefinitions
-		case ProcessCommand(token, scope, context, arguments) =>
-			sender ! processCommand(token, scope, context, arguments)
+		case ProcessCommand(user, token, arguments) =>
+			sender ! processCommand(user, token, arguments)
 	}
 
 	/**
@@ -21,15 +21,13 @@ abstract class CommandPlugin extends Actor with ActorLogging {
 
 	/**
 	 * Process a command.
+	 * @param user a user executing the command.
 	 * @param token token registered for command.
-	 * @param scope a scope in which command was resolved.
-	 * @param context context of command.
 	 * @param arguments command argument array.
 	 * @return string for replying the sender.
 	 */
 	def processCommand (
+		user: User,
 		token: Any,
-		scope: Scope,
-		context: CommandContext,
 		arguments: Array[String]): Option[String]
 }

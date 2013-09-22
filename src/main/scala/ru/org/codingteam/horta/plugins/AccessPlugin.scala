@@ -3,17 +3,17 @@ package ru.org.codingteam.horta.plugins
 import ru.org.codingteam.horta.security.{User, CommonAccess}
 
 /**
- * Test plugin. Its work is to respond "test" to any test request.
+ * Access test plugin. Its work is to respond user privileges to any request.
  */
-class TestPlugin extends CommandPlugin {
+class AccessPlugin extends CommandPlugin {
 
-	private object TestCommand
+	private object AccessCommand
 
 	/**
 	 * A collection of (token -> scope) pairs, where token defines command token and scope - its scope.
 	 * @return collection.
 	 */
-	def commandDefinitions: List[CommandDefinition] = List(CommandDefinition(CommonAccess, "test", TestCommand))
+	def commandDefinitions: List[CommandDefinition] = List(CommandDefinition(CommonAccess, "access", AccessCommand))
 
 	/**
 	 * Process a command.
@@ -27,7 +27,7 @@ class TestPlugin extends CommandPlugin {
 		token: Any,
 		arguments: Array[String]): Option[String] = {
 		token match {
-			case TestCommand => Some("test")
+			case AccessCommand => Some(user.toString)
 			case _ => None
 		}
 	}

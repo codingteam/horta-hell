@@ -3,15 +3,17 @@ package ru.org.codingteam.horta.actors.core
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
-import ru.org.codingteam.horta.actors.database.{StoreObject, ReadObject, PersistentStore}
+import ru.org.codingteam.horta.actors.database._
 import ru.org.codingteam.horta.actors.messenger.Messenger
+import ru.org.codingteam.horta.actors.database.StoreObject
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.plugins.{TestPlugin, FortunePlugin, CommandDefinition, GetCommands}
+import ru.org.codingteam.horta.messages.ProcessCommand
+import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.security._
+import ru.org.codingteam.horta.Configuration
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.Some
 
 class Core extends Actor with ActorLogging {
 
@@ -22,7 +24,7 @@ class Core extends Actor with ActorLogging {
 	/**
 	 * List of plugin props to be started.
 	 */
-	val plugins: List[Props] = List(Props[TestPlugin], Props[FortunePlugin])
+	val plugins: List[Props] = List(Props[TestPlugin], Props[FortunePlugin], Props[AccessPlugin])
 
 	/**
 	 * List of registered commands.
@@ -47,21 +49,20 @@ class Core extends Actor with ActorLogging {
 	}
 
 	def receive = {
-		case RegisterCommand(command, role, receiver) => {
-			commandMap = commandMap.updated(command, Command(command, role, receiver))
+		case RegisterCommand(level, name, receiver) => {
+			commandMap += name -> Command(level, name, receiver)
 		}
 
 		case ProcessCommand(user, message) => {
 			val command = parseCommand(message)
 			command match {
 				case Some((name, arguments)) =>
-					val scope = GlobalScope // TODO: properly determine scope.
-					executeCommand(sender, scope, user, name, arguments)
+					executeCommand(sender, user, name, arguments)
 
 					// TODO: Remove this deprecated mechanism:
 					commandMap.get(name) match {
-						case Some(Command(name, role, target)) if (accessGranted(user, role)) =>
-							target ! ExecuteCommand(user, name, arguments)
+						case Some(Command(level, name, target)) if (accessGranted(user, level)) =>
+							sender ! ExecuteCommand(user, name, arguments)
 						case None =>
 					}
 				case None =>
@@ -95,11 +96,18 @@ class Core extends Actor with ActorLogging {
 		groups
 	}
 
-	private def accessGranted(user: User, role: UserRole) = {
-		role match {
-			case BotOwner => user.role == BotOwner
-			case KnownUser => user.role == BotOwner || user.role == KnownUser
-			case UnknownUser => user.role == BotOwner || user.role == KnownUser || user.role == UnknownUser
+	private def accessGranted(user: User, access: AccessLevel) = {
+		if (user.jid == Configuration.owner) {
+			true
+		} else {
+			access match {
+				case GlobalAccess => false
+				case RoomAdminAccess => user.roomPrivileges match {
+					case Some(RoomTemporaryAdmin) | Some(RoomAdmin) | Some(RoomOwner) => true
+					case _ => false
+				}
+				case CommonAccess => true
+			}
 		}
 	}
 
@@ -116,33 +124,38 @@ class Core extends Actor with ActorLogging {
 
 	/**
 	 * Executes the command.
-	 * @param scope scope in which the command was received. May differ from the execution scope.
 	 * @param user user that has sent the command.
 	 * @param name command name.
 	 * @param arguments command arguments.
 	 */
-	private def executeCommand(sender: ActorRef, scope: Scope, user: User, name: String, arguments: Array[String]) {
+	private def executeCommand(sender: ActorRef, user: User, name: String, arguments: Array[String]) {
 		val executors = commands.get(name)
 		executors match {
 			case Some(executors) =>
 				executors foreach {
-					case (plugin, CommandDefinition(commandScope, _, token)) =>
-						val executionScope = commandScope // TODO: determine proper scope.
-						val executionContext = CommandContext(self) // TODO: get proper execution context
+					case (plugin, CommandDefinition(level, _, token)) =>
 						val request = ru.org.codingteam.horta.plugins.ProcessCommand(
-								token,
-								executionScope,
-								executionContext,
-								arguments)
-						val roomFuture = ask(user.location, GetJID()).mapTo[String]
+							user,
+							token,
+							arguments)
+
 						val messageFuture = ask(plugin, request).mapTo[Option[String]].filter(_.isDefined)
 
 						// Send the messages.
 						for {
-							room <- roomFuture
 							message <- messageFuture
 						} {
-							val response = SendMucMessage(room, message.get) // TODO: More general response type.
+							val text = message.get
+							val response = user.room match {
+								case Some(room) => SendMucMessage(room, text)
+								case None => user.jid match {
+									case Some(jid) => SendChatMessage(jid, text)
+									case None =>
+										log.info(s"Trying to send $text response but it's unknown how to send it")
+										return
+								}
+							}
+
 							sender ! response
 						}
 				}

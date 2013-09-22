@@ -1,7 +1,9 @@
 package ru.org.codingteam.horta.actors.messenger
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import org.jivesoftware.smack.{ConnectionConfiguration, Chat, XMPPConnection}
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
+import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
@@ -9,13 +11,14 @@ import ru.org.codingteam.horta.actors.database.GetDAORequest
 import ru.org.codingteam.horta.actors.pet.PetDAO
 import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security.UnknownUser
+import ru.org.codingteam.horta.security.CommonAccess
 import ru.org.codingteam.horta.Configuration
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 	import context.dispatcher
+	implicit val timeout = Timeout(1 minute)
 
 	var connection: XMPPConnection = null
 	var parser: ActorRef = null
@@ -27,11 +30,11 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 
 		connection = connect()
 
-		core ! RegisterCommand("say", UnknownUser, self)
-		core ! RegisterCommand("♥", UnknownUser, self)
-		core ! RegisterCommand("s", UnknownUser, self)
-		core ! RegisterCommand("mdiff", UnknownUser, self)
-		core ! RegisterCommand("pet", UnknownUser, self)
+		core ! RegisterCommand(CommonAccess, "say", self)
+		core ! RegisterCommand(CommonAccess, "♥", self)
+		core ! RegisterCommand(CommonAccess, "s", self)
+		core ! RegisterCommand(CommonAccess, "mdiff", self)
+		core ! RegisterCommand(CommonAccess, "pet", self)
 	}
 
 	override def postStop() {
@@ -47,12 +50,12 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		}
 
 		case ExecuteCommand(user, command, arguments) => {
-			val location = user.location
+			// TODO: This is the legacy code part. Remove this.
 			command match {
-				case "say" | "♥" => location ! GenerateCommand(user.jid, command, arguments)
-				case "s" => location ! ReplaceCommand(user.jid, arguments)
-				case "mdiff" => location ! DiffCommand(user.jid, arguments)
-				case "pet" => location ! PetCommand(arguments)
+				case "say" | "♥" => sender ! GenerateCommand(user.roomNick.get, command, arguments)
+				case "s" => sender ! ReplaceCommand(user.roomNick.get, arguments)
+				case "mdiff" => sender ! DiffCommand(user.roomNick.get, arguments)
+				case "pet" => sender ! PetCommand(arguments)
 			}
 		}
 
@@ -111,7 +114,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		}
 
 		case ProcessCommand(user, message) => {
-			core ! ProcessCommand(user, message)
+			core ? ProcessCommand(user, message) pipeTo sender
 		}
 
 		case IncrementTopic(room) =>

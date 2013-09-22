@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.security.{CommandContext, Scope}
+import ru.org.codingteam.horta.security.User
 
 /**
  * Standard plugin messages that expected to be supported for any plugins.
@@ -15,9 +15,8 @@ case class GetCommands() extends PluginMessage
 
 /**
  * A process command request.
+ * @param user a user executing the command.
  * @param token token used when registering a command.
- * @param scope a scope in which command was resolved.
- * @param context a context for command (session context, user context, etc.).
  * @param arguments command argument array.
  */
-case class ProcessCommand(token: Any, scope: Scope, context: CommandContext, arguments: Array[String])
+case class ProcessCommand(user: User, token: Any, arguments: Array[String])
