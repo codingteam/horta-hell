@@ -114,7 +114,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		}
 
 		case ProcessCommand(user, message) => {
-			core ? ProcessCommand(user, message) pipeTo sender
+			core ! ProcessCommand(user, message)
 		}
 	}
 
