@@ -9,13 +9,9 @@ import ru.org.codingteam.horta.security.{RoomVisitor, User}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.pet.Pet
-import java.util.{Calendar, Date}
-import org.joda.time.{Interval, DateTimeZone, DateTime}
 import ru.org.codingteam.horta.Configuration
 
 class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
-
-	object IncrementMessage
 
 	import context.dispatcher
 
@@ -24,7 +20,6 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 	var users = Map[String, ActorRef]()
 	var pet: ActorRef = null
 	var lastMessage: Option[String] = None
-	var incrementEnabled = false
 
 	override def preStart() {
 		pet = context.actorOf(Props(new Pet(self, room)))
@@ -40,13 +35,6 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 
 			val nick = nickByJid(jid)
 			val user = userByNick(nick)
-
-			// TODO: Move to plugin!
-			text match {
-				case "$enable" => enableIncrement()
-				case "$disable" => disableIncrement()
-				case _ =>
-			}
 
 			user ! UserPhrase(text)
 			messenger ! ProcessCommand(getUserObject(jid), text)
@@ -157,12 +145,6 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 		case PetResponse(message) => {
 			sendMessage(message)
 		}
-
-		case IncrementMessage =>
-			if (incrementEnabled) {
-				messenger ! IncrementTopic(room)
-				setIncrement()
-			}
 	}
 
 	def sendMessage(message: String) {
@@ -196,25 +178,5 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 				user
 			}
 		}
-	}
-
-	def enableIncrement() {
-		if (!incrementEnabled) {
-			incrementEnabled = true
-
-			setIncrement()
-		}
-	}
-
-	def setIncrement() {
-		val now = DateTime.now(DateTimeZone.UTC)
-		val next = now.plusDays(1).withTimeAtStartOfDay
-		val ms = new org.joda.time.Duration(now, next).getMillis
-
-		context.system.scheduler.scheduleOnce(ms millis, self, IncrementMessage)
-	}
-
-	def disableIncrement() {
-		incrementEnabled = false
 	}
 }
