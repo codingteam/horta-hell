@@ -16,7 +16,7 @@ resolvers += "Local Maven Repository" at "file:///"+Path.userHome+"/.m2/reposito
 
 libraryDependencies += "platonus" % "platonus" % "0.1.19"
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.1.0"
+libraryDependencies += "com.typesafe.akka" % "akka-actor_2.10" % "2.2.1"
 
 libraryDependencies += "org.igniterealtime.smack" % "smack" % "3.2.1"
 
@@ -28,8 +28,8 @@ libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-core" % "0.4
 
 libraryDependencies += "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.1"
 
-libraryDependencies += "com.h2database" % "h2" % "1.3.170"
+libraryDependencies += "com.h2database" % "h2" % "1.3.173"
 
-libraryDependencies += "joda-time" % "joda-time" % "2.2"
+libraryDependencies += "joda-time" % "joda-time" % "2.3"
 
-libraryDependencies += "org.joda" % "joda-convert" % "1.2"
+libraryDependencies += "org.joda" % "joda-convert" % "1.5"
