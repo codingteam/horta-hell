@@ -34,8 +34,6 @@ class Core extends Actor with ActorLogging {
 	@Deprecated
 	var commandMap = Map[String, Command]()
 
-	@Deprecated
-	var pluginMap: Map[String, ActorRef] = null
 	val parsers = List(SlashParsers, DollarParsers)
 	var store: ActorRef = null
 
@@ -44,8 +42,7 @@ class Core extends Actor with ActorLogging {
 		commands foreach (command => log.info(s"Registered command: $command"))
 
 		val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
-		pluginMap = Map("messenger" -> messenger)
-		store = context.actorOf(Props(new PersistentStore(pluginMap)), "persistent_store")
+		store = context.actorOf(Props(new PersistentStore()), "persistent_store")
 	}
 
 	def receive = {
@@ -61,12 +58,16 @@ class Core extends Actor with ActorLogging {
 
 					// TODO: Remove this deprecated mechanism:
 					commandMap.get(name) match {
-						case Some(Command(level, name, target)) if (accessGranted(user, level)) =>
+						case Some(Command(level, name, target)) if accessGranted(user, level) =>
 							sender ! ExecuteCommand(user, name, arguments)
 						case None =>
 					}
 				case None =>
 			}
+		}
+
+		case RegisterStore(plugin, dao) => {
+			store ! RegisterStore(plugin, dao)
 		}
 
 		case ReadObject(plugin, id) => {
@@ -97,7 +98,7 @@ class Core extends Actor with ActorLogging {
 	}
 
 	private def accessGranted(user: User, access: AccessLevel) = {
-		if (user.jid == Configuration.owner) {
+		if (user.jid == Some(Configuration.owner)) {
 			true
 		} else {
 			access match {

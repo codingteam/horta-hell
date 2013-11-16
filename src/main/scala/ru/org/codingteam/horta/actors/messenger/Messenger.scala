@@ -7,7 +7,7 @@ import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
-import ru.org.codingteam.horta.actors.database.GetDAORequest
+import ru.org.codingteam.horta.actors.database.{RegisterStore}
 import ru.org.codingteam.horta.actors.pet.PetDAO
 import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
@@ -17,6 +17,8 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 class Messenger(val core: ActorRef) extends Actor with ActorLogging {
+	case class RoomDefinition(chat: MultiUserChat, actor: ActorRef)
+
 	import context.dispatcher
 	implicit val timeout = Timeout(1 minute)
 
@@ -35,27 +37,30 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		core ! RegisterCommand(CommonAccess, "s", self)
 		core ! RegisterCommand(CommonAccess, "mdiff", self)
 		core ! RegisterCommand(CommonAccess, "pet", self)
+
+		core ! RegisterStore("pet", new PetDAO())
 	}
 
 	override def postStop() {
 		disconnect()
 	}
 
-	var rooms = Map[String, MultiUserChat]()
+	var rooms = Map[String, RoomDefinition]()
 	var chats = Map[String, Chat]()
 
 	def receive = {
-		case GetDAORequest => {
-			sender ! new PetDAO()
-		}
-
 		case ExecuteCommand(user, command, arguments) => {
-			// TODO: This is the legacy code part. Remove this.
-			command match {
-				case "say" | "♥" => sender ! GenerateCommand(user.roomNick.get, command, arguments)
-				case "s" => sender ! ReplaceCommand(user.roomNick.get, arguments)
-				case "mdiff" => sender ! DiffCommand(user.roomNick.get, arguments)
-				case "pet" => sender ! PetCommand(arguments)
+			for {
+				room <- user.room
+				roomDefinition <- rooms.get(room)
+			} {
+				val actor = roomDefinition.actor
+				command match {
+					case "say" | "♥" => actor ! GenerateCommand(user.roomNick.get, command, arguments)
+					case "s" => actor ! ReplaceCommand(user.roomNick.get, arguments)
+					case "mdiff" => actor ! DiffCommand(user.roomNick.get, arguments)
+					case "pet" => actor ! PetCommand(arguments)
+				}
 			}
 		}
 
@@ -72,7 +77,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 			val actor = context.system.actorOf(Props(new Room(self, jid)))
 
 			val muc = new MultiUserChat(connection, jid)
-			rooms = rooms.updated(jid, muc)
+			rooms = rooms.updated(jid, RoomDefinition(muc, actor))
 
 			muc.addMessageListener(new MucMessageListener(jid, actor, log))
 			muc.addParticipantListener(new MucParticipantListener(actor))
@@ -94,7 +99,7 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		case SendMucMessage(jid, message) => {
 			val muc = rooms.get(jid)
 			muc match {
-				case Some(muc) => muc.sendMessage(message)
+				case Some(muc) => muc.chat.sendMessage(message)
 				case None =>
 			}
 

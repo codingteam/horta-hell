@@ -23,7 +23,7 @@ class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogg
 
 	override def preStart() = {
 		context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
-		for (obj <- core ? ReadObject("messenger", roomName)) {
+		for (obj <- core ? ReadObject("pet", roomName)) {
 			obj match {
 				case Some(PetStatus(nickname, alive, health, hunger)) => {
 					this.nickname = nickname
@@ -114,7 +114,7 @@ class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogg
 
 	def savePet() {
 		val state = PetStatus(nickname, alive, health, hunger)
-		for (reply <- core ? StoreObject("messenger", Some(roomName), state)) {
+		for (reply <- core ? StoreObject("pet", Some(roomName), state)) {
 			reply match {
 				case StoreOkReply =>
 			}
