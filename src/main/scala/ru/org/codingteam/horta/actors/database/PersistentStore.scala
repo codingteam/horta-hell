@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import concurrent.Await
 
-case object GetDAORequest
+case class RegisterStore(plugin: String, store: DAO)
 
 case object StoreOkReply
 
@@ -27,7 +27,7 @@ trait DAO {
 	def read(connection: Connection, id: Any): Option[Any]
 }
 
-class PersistentStore(val plugins: Map[String, ActorRef]) extends Actor with ActorLogging {
+class PersistentStore() extends Actor with ActorLogging {
 
 	import context.dispatcher
 
@@ -39,16 +39,13 @@ class PersistentStore(val plugins: Map[String, ActorRef]) extends Actor with Act
 	override def preStart() {
 		val pool = JdbcConnectionPool.create("jdbc:h2:hell;DB_CLOSE_DELAY=-1", "sa", "")
 		connection = pool.getConnection()
-
-		plugins map (pair => pair match {
-			case (key, actor) => {
-				val dao = Await.result(actor ? GetDAORequest, timeout.duration)
-				daos += key -> dao.asInstanceOf[DAO]
-			}
-		})
 	}
 
 	def receive() = {
+		case RegisterStore(plugin, dao) => {
+			daos += plugin -> dao
+		}
+
 		case StoreObject(plugin, id, obj) => {
 			daos.get(plugin) match {
 				case Some(dao) => {
@@ -72,7 +69,6 @@ class PersistentStore(val plugins: Map[String, ActorRef]) extends Actor with Act
 						dao.initializeTable(connection)
 					}
 					sender ! dao.read(connection, id)
-					sender ! StoreOkReply
 				}
 
 				case None => {
