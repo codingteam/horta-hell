@@ -5,7 +5,7 @@ import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
-import org.jivesoftware.smack.packet.Message
+import org.jivesoftware.smack.packet.{Presence, Message}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.actors.database.{RegisterStore}
 import ru.org.codingteam.horta.actors.pet.PetDAO
@@ -13,6 +13,7 @@ import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.CommonAccess
 import ru.org.codingteam.horta.Configuration
+import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -88,6 +89,10 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 				filter)
 
 			muc.join(Configuration.nickname)
+			muc.getOccupants.foreach { occupant =>
+				actor ! UserPresence(occupant, Presence.Type.available)
+			}
+
 			muc.sendMessage("Muhahahaha!")
 		}
 

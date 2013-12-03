@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.pet.Pet
 import ru.org.codingteam.horta.Configuration
+import java.util.regex.Pattern
 
 class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
 
@@ -17,6 +18,7 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 
 	implicit val timeout = Timeout(60 seconds)
 
+	var userNicks = Set[String]()
 	var users = Map[String, ActorRef]()
 	var pet: ActorRef = null
 	var lastMessage: Option[String] = None
@@ -40,10 +42,11 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 			messenger ! ProcessCommand(getUserObject(jid), text)
 		}
 
-		case UserPresence(presence) => {
-			val jid = presence.getFrom
+		case UserPresence(jid, presenceType) => {
+			// TODO: Handle unavailable presences.
 			val nick = nickByJid(jid)
-			val presenceType = presence.getType
+			userNicks += nick
+
 			if (nick == "zxc" && presenceType == Presence.Type.available) {
 				sendMessage(if (Math.random() > 0.5) ".z" else "zxc: осечка!")
 			}
@@ -151,7 +154,19 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 		messenger ! SendMucMessage(room, message)
 	}
 
-	def prepareResponse(nick: String, message: String) = s"$nick: $message"
+	def prepareResponse(recipient: String, text: String) = {
+        var message = text
+		for (nick <- userNicks) {
+			if (nick != recipient && nick.length > 0) {
+				val quoted = Pattern.quote(nick)
+				val pattern = s"\\b$quoted\\b"
+				val replacement = nick.substring(0, 1) + "…"
+				message = message.replaceAll(pattern, replacement)
+			}
+		}
+
+		s"$recipient: $message"
+	}
 
 	def nickByJid(jid: String) = {
 		val args = jid.split('/')

@@ -9,7 +9,7 @@ class MucParticipantListener(val roomActor: ActorRef) extends PacketListener {
 	def processPacket(packet: Packet) {
 		packet match {
 			case presence: Presence => {
-				roomActor ! UserPresence(presence)
+				roomActor ! UserPresence(presence.getFrom, presence.getType)
 			}
 		}
 	}
