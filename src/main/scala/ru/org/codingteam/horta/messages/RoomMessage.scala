@@ -11,7 +11,7 @@ case class GetJID() extends RoomMessage
 
 case class UserMessage(message: Message) extends RoomMessage
 
-case class UserPresence(presence: Presence) extends RoomMessage
+case class UserPresence(nick: String, presenceType: Presence.Type) extends RoomMessage
 
 case class ParsedPhrase(nick: String, message: String) extends RoomMessage
 
