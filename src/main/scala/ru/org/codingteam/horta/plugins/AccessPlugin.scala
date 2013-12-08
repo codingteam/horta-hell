@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.security.{User, CommonAccess}
+import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 
 /**
  * Access test plugin. Its work is to respond user privileges to any request.
@@ -23,7 +23,7 @@ class AccessPlugin extends CommandPlugin {
 	 * @return string for replying the sender.
 	 */
 	def processCommand (
-		user: User,
+		user: Credential,
 		token: Any,
 		arguments: Array[String]): Option[String] = {
 		token match {

@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors.messenger
+package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{Props, ActorLogging, Actor}
 import akka.pattern.{ask, pipe}
@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import java.util.{Calendar, Locale}
 import scala.concurrent.Future
-import ru.org.codingteam.horta.actors.LogParser
+import ru.org.codingteam.horta.plugins.LogParser
 
 class RoomUser(val room: String, val nick: String) extends Actor with ActorLogging {
 

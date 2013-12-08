@@ -1,7 +1,8 @@
-package ru.org.codingteam.horta.actors.pet
+package ru.org.codingteam.horta.plugins.pet
 
 import ru.org.codingteam.horta.actors.database.DAO
 import java.sql.Connection
+import ru.org.codingteam.horta.plugins.pet.PetStatus
 
 class PetDAO extends DAO {
 	def isTableInitialized(connection: Connection): Boolean = {

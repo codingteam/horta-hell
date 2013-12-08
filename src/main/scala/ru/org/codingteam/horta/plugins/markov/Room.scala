@@ -1,19 +1,19 @@
-package ru.org.codingteam.horta.actors.messenger
+package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.packet.Presence
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security.{RoomVisitor, User}
+import ru.org.codingteam.horta.security.{RoomVisitor, Credential}
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.actors.pet.Pet
 import ru.org.codingteam.horta.Configuration
 import java.util.regex.Pattern
+import ru.org.codingteam.horta.plugins.pet.Pet
 
 class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
-
+  // TODO: Factor room functionality to 2 classes: one for markov interactions and another for the room itself.
 	import context.dispatcher
 
 	implicit val timeout = Timeout(60 seconds)
@@ -180,7 +180,7 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 	def getUserObject(jid: String) = {
 		val realJid = None // TODO: Use admin access to know the real JID if possible.
 		val privileges = RoomVisitor // TODO: Get real room privileges.
-		User(realJid, Some(room), Some(nickByJid(jid)), Some(privileges))
+		Credential(realJid, Some(room), Some(nickByJid(jid)), Some(privileges))
 	}
 
 	def userByNick(nick: String) = {

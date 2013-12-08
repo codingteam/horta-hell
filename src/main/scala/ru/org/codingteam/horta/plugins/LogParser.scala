@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors
+package ru.org.codingteam.horta.plugins
 
 import akka.actor.{Actor, ActorLogging}
 import java.io.File

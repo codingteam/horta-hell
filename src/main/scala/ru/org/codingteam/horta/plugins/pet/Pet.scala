@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors.pet
+package ru.org.codingteam.horta.plugins.pet
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import ru.org.codingteam.horta.messages._
@@ -6,7 +6,10 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.actors.database.{StoreOkReply, StoreObject, ReadObject}
+import ru.org.codingteam.horta.actors.database.{RegisterStore, StoreOkReply, StoreObject, ReadObject}
+import ru.org.codingteam.horta.plugins.pet.PetStatus
+import ru.org.codingteam.horta.security.CommonAccess
+import ru.org.codingteam.horta.actors.pet.PetDAO
 
 class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogging {
 
@@ -22,7 +25,11 @@ class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogg
 	var hunger = 100
 
 	override def preStart() = {
-		context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
+    // TODO: Extend CommandPlugin. Next code migrated from the old Messenger class and should be removed:
+    core ! RegisterCommand(CommonAccess, "pet", self)
+    core ! RegisterStore("pet", new PetDAO())
+
+    context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
 		for (obj <- core ? ReadObject("pet", roomName)) {
 			obj match {
 				case Some(PetStatus(nickname, alive, health, hunger)) => {

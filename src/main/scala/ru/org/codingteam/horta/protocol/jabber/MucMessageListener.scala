@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors.messenger
+package ru.org.codingteam.horta.protocol.jabber
 
 import akka.actor.ActorRef
 import akka.event.LoggingAdapter

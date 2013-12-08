@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.security.{User, CommonAccess}
+import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 
 /**
  * Test plugin. Its work is to respond "test" to any test request.
@@ -23,7 +23,7 @@ class TestPlugin extends CommandPlugin {
 	 * @return string for replying the sender.
 	 */
 	def processCommand (
-		user: User,
+		user: Credential,
 		token: Any,
 		arguments: Array[String]): Option[String] = {
 		token match {
