@@ -93,7 +93,7 @@ class JabberProtocol() extends Actor with ActorLogging {
   var rooms = Map[String, RoomDefinition]()
 
 	override def preStart() {
-		privateHandler = context.actorOf(Props(new PrivateHandler(self)), "privateHandler")
+		privateHandler = context.actorOf(Props(new PrivateMessageHandler(self)), "privateHandler")
 
     // TODO: Move these definitions to the plugin.
 		/*core ! RegisterCommand(CommonAccess, "say", self)
@@ -127,7 +127,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 
 		case JoinRoom(jid) => {
       log.info(s"Joining room $jid")
-			val actor = context.system.actorOf(Props(new Room(self, jid)))
+			val actor = context.system.actorOf(Props(new MucMessageHandler(self, jid)), jid)
 
 			val muc = new MultiUserChat(connection, jid)
 			rooms = rooms.updated(jid, RoomDefinition(muc, actor))
@@ -145,7 +145,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 				actor ! UserPresence(occupant, Presence.Type.available)
 			}
 
-			muc.sendMessage("Muhahahaha!")
+			muc.sendMessage("Hell installed.")
 		}
 
 		case ChatOpened(chat) => {

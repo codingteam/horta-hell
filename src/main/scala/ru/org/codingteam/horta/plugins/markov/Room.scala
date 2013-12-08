@@ -18,7 +18,7 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 
 	implicit val timeout = Timeout(60 seconds)
 
-	var userNicks = Set[String]()
+
 	var users = Map[String, ActorRef]()
 	var pet: ActorRef = null
 	var lastMessage: Option[String] = None
@@ -29,28 +29,8 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 
 	def receive = {
 		case GetJID() =>
+      // TODO: What is it? Remove?
 			sender ! room
-
-		case UserMessage(message) => {
-			val jid = message.getFrom
-			val text = message.getBody
-
-			val nick = nickByJid(jid)
-			val user = userByNick(nick)
-
-			user ! UserPhrase(text)
-			messenger ! ProcessCommand(getUserObject(jid), text)
-		}
-
-		case UserPresence(jid, presenceType) => {
-			// TODO: Handle unavailable presences.
-			val nick = nickByJid(jid)
-			userNicks += nick
-
-			if (nick == "zxc" && presenceType == Presence.Type.available) {
-				sendMessage(if (Math.random() > 0.5) ".z" else "zxc: осечка!")
-			}
-		}
 
 		case GenerateCommand(jid, command, arguments) => {
 			arguments match {
@@ -150,38 +130,11 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 		}
 	}
 
-	def sendMessage(message: String) {
-		messenger ! SendMucMessage(room, message)
-	}
 
-	def prepareResponse(recipient: String, text: String) = {
-        var message = text
-		for (nick <- userNicks) {
-			if (nick != recipient && nick.length > 0) {
-				val quoted = Pattern.quote(nick)
-				val pattern = s"\\b$quoted\\b"
-				val replacement = nick.substring(0, 1) + "…"
-				message = message.replaceAll(pattern, replacement)
-			}
-		}
 
-		s"$recipient: $message"
-	}
 
-	def nickByJid(jid: String) = {
-		val args = jid.split('/')
-		if (args.length > 1) {
-			args(1)
-		} else {
-			args(0)
-		}
-	}
 
-	def getUserObject(jid: String) = {
-		val realJid = None // TODO: Use admin access to know the real JID if possible.
-		val privileges = RoomVisitor // TODO: Get real room privileges.
-		Credential(realJid, Some(room), Some(nickByJid(jid)), Some(privileges))
-	}
+
 
 	def userByNick(nick: String) = {
 		val user = users.get(nick)
