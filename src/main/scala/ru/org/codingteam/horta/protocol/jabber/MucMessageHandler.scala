@@ -44,7 +44,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
     // TODO: Use admin access to know the real JID if possible.
     // TODO: If user known to be an owner - give him the GlobalAccess level.
     val accessLevel = CommonAccess // TODO: Get real access level.
-    Credential(self, accessLevel, nickByJid(jid), Some(jid))
+    Credential(self, accessLevel, Some(roomJid), nickByJid(jid), Some(jid))
   }
 
   def nickByJid(jid: String) = {

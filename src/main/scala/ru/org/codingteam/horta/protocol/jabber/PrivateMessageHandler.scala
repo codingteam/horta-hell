@@ -31,6 +31,6 @@ class PrivateMessageHandler(val protocol: ActorRef) extends Actor with ActorLogg
     val baseJid = StringUtils.parseBareAddress(jid)
     val accessLevel = if (baseJid == Configuration.owner) GlobalAccess else CommonAccess
     val name = StringUtils.parseName(jid)
-    Credential(self, accessLevel, name, Some(jid))
+    Credential(self, accessLevel, None, name, Some(jid))
   }
 }
