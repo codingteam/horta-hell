@@ -15,7 +15,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "platonus" % "platonus" % "0.1.19",
-  "com.typesafe.akka" % "akka-actor_2.10" % "2.2.1",
+  "com.typesafe.akka" % "akka-actor_2.10" % "2.2.3",
   "org.igniterealtime.smack" % "smack" % "3.2.1",
   "org.igniterealtime.smack" % "smackx" % "3.2.1",
   "javax.transaction" % "jta" % "1.1",
