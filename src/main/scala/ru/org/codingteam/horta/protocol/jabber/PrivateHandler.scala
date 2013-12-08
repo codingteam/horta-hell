@@ -1,8 +1,8 @@
-package ru.org.codingteam.horta.actors.messenger
+package ru.org.codingteam.horta.protocol.jabber
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security.User
+import ru.org.codingteam.horta.security.Credential
 import ru.org.codingteam.horta.messages.UserMessage
 import ru.org.codingteam.horta.messages.ProcessCommand
 
@@ -12,7 +12,7 @@ class PrivateHandler(val messenger: ActorRef) extends Actor with ActorLogging {
 			val jid = message.getFrom
 			val text = message.getBody
 
-			messenger ! ProcessCommand(User(Some(jid), None, None, None), text)
+			messenger ! ProcessCommand(Credential(Some(jid), None, None, None), text)
 		}
 
 		case GenerateCommand(jid, _, _) => {

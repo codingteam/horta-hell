@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.security.{User, CommonAccess}
+import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 import scala.io.Source
 import scala.util.parsing.json._
 
@@ -13,7 +13,7 @@ class FortunePlugin extends CommandPlugin {
 		List(CommandDefinition(CommonAccess, "fortune", FortuneCommand))
 
 	def processCommand (
-		user: User,
+		user: Credential,
 		token: Any,
 		arguments: Array[String]
 	): Option[String] = token match {

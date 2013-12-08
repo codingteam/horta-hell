@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
 import akka.actor.{Actor, ActorLogging}
-import ru.org.codingteam.horta.security.User
+import ru.org.codingteam.horta.security.Credential
 
 /**
  * CommandPlugin trait used as base for all command plugins.
@@ -27,7 +27,7 @@ abstract class CommandPlugin extends Actor with ActorLogging {
 	 * @return string for replying the sender.
 	 */
 	def processCommand (
-		user: User,
+		user: Credential,
 		token: Any,
 		arguments: Array[String]): Option[String]
 }

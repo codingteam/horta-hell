@@ -16,6 +16,6 @@ case object GlobalAccess extends AccessLevel
 case object RoomAdminAccess extends AccessLevel
 
 /**
- * Ordinar user access.
+ * Common user access.
  */
 case object CommonAccess extends AccessLevel

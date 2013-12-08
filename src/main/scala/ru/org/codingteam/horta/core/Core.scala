@@ -4,7 +4,6 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import ru.org.codingteam.horta.actors.database._
-import ru.org.codingteam.horta.actors.messenger.Messenger
 import ru.org.codingteam.horta.actors.database.StoreObject
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.messages.ProcessCommand
@@ -14,6 +13,7 @@ import ru.org.codingteam.horta.Configuration
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
+import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 
 class Core extends Actor with ActorLogging {
 
@@ -31,52 +31,18 @@ class Core extends Actor with ActorLogging {
 	 */
 	var commands = Map[String, List[(ActorRef, CommandDefinition)]]()
 
-	@Deprecated
-	var commandMap = Map[String, Command]()
-
 	val parsers = List(SlashParsers, DollarParsers)
-	var store: ActorRef = null
 
 	override def preStart() {
 		commands = commandDefinitions()
 		commands foreach (command => log.info(s"Registered command: $command"))
 
-		val messenger = context.actorOf(Props(new Messenger(self)), "messenger")
-		store = context.actorOf(Props(new PersistentStore()), "persistent_store")
+		val protocol = context.actorOf(Props[JabberProtocol], "jabber")
+		val store = context.actorOf(Props[PersistentStore], "store")
 	}
 
 	def receive = {
-		case RegisterCommand(level, name, receiver) => {
-			commandMap += name -> Command(level, name, receiver)
-		}
-
-		case ProcessCommand(user, message) => {
-			val command = parseCommand(message)
-			command match {
-				case Some((name, arguments)) =>
-					executeCommand(sender, user, name, arguments)
-
-					// TODO: Remove this deprecated mechanism:
-					commandMap.get(name) match {
-						case Some(Command(level, name, target)) if accessGranted(user, level) =>
-							sender ! ExecuteCommand(user, name, arguments)
-						case None =>
-					}
-				case None =>
-			}
-		}
-
-		case RegisterStore(plugin, dao) => {
-			store ! RegisterStore(plugin, dao)
-		}
-
-		case ReadObject(plugin, id) => {
-			store.ask(ReadObject(plugin, id)).pipeTo(sender)
-		}
-
-		case StoreObject(plugin, id, obj) => {
-			store.ask(StoreObject(plugin, id, obj)).pipeTo(sender)
-		}
+		// TODO: Receive message, parse command.
 	}
 
 	private def commandDefinitions(): Map[String, List[(ActorRef, CommandDefinition)]] = {
@@ -97,20 +63,13 @@ class Core extends Actor with ActorLogging {
 		groups
 	}
 
-	private def accessGranted(user: User, access: AccessLevel) = {
-		if (user.jid == Some(Configuration.owner)) {
-			true
-		} else {
-			access match {
-				case GlobalAccess => false
-				case RoomAdminAccess => user.roomPrivileges match {
-					case Some(RoomTemporaryAdmin) | Some(RoomAdmin) | Some(RoomOwner) => true
-					case _ => false
-				}
-				case CommonAccess => true
-			}
-		}
-	}
+  private def accessGranted(user: Credential, access: AccessLevel) = {
+    access match {
+      case GlobalAccess => user.access == GlobalAccess
+      case RoomAdminAccess => user.access == GlobalAccess || user.access == RoomAdminAccess
+      case CommonAccess => true
+    }
+  }
 
 	private def parseCommand(message: String): Option[(String, Array[String])] = {
 		for (p <- parsers) {
@@ -129,7 +88,8 @@ class Core extends Actor with ActorLogging {
 	 * @param name command name.
 	 * @param arguments command arguments.
 	 */
-	private def executeCommand(sender: ActorRef, user: User, name: String, arguments: Array[String]) {
+	private def executeCommand(sender: ActorRef, user: Credential, name: String, arguments: Array[String]) {
+    // TODO: Remove this?
 		val executors = commands.get(name)
 		executors match {
 			case Some(executors) =>

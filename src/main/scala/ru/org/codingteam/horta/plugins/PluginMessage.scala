@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.security.User
+import ru.org.codingteam.horta.security.Credential
 
 /**
  * Standard plugin messages that expected to be supported for any plugins.
@@ -19,4 +19,4 @@ case class GetCommands() extends PluginMessage
  * @param token token used when registering a command.
  * @param arguments command argument array.
  */
-case class ProcessCommand(user: User, token: Any, arguments: Array[String])
+case class ProcessCommand(user: Credential, token: Any, arguments: Array[String])
