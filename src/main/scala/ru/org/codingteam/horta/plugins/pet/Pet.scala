@@ -7,9 +7,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.database.{RegisterStore, StoreOkReply, StoreObject, ReadObject}
-import ru.org.codingteam.horta.plugins.pet.PetStatus
 import ru.org.codingteam.horta.security.CommonAccess
-import ru.org.codingteam.horta.actors.pet.PetDAO
 
 class Pet(val room: ActorRef, val roomName: String) extends Actor with ActorLogging {
 
