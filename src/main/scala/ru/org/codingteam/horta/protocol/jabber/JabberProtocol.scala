@@ -1,82 +1,23 @@
 package ru.org.codingteam.horta.protocol.jabber
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.{Presence, Message}
 import org.jivesoftware.smackx.muc.MultiUserChat
-import ru.org.codingteam.horta.actors.database.RegisterStore
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security.CommonAccess
 import ru.org.codingteam.horta.Configuration
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.messages.GenerateCommand
-import ru.org.codingteam.horta.messages.ProcessCommand
-import ru.org.codingteam.horta.messages.PetCommand
 import ru.org.codingteam.horta.messages.SendMucMessage
-import ru.org.codingteam.horta.messages.ReplaceCommand
-import ru.org.codingteam.horta.messages.DiffCommand
-import ru.org.codingteam.horta.messages.ExecuteCommand
-import ru.org.codingteam.horta.messages.SendChatMessage
-import scala.Some
-import ru.org.codingteam.horta.actors.database.RegisterStore
-import ru.org.codingteam.horta.messages.UserPresence
-import ru.org.codingteam.horta.messages.ChatOpened
-import ru.org.codingteam.horta.messages.Reconnect
-import ru.org.codingteam.horta.messages.JoinRoom
-import ru.org.codingteam.horta.messages.RegisterCommand
-import ru.org.codingteam.horta.messages.GenerateCommand
-import ru.org.codingteam.horta.messages.ProcessCommand
-import ru.org.codingteam.horta.messages.PetCommand
-import ru.org.codingteam.horta.messages.SendMucMessage
-import ru.org.codingteam.horta.messages.ReplaceCommand
-import ru.org.codingteam.horta.messages.DiffCommand
-import ru.org.codingteam.horta.messages.ExecuteCommand
-import ru.org.codingteam.horta.messages.SendChatMessage
-import scala.Some
-import ru.org.codingteam.horta.actors.database.RegisterStore
-import ru.org.codingteam.horta.messages.UserPresence
-import ru.org.codingteam.horta.messages.ChatOpened
-import ru.org.codingteam.horta.messages.Reconnect
-import ru.org.codingteam.horta.messages.JoinRoom
-import ru.org.codingteam.horta.messages.RegisterCommand
-import ru.org.codingteam.horta.messages.GenerateCommand
-import ru.org.codingteam.horta.messages.ProcessCommand
-import ru.org.codingteam.horta.messages.PetCommand
-import ru.org.codingteam.horta.messages.SendMucMessage
-import ru.org.codingteam.horta.messages.ReplaceCommand
-import ru.org.codingteam.horta.messages.DiffCommand
-import ru.org.codingteam.horta.messages.ExecuteCommand
-import ru.org.codingteam.horta.messages.SendChatMessage
-import scala.Some
-import ru.org.codingteam.horta.actors.database.RegisterStore
-import ru.org.codingteam.horta.messages.UserPresence
-import ru.org.codingteam.horta.messages.ChatOpened
-import ru.org.codingteam.horta.messages.Reconnect
-import ru.org.codingteam.horta.messages.JoinRoom
-import ru.org.codingteam.horta.messages.RegisterCommand
-import ru.org.codingteam.horta.plugins.LogParser
-import ru.org.codingteam.horta.plugins.pet.PetDAO
-import ru.org.codingteam.horta.plugins.markov.Room
-import ru.org.codingteam.horta.protocol._
-import ru.org.codingteam.horta.messages.GenerateCommand
-import ru.org.codingteam.horta.messages.ProcessCommand
-import ru.org.codingteam.horta.messages.PetCommand
-import ru.org.codingteam.horta.messages.SendMucMessage
-import ru.org.codingteam.horta.messages.ReplaceCommand
-import ru.org.codingteam.horta.messages.DiffCommand
-import ru.org.codingteam.horta.messages.ExecuteCommand
 import ru.org.codingteam.horta.messages.SendChatMessage
 import scala.Some
 import ru.org.codingteam.horta.messages.UserPresence
 import ru.org.codingteam.horta.messages.ChatOpened
 import ru.org.codingteam.horta.messages.Reconnect
 import ru.org.codingteam.horta.messages.JoinRoom
-import ru.org.codingteam.horta.messages.RegisterCommand
 
 class JabberProtocol() extends Actor with ActorLogging {
 	case class RoomDefinition(chat: MultiUserChat, actor: ActorRef)

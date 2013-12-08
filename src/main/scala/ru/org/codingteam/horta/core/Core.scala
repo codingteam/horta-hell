@@ -1,15 +1,12 @@
 package ru.org.codingteam.horta.actors.core
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.pattern.{ask, pipe}
+import akka.pattern.ask
 import akka.util.Timeout
 import ru.org.codingteam.horta.actors.database._
-import ru.org.codingteam.horta.actors.database.StoreObject
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.messages.ProcessCommand
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.security._
-import ru.org.codingteam.horta.Configuration
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
