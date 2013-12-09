@@ -11,7 +11,7 @@ import java.util.{Calendar, Locale}
 import scala.concurrent.Future
 import ru.org.codingteam.horta.plugins.LogParser
 
-class RoomUser(val room: String, val nick: String) extends Actor with ActorLogging {
+class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging {
 
 	import context.dispatcher
 
