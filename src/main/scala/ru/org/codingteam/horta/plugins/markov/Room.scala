@@ -3,35 +3,20 @@ package ru.org.codingteam.horta.plugins.markov
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import org.jivesoftware.smack.packet.Presence
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security.{RoomVisitor, Credential}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.Configuration
-import java.util.regex.Pattern
-import ru.org.codingteam.horta.plugins.pet.Pet
 
 class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLogging {
   // TODO: Factor room functionality to 2 classes: one for markov interactions and another for the room itself.
-	import context.dispatcher
-
-	implicit val timeout = Timeout(60 seconds)
-
+  import context.dispatcher
+  implicit val timeout = Timeout(60 seconds)
 
 	var users = Map[String, ActorRef]()
-	var pet: ActorRef = null
 	var lastMessage: Option[String] = None
 
-	override def preStart() {
-		pet = context.actorOf(Props(new Pet(self, room)))
-	}
-
 	def receive = {
-		case GetJID() =>
-      // TODO: What is it? Remove?
-			sender ! room
-
 		case GenerateCommand(jid, command, arguments) => {
 			arguments match {
 				case Array(_) | Array() =>
@@ -108,10 +93,6 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 			}
 		}
 
-		case PetCommand(command) => {
-			pet ! PetCommand(command)
-		}
-
 		case ParsedPhrase(nick, message) => {
 			val user = userByNick(nick)
 			user ! AddPhrase(message)
@@ -129,12 +110,6 @@ class Room(val messenger: ActorRef, val room: String) extends Actor with ActorLo
 			sendMessage(message)
 		}
 	}
-
-
-
-
-
-
 
 	def userByNick(nick: String) = {
 		val user = users.get(nick)
