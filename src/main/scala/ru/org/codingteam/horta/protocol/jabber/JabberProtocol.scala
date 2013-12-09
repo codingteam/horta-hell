@@ -35,13 +35,6 @@ class JabberProtocol() extends Actor with ActorLogging {
 
 	override def preStart() {
 		privateHandler = context.actorOf(Props(new PrivateMessageHandler(self)), "privateHandler")
-
-    // TODO: Move these definitions to the plugin.
-		/*core ! RegisterCommand(CommonAccess, "say", self)
-		core ! RegisterCommand(CommonAccess, "♥", self)
-		core ! RegisterCommand(CommonAccess, "s", self)
-		core ! RegisterCommand(CommonAccess, "mdiff", self)*/
-
     initializeConnection()
 	}
 

@@ -10,9 +10,7 @@ abstract class CommandPlugin extends Actor with ActorLogging {
   def receive = {
     case GetCommands => sender ! commandDefinitions
     case ProcessCommand(credential, token, arguments) =>
-      val location = credential.location
-      val result = processCommand(credential, token, arguments)
-      location ! result
+      processCommand(credential, token, arguments)
   }
 
 	/**
@@ -23,13 +21,13 @@ abstract class CommandPlugin extends Actor with ActorLogging {
 
 	/**
 	 * Process a command.
-	 * @param user a user executing the command.
+	 * @param credential a credential of a user executing the command.
 	 * @param token token registered for command.
 	 * @param arguments command argument array.
 	 * @return string for replying the sender.
 	 */
 	def processCommand (
-		user: Credential,
+		credential: Credential,
 		token: Any,
-		arguments: Array[String]): Option[String]
+		arguments: Array[String]): Unit
 }
