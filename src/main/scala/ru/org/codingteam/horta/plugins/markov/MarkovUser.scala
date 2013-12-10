@@ -30,87 +30,68 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
 	}
 
 	def receive = {
-		case SetNetwork(newNetwork) => {
-			network = Some(newNetwork)
-			lastNetworkTime = Some(Calendar.getInstance)
-		}
+		case SetNetwork(newNetwork) =>
+      network = Some(newNetwork)
+      lastNetworkTime = Some(Calendar.getInstance)
 
-		case UserPhrase(message) => {
-			if (addPhrase(message)) {
-				lastMessage = Some(message)
-			}
-		}
+    case UserPhrase(message) =>
+      if (addPhrase(message)) {
+        lastMessage = Some(message)
+      }
 
-		case AddPhrase(phrase) => {
-			addPhrase(phrase)
-		}
+    case AddPhrase(phrase) =>
+      addPhrase(phrase)
 
-		case GeneratePhrase(forNick, length, allCaps) => {
-			getNetwork() map {
-				case network => {
-					val phrase = generatePhrase(network, length)
-					GeneratedPhrase(forNick, if (allCaps) phrase.toUpperCase(Locale.ROOT) else phrase)
-				}
-			} pipeTo sender
-		}
+    case GeneratePhrase(credential, length, allCaps) =>
+      val location = credential.location
 
-		case ReplaceRequest(from, to) => {
-			lastMessage match {
+      getNetwork() map {
+				case network =>
+          val phrase = generatePhrase(network, length)
+          location ! SendResponse(credential, if (allCaps) phrase.toUpperCase(Locale.ROOT) else phrase)
+      } pipeTo sender
+
+    case ReplaceRequest(credential, from, to) =>
+      val location = credential.location
+
+      lastMessage match {
 				case Some(message) =>
 					val newMessage = message.replace(from, to)
 					lastMessage = Some(newMessage)
-					sender ! ReplaceResponse(newMessage)
-				case None => sender ! ReplaceResponse("No messages for you, sorry.")
-			}
-		}
-
-		case CalculateDiff(forNick, nick1, nick2, roomUser2) => {
-			getNetwork() map {
-				case network => (roomUser2 ? CalculateDiffRequest(forNick, nick1, nick2, network))
-			} pipeTo sender
-		}
-
-		case CalculateDiffRequest(forNick, nick1, nick2, network2) => {
-			getNetwork() map {
-				case network => {
-					val diff = network.diff(network2)
-					CalculateDiffResponse(forNick, nick1, nick2, diff)
-				}
-			} pipeTo sender
-		}
-
-		case Tick => {
-			// Analyse and flush cache on tick.
-			lastNetworkTime match {
-				case Some(time) => {
-					val msDiff = Calendar.getInstance.getTimeInMillis - time.getTimeInMillis
-					if (msDiff > cacheTime.toMillis) {
-						flushNetwork()
-					}
-				}
-
+					location ! SendResponse(credential, newMessage)
 				case None =>
+          location ! SendResponse(credential, "No messages for you, sorry.")
 			}
-		}
-	}
+
+    case Tick =>
+      // Analyse and flush cache on tick.
+      lastNetworkTime match {
+        case Some(time) => {
+          val msDiff = Calendar.getInstance.getTimeInMillis - time.getTimeInMillis
+          if (msDiff > cacheTime.toMillis) {
+            flushNetwork()
+          }
+        }
+
+        case None =>
+      }
+  }
 
 	def getNetwork(): Future[Network] = {
 		network match {
-			case Some(network) => {
-				lastNetworkTime = Some(Calendar.getInstance)
-				Future.successful(network)
-			}
+			case Some(network) =>
+        lastNetworkTime = Some(Calendar.getInstance)
+        Future.successful(network)
 
-			case None => {
-				val parser = context.actorOf(Props[LogParser])
-				val result = parser ? DoParsing(room, nick)
-				result map {
-					case network: Network =>
-						self ! SetNetwork(network)
-						network
-				}
-			}
-		}
+      case None =>
+        val parser = context.actorOf(Props[LogParser])
+        val result = parser ? DoParsing(room, nick)
+        result map {
+          case network: Network =>
+            self ! SetNetwork(network)
+            network
+        }
+    }
 	}
 
 	def flushNetwork() {
