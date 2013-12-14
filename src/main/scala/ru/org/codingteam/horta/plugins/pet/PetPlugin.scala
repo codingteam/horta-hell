@@ -14,24 +14,23 @@ class PetPlugin extends CommandPlugin {
 
   case object PetTick
 
-	import context.dispatcher
+  import context.dispatcher
 
-	implicit val timeout = Timeout(60 seconds)
+  implicit val timeout = Timeout(60 seconds)
 
-	val core = context.actorSelection("/user/core")
+  val core = context.actorSelection("/user/core")
   val store = context.actorSelection("/user/store")
 
   var pets = Map[String, Pet]()
 
   override def commandDefinitions = List(CommandDefinition(CommonAccess, "pet", null))
 
-	override def preStart() = {
+  override def preStart() = {
     core ! RegisterStore("pet", new PetDAO())
     context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
-	}
+  }
 
   override def receive = {
-    // TODO: Add receive clauses of the superclass here. Nothing will woek otherwise.
     case PetTick =>
       for (pair <- pets) {
         val roomName = pair._1
@@ -61,10 +60,12 @@ class PetPlugin extends CommandPlugin {
           savePet(roomName) // TODO: move to another place
         }
       }
+
+    case other => super.receive(other)
   }
 
-  override def processCommand(user: Credential, token: Any, arguments: Array[String]) = {
-    user.roomName match {
+  override def processCommand(user: Credential, token: Any, arguments: Array[String]) {
+    val response = user.roomName match {
       case Some(room) =>
         pets.get(room) match {
           case Some(pet) => {
@@ -87,6 +88,10 @@ class PetPlugin extends CommandPlugin {
 
       case None => None
     }
+
+    response foreach  { text =>
+      user.location ! SendResponse(user, text)
+    }
   }
 
   // TODO: Call this method on entering the room. See issue #47 for details.
@@ -106,7 +111,7 @@ class PetPlugin extends CommandPlugin {
     pets += roomName -> pet
   }
 
-	def help = "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick"
+  def help = "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick"
 
   def stats(pet: Pet) = {
     if (pet.alive) {
@@ -119,7 +124,7 @@ class PetPlugin extends CommandPlugin {
     }
   }
 
-	def kill(room: String) = {
+  def kill(room: String) = {
     val pet = pets(room)
     if (pet.alive) {
       pets = pets.updated(room, pet.copy(alive = false))
@@ -149,13 +154,13 @@ class PetPlugin extends CommandPlugin {
     }
   }
 
-	def heal(room: String) = {
+  def heal(room: String) = {
     val pet = pets(room)
     if (pet.alive) {
       pets = pets.updated(room, pet.copy(health = 100))
-		"%s здоров".format(pet.nickname)
-	} else {
-		"Невозможно вылечить мертвого питомца."
+      "%s здоров".format(pet.nickname)
+    } else {
+      "Невозможно вылечить мертвого питомца."
     }
   }
 

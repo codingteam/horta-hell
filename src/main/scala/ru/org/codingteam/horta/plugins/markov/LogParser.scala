@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.plugins
+package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{Actor, ActorLogging}
 import java.io.File
