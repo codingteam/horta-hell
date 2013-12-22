@@ -19,8 +19,8 @@ libraryDependencies ++= Seq(
   "org.igniterealtime.smack" % "smack" % "3.2.1",
   "org.igniterealtime.smack" % "smackx" % "3.2.1",
   "javax.transaction" % "jta" % "1.1",
-  "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.1",
-  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.1",
+  "com.github.scala-incubator.io" %% "scala-io-core" % "0.4.2",
+  "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.2",
   "com.h2database" % "h2" % "1.3.173",
   "joda-time" % "joda-time" % "2.3",
   "org.joda" % "joda-convert" % "1.5"
