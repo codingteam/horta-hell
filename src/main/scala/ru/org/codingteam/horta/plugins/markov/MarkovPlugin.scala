@@ -4,9 +4,9 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import ru.org.codingteam.horta.messages._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+import ru.org.codingteam.horta.configuration.Configuration
 
 class MarkovPlugin() extends CommandPlugin {
 

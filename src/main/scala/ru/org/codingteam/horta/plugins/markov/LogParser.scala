@@ -3,10 +3,10 @@ package ru.org.codingteam.horta.plugins.markov
 import akka.actor.{Actor, ActorLogging}
 import java.io.File
 import java.util.Scanner
-import ru.org.codingteam.horta.Configuration
 import ru.org.codingteam.horta.messages.{DoParsing, ParsedPhrase}
 import scalax.file.Path
 import platonus.Network
+import ru.org.codingteam.horta.configuration.Configuration
 
 class LogParser extends Actor with ActorLogging {
 	val regex = "^\\[.*?\\] \\* (.*?)(?: \\*|:) (.*?)$".r
