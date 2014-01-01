@@ -7,7 +7,6 @@ import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeF
 import org.jivesoftware.smack.packet.{Presence, Message}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.Configuration
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -18,6 +17,7 @@ import ru.org.codingteam.horta.messages.UserPresence
 import ru.org.codingteam.horta.messages.ChatOpened
 import ru.org.codingteam.horta.messages.Reconnect
 import ru.org.codingteam.horta.messages.JoinRoom
+import ru.org.codingteam.horta.configuration.Configuration
 
 class JabberProtocol() extends Actor with ActorLogging {
 	case class RoomDefinition(chat: MultiUserChat, actor: ActorRef)

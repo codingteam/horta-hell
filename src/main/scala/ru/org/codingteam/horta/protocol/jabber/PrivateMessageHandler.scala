@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security.{GlobalAccess, CommonAccess, Credential}
 import ru.org.codingteam.horta.messages.UserMessage
-import ru.org.codingteam.horta.Configuration
 import org.jivesoftware.smack.util.StringUtils
+import ru.org.codingteam.horta.configuration.Configuration
 
 class PrivateMessageHandler(val protocol: ActorRef) extends Actor with ActorLogging {
 
