@@ -6,7 +6,7 @@ import ru.org.codingteam.horta.messages._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
-import ru.org.codingteam.horta.configuration.Configuration
+import ru.org.codingteam.horta.configuration.{RoomDescriptor, Configuration}
 
 class MarkovPlugin() extends CommandPlugin {
 
@@ -34,6 +34,10 @@ class MarkovPlugin() extends CommandPlugin {
     }
   }
 
+  def isMyself(credential: Credential): Boolean = {
+    (Configuration.roomDescriptors find {rd => rd.room == credential.roomName} map {rd => rd.nickname} getOrElse(Configuration.dftName)) == credential.name
+  }
+
   def generatePhrase(credential: Credential, arguments: Array[String]) {
     arguments match {
       case Array(_) | Array() =>
@@ -47,8 +51,7 @@ class MarkovPlugin() extends CommandPlugin {
           case _ => 1
         }
 
-        val nick = credential.name
-        if (nick != Configuration.nickname) {
+        if (! isMyself(credential)) {
           val user = getUser(credential)
           val location = credential.location
           if (Math.random() > 0.99) {
@@ -73,7 +76,7 @@ class MarkovPlugin() extends CommandPlugin {
     val location = credential.location
     val nick = credential.name
 
-    if (nick != Configuration.nickname) {
+    if (! isMyself(credential)) {
       arguments match {
         case Array(from, to, _*) if from != "" => {
           val user = getUser(credential)

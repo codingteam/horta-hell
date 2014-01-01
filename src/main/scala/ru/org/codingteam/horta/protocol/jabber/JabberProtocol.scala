@@ -17,7 +17,7 @@ import ru.org.codingteam.horta.messages.UserPresence
 import ru.org.codingteam.horta.messages.ChatOpened
 import ru.org.codingteam.horta.messages.Reconnect
 import ru.org.codingteam.horta.messages.JoinRoom
-import ru.org.codingteam.horta.configuration.Configuration
+import ru.org.codingteam.horta.configuration._
 
 class JabberProtocol() extends Actor with ActorLogging {
 	case class RoomDefinition(chat: MultiUserChat, actor: ActorRef)
@@ -59,7 +59,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 		case Reconnect(otherConnection) =>
 			log.info(s"Ignored reconnect request from connection $otherConnection")
 
-		case JoinRoom(jid) => {
+		case JoinRoom(jid, nickname, greeting) => {
       log.info(s"Joining room $jid")
 			val actor = context.system.actorOf(Props(new MucMessageHandler(self, jid)), jid)
 
@@ -74,12 +74,12 @@ class JabberProtocol() extends Actor with ActorLogging {
 				new MessageAutoRepeater(self, context.system.scheduler, jid, context.dispatcher),
 				filter)
 
-			muc.join(Configuration.nickname)
+			muc.join(nickname)
 			muc.getOccupants.foreach { occupant =>
 				actor ! UserPresence(occupant, Presence.Type.available)
 			}
 
-			muc.sendMessage("Hell installed.")
+			muc.sendMessage(greeting)
 		}
 
 		case ChatOpened(chat) => {
@@ -139,8 +139,10 @@ class JabberProtocol() extends Actor with ActorLogging {
 		connection.login(Configuration.login, Configuration.password)
 		log.info("Login succeed")
 
-		Configuration.rooms foreach {
-			case (roomName, jid) => self ! JoinRoom(jid)
+		Configuration.roomDescriptors foreach {
+			case rd =>
+        if(rd.room != null) self ! JoinRoom(rd.room, rd.nickname, rd.message)
+        else log.warning(s"No JID given for room ${rd.id}")
 		}
 
 		connection
