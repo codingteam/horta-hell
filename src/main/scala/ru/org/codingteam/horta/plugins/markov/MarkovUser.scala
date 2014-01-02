@@ -1,8 +1,9 @@
 package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{PoisonPill, Props, ActorLogging, Actor}
-import akka.pattern.{ask, pipe}
+import akka.pattern.ask
 import akka.util.Timeout
+import org.joda.time.DateTime
 import platonus.Network
 import ru.org.codingteam.horta.messages._
 import scala.concurrent.duration._
@@ -19,8 +20,12 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
   object Tick
 
   val cacheTime = 5 minutes
+  val seriesMessageCount = 5
+  val seriesTime = 1 minute
 
   var network: Option[Network] = None
+  var firstSeriesMessageTime: Option[DateTime] = None
+  var seriesMessages = 0
   var lastMessage: Option[String] = None
   var lastNetworkTime: Option[Calendar] = None
 
@@ -41,14 +46,45 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
     case AddPhrase(phrase) =>
       addPhrase(phrase)
 
-    case GeneratePhrase(credential, length, allCaps) =>
+    case GeneratePhrase(credential, length, bloodMode) =>
       val location = credential.location
 
       getNetwork() map {
         case network =>
-          val phrase = generatePhrase(network, length)
-          location ! SendResponse(credential, if (allCaps) phrase.toUpperCase(Locale.ROOT) else phrase)
-      } pipeTo sender
+          def generator() = {
+            val phrase = generatePhrase(network, length)
+            if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase
+          }
+
+          val result = if (bloodMode) {
+            generator()
+          } else {
+            val currentTime = DateTime.now
+            def resetSeries() = {
+              firstSeriesMessageTime = Some(currentTime)
+              seriesMessages = 1
+              generator()
+            }
+
+            firstSeriesMessageTime match {
+              case Some(time) =>
+                val inSeries = time.plusMillis(seriesTime.toMillis.toInt).isAfter(currentTime)
+                if (inSeries && seriesMessages < seriesMessageCount) {
+                  seriesMessages += 1
+                  generator()
+                } else if (!inSeries) {
+                  resetSeries()
+                } else {
+                  s"Message count exceeded, wait for $seriesTime"
+                }
+
+              case _ =>
+                resetSeries()
+            }
+          }
+
+          location ! SendResponse(credential, result)
+      }
 
     case ReplaceRequest(credential, from, to) =>
       val location = credential.location
@@ -65,12 +101,11 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
     case Tick =>
       // Analyse and flush cache on tick.
       lastNetworkTime match {
-        case Some(time) => {
+        case Some(time) =>
           val msDiff = Calendar.getInstance.getTimeInMillis - time.getTimeInMillis
           if (msDiff > cacheTime.toMillis) {
             flushNetwork()
           }
-        }
 
         case None =>
       }
