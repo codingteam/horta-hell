@@ -4,40 +4,9 @@ import ru.org.codingteam.horta.actors.database.DAO
 import java.sql.Connection
 
 class PetDAO extends DAO {
-	def isTableInitialized(connection: Connection): Boolean = {
-		val statement = connection.prepareStatement("select count(*) from information_schema.tables where table_name = ?")
-		try {
-			statement.setString(1, "PET")
+	override def directoryName = "pet"
 
-			val tables = statement.executeQuery()
-			try {
-				tables.next() && {
-					val count = tables.getInt(1)
-					count > 0
-				}
-			} finally {
-				tables.close()
-			}
-		} finally {
-			statement.close()
-		}
-	}
-
-	def initializeTable(connection: Connection) {
-		val statement = connection.prepareStatement("CREATE TABLE pet (" +
-			" room VARCHAR(255) PRIMARY KEY, " +
-			" nickname VARCHAR(255), " +
-			" alive BOOLEAN, " +
-			" health INTEGER, " +
-			" hunger INTEGER)")
-		try {
-			statement.executeUpdate()
-		} finally {
-			statement.close()
-		}
-	}
-
-	def store(connection: Connection, id: Option[Any], obj: Any): Any = {
+  override def store(connection: Connection, id: Option[Any], obj: Any): Any = {
 		id match {
 			case Some(room) => {
 				val roomName = room.asInstanceOf[String]
@@ -65,7 +34,7 @@ class PetDAO extends DAO {
 		}
 	}
 
-	def read(connection: Connection, id: Any): Option[Any] = {
+	override def read(connection: Connection, id: Any): Option[Any] = {
 		val roomName = id.asInstanceOf[String]
 		val select = connection.prepareStatement("SELECT * FROM pet WHERE room = ?")
 		try {
