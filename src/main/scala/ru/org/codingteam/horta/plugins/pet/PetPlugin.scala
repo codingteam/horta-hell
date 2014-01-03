@@ -9,6 +9,7 @@ import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.database.{RegisterStore, StoreOkReply, StoreObject, ReadObject}
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
+import scala.concurrent.Await
 
 class PetPlugin extends CommandPlugin {
 
@@ -18,15 +19,14 @@ class PetPlugin extends CommandPlugin {
 
   implicit val timeout = Timeout(60 seconds)
 
-  val core = context.actorSelection("/user/core")
-  val store = context.actorSelection("/user/store")
+  val store = context.actorSelection("/user/core/store")
 
   var pets = Map[String, Pet]()
 
   override def commandDefinitions = List(CommandDefinition(CommonAccess, "pet", null))
 
   override def preStart() = {
-    core ! RegisterStore("pet", new PetDAO())
+    store ! RegisterStore("pet", new PetDAO())
     context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
   }
 
@@ -64,51 +64,50 @@ class PetPlugin extends CommandPlugin {
     case other => super.receive(other)
   }
 
-  override def processCommand(user: Credential, token: Any, arguments: Array[String]) {
-    val response = user.roomName match {
+  override def processCommand(credential: Credential, token: Any, arguments: Array[String]) {
+    val response = credential.roomName match {
       case Some(room) =>
-        pets.get(room) match {
-          case Some(pet) => {
-            val response = arguments match {
-              case Array("help", _*) => help
-              case Array("stats", _*) => stats(pet)
-              case Array("kill", _*) => kill(room)
-              case Array("resurrect", _*) => resurrect(room)
-              case Array("feed", _*) => feed(room)
-              case Array("heal", _*) => heal(room)
-              case Array("change", "nick", newNickname, _*) => changeNickname(room, newNickname)
-              case _ => "Попробуйте $pet help."
-            }
-
-            Some(response)
-          }
-
-          case None => Some("Pet does not exist.")
+        val pet = pets.get(room) match {
+          case Some(p) => p
+          case None => initializeRoom(room, credential.location)
+            // TODO: Make initialization asynchronously
         }
 
-      case None => None
+        val response = arguments match {
+          case Array("help", _*) => help
+          case Array("stats", _*) => stats(pet)
+          case Array("kill", _*) => kill(room)
+          case Array("resurrect", _*) => resurrect(room)
+          case Array("feed", _*) => feed(room)
+          case Array("heal", _*) => heal(room)
+          case Array("change", "nick", newNickname, _*) => changeNickname(room, newNickname)
+          case _ => "Попробуйте $pet help."
+        }
+
+        Some(response)
+
+      case None =>
+        None
     }
 
-    response foreach  { text =>
-      user.location ! SendResponse(user, text)
+    response foreach { text =>
+      credential.location ! SendResponse(credential, text)
     }
   }
 
   // TODO: Call this method on entering the room. See issue #47 for details.
-  def initializeRoom(roomName: String, room: ActorRef) {
-    var pet: Pet = null
-    for (obj <- core ? ReadObject("pet", roomName)) {
-      obj match {
-        case Some(PetStatus(nickname, alive, health, hunger)) => {
-          pet = Pet(room, nickname, alive, health, hunger)
-        }
+  def initializeRoom(roomName: String, room: ActorRef) = {
+    val response = Await.result(store ? ReadObject("pet", roomName), timeout.duration)
+    val pet = response match {
+      case Some(PetStatus(nickname, alive, health, hunger)) =>
+        Pet(room, nickname, alive, health, hunger)
 
-        case None =>
-          pet = Pet.default(room)
-      }
+      case None =>
+        Pet.default(room)
     }
 
     pets += roomName -> pet
+    pet
   }
 
   def help = "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick"
@@ -177,7 +176,7 @@ class PetPlugin extends CommandPlugin {
   def savePet(room: String) {
     val pet = pets(room)
     val state = PetStatus(pet.nickname, pet.alive, pet.health, pet.hunger)
-    for (reply <- core ? StoreObject("pet", Some(room), state)) {
+    for (reply <- store ? StoreObject("pet", Some(room), state)) {
       reply match {
         case StoreOkReply =>
       }
