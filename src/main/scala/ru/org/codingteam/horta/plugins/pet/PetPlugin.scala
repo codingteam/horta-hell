@@ -9,7 +9,7 @@ import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.database.{RegisterStore, StoreOkReply, StoreObject, ReadObject}
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
-import scala.concurrent.Await
+import scala.concurrent.Future
 
 class PetPlugin extends CommandPlugin {
 
@@ -65,49 +65,46 @@ class PetPlugin extends CommandPlugin {
   }
 
   override def processCommand(credential: Credential, token: Any, arguments: Array[String]) {
-    val response = credential.roomName match {
+    credential.roomName match {
       case Some(room) =>
-        val pet = pets.get(room) match {
-          case Some(p) => p
+        val petF = pets.get(room) match {
+          case Some(p) => Future.successful(p)
           case None => initializeRoom(room, credential.location)
-            // TODO: Make initialization asynchronously
         }
 
-        val response = arguments match {
-          case Array("help", _*) => help
-          case Array("stats", _*) => stats(pet)
-          case Array("kill", _*) => kill(room)
-          case Array("resurrect", _*) => resurrect(room)
-          case Array("feed", _*) => feed(room)
-          case Array("heal", _*) => heal(room)
-          case Array("change", "nick", newNickname, _*) => changeNickname(room, newNickname)
-          case _ => "Попробуйте $pet help."
-        }
+        for (pet <- petF) {
+          val text = arguments match {
+            case Array("help", _*) => help
+            case Array("stats", _*) => stats(pet)
+            case Array("kill", _*) => kill(room)
+            case Array("resurrect", _*) => resurrect(room)
+            case Array("feed", _*) => feed(room)
+            case Array("heal", _*) => heal(room)
+            case Array("change", "nick", newNickname, _*) => changeNickname(room, newNickname)
+            case _ => "Попробуйте $pet help."
+          }
 
-        Some(response)
+          credential.location ! SendResponse(credential, text)
+        }
 
       case None =>
-        None
-    }
-
-    response foreach { text =>
-      credential.location ! SendResponse(credential, text)
     }
   }
 
   // TODO: Call this method on entering the room. See issue #47 for details.
   def initializeRoom(roomName: String, room: ActorRef) = {
-    val response = Await.result(store ? ReadObject("pet", roomName), timeout.duration)
-    val pet = response match {
-      case Some(PetStatus(nickname, alive, health, hunger)) =>
-        Pet(room, nickname, alive, health, hunger)
+    (store ? ReadObject("pet", roomName)).map { response =>
+      val pet = response match {
+        case Some(PetStatus(nickname, alive, health, hunger)) =>
+          Pet(room, nickname, alive, health, hunger)
 
-      case None =>
-        Pet.default(room)
+        case None =>
+          Pet.default(room)
+      }
+
+      pets += roomName -> pet
+      pet
     }
-
-    pets += roomName -> pet
-    pet
   }
 
   def help = "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick"
