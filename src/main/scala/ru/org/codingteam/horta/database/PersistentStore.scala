@@ -8,6 +8,8 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import concurrent.Await
+import com.googlecode.flyway.core.Flyway
+import javax.sql.DataSource
 
 case class RegisterStore(plugin: String, store: DAO)
 
@@ -18,9 +20,7 @@ case class StoreObject(plugin: String, id: Option[Any], obj: Any)
 case class ReadObject(plugin: String, id: Any)
 
 trait DAO {
-	def initializeTable(connection: Connection)
-
-	def isTableInitialized(connection: Connection): Boolean
+  def directoryName: String
 
 	def store(connection: Connection, id: Option[Any], obj: Any): Any
 
@@ -29,52 +29,73 @@ trait DAO {
 
 class PersistentStore() extends Actor with ActorLogging {
 
+  val Url = "jdbc:h2:hell;DB_CLOSE_DELAY=-1"
+  val User = "sa"
+  val Password = ""
+
 	import context.dispatcher
 
 	implicit val timeout = Timeout(60 seconds)
 
-	var connection: Connection = null
+  var dataSource: DataSource = null
 	var daos = Map[String, DAO]()
+  var initializedDirectories = Set[String]()
 
 	override def preStart() {
-		val pool = JdbcConnectionPool.create("jdbc:h2:hell;DB_CLOSE_DELAY=-1", "sa", "")
-		connection = pool.getConnection()
+		dataSource = JdbcConnectionPool.create(Url, User, Password)
 	}
 
-	def receive() = {
-		case RegisterStore(plugin, dao) => {
-			daos += plugin -> dao
-		}
+	override def receive = {
+		case RegisterStore(plugin, dao) =>
+      daos += plugin -> dao
 
-		case StoreObject(plugin, id, obj) => {
-			daos.get(plugin) match {
-				case Some(dao) => {
-					if (!dao.isTableInitialized(connection)) {
-						dao.initializeTable(connection)
-					}
-					dao.store(connection, id, obj)
-					sender ! StoreOkReply
-				}
+    case StoreObject(plugin, id, obj) =>
+      daos.get(plugin) match {
+        case Some(dao) => {
+          withConnection { connection =>
+              dao.store(connection, id, obj)
+              sender ! StoreOkReply
+          }
+        }
 
-				case None => {
-					log.info(s"Cannot store object $obj for plugin $plugin")
-				}
-			}
-		}
+        case None =>
+          log.info(s"Cannot store object $obj for plugin $plugin")
+      }
 
-		case ReadObject(plugin, id) => {
-			daos.get(plugin) match {
-				case Some(dao) => {
-					if (!dao.isTableInitialized(connection)) {
-						dao.initializeTable(connection)
-					}
-					sender ! dao.read(connection, id)
-				}
+    case ReadObject(plugin, id) =>
+      daos.get(plugin) match {
+        case Some(dao) =>
+          val directory = dao.directoryName
+          if (!initializedDirectories.contains(directory)) {
+            initializeScript(directory)
+            initializedDirectories += directory
+          }
 
-				case None => {
-					log.info(s"Cannot read object $id for plugin $plugin")
-				}
-			}
-		}
-	}
+          withConnection { connection =>
+            sender ! dao.read(connection, id)
+          }
+
+        case None =>
+          log.info(s"Cannot read object $id for plugin $plugin")
+      }
+  }
+
+  def withConnection[T](action: Connection => T) = {
+    val connection = dataSource.getConnection()
+    try {
+      action(connection)
+    } finally {
+      connection.close()
+    }
+  }
+
+  def initializeScript(directory: String) {
+    val flyway = new Flyway()
+
+    flyway.setInitOnMigrate(true)
+    flyway.setDataSource(dataSource)
+    flyway.setLocations(s"classpath:db/$directory")
+
+    flyway.migrate()
+  }
 }
