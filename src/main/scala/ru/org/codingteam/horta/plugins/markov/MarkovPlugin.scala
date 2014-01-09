@@ -90,7 +90,7 @@ class MarkovPlugin() extends CommandPlugin {
   }
 
   def getUser(credential: Credential) = {
-    val roomName = credential.roomName.get
+    val roomName = credential.roomName.getOrElse("")
     val name = credential.name
 
     val user = users.get(credential.name)
