@@ -8,14 +8,13 @@ import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 import ru.org.codingteam.horta.configuration.{RoomDescriptor, Configuration}
 
+case object SayCommand
+
+case object ReplaceCommand
+
 class MarkovPlugin() extends CommandPlugin {
 
   // TODO: Drop inactive users?
-  // TODO: Call a parser when creating new user.
-  private case object SayCommand
-
-  private case object ReplaceCommand
-
   var users = Map[String, ActorRef]()
 
   override def commandDefinitions = List(
@@ -35,7 +34,7 @@ class MarkovPlugin() extends CommandPlugin {
   }
 
   def isMyself(credential: Credential): Boolean = {
-    (Configuration.roomDescriptors find {rd => rd.room == credential.roomName} map {rd => rd.nickname} getOrElse(Configuration.dftName)) == credential.name
+    (Configuration.roomDescriptors find {rd => rd.room == credential.roomName.getOrElse("")} map {rd => rd.nickname} getOrElse(Configuration.dftName)) == credential.name
   }
 
   def generatePhrase(credential: Credential, arguments: Array[String]) {
