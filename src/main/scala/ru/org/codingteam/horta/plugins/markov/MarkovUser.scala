@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import java.util.{Calendar, Locale}
 import scala.concurrent.Future
+import ru.org.codingteam.horta.configuration.Configuration
 
 class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging {
 
@@ -20,7 +21,6 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
   object Tick
 
   val cacheTime = 5 minutes
-  val seriesMessageCount = 5
   val seriesTime = 1 minute
 
   var network: Option[Network] = None
@@ -69,7 +69,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
             firstSeriesMessageTime match {
               case Some(time) =>
                 val inSeries = time.plusMillis(seriesTime.toMillis.toInt).isAfter(currentTime)
-                if (inSeries && seriesMessages < seriesMessageCount) {
+                if (inSeries && seriesMessages < Configuration.markovMessagesPerMinute) {
                   seriesMessages += 1
                   generator()
                 } else if (!inSeries) {
