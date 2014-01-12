@@ -32,6 +32,8 @@ object Configuration {
       properties.getProperty(rid+".message", dftMessage))
   }
 
+  lazy val markovMessagesPerMinute = properties.getProperty("markov_messages_per_minute", "5").toInt
+
 	lazy val logDirectory = properties.getProperty("log_directory")
 	lazy val logEncoding = properties.getProperty("log_encoding")
 }
