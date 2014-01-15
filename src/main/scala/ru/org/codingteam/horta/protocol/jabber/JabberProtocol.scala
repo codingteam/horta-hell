@@ -38,14 +38,6 @@ class JabberProtocol() extends Actor with ActorLogging {
     initializeConnection()
 	}
 
-  override def postRestart(reason: Throwable) {
-    initializeConnection()
-  }
-
-  override def preRestart(reason: Throwable, message: Option[Any]) {
-    disconnect()
-  }
-
   override def postStop() {
 		disconnect()
 	}
@@ -61,7 +53,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 
 		case JoinRoom(jid, nickname, greeting) => {
       log.info(s"Joining room $jid")
-			val actor = context.system.actorOf(Props(new MucMessageHandler(self, jid)), jid)
+			val actor = context.actorOf(Props(new MucMessageHandler(self, jid)), jid)
 
 			val muc = new MultiUserChat(connection, jid)
 			rooms = rooms.updated(jid, RoomDefinition(muc, actor))
