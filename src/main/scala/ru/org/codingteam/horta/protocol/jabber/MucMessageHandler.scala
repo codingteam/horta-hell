@@ -65,7 +65,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
     for (nick <- userNicks) {
       if (nick != recipient && nick.length > 0) {
         val quoted = Pattern.quote(nick)
-        val pattern = s"\\b$quoted\\b"
+        val pattern = s"(\\b|\\B)$quoted(\\b|\\B)"
         val replacement = nick.substring(0, 1) + "…"
         message = message.replaceAll(pattern, replacement)
       }
