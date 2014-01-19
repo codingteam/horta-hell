@@ -71,6 +71,10 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
       }
     }
 
-    s"$recipient: $message"
+    if (recipient.isEmpty) {
+      message
+    } else {
+      s"$recipient: $message"
+    }
   }
 }
