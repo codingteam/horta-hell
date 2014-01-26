@@ -4,16 +4,14 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
-import org.jivesoftware.smack.packet.{Presence, Message}
+import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.messages._
-import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.messages.SendMucMessage
 import ru.org.codingteam.horta.messages.SendChatMessage
 import scala.Some
-import ru.org.codingteam.horta.messages.UserPresence
 import ru.org.codingteam.horta.messages.ChatOpened
 import ru.org.codingteam.horta.messages.Reconnect
 import ru.org.codingteam.horta.messages.JoinRoom
@@ -59,7 +57,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 			rooms = rooms.updated(jid, RoomDefinition(muc, actor))
 
 			muc.addMessageListener(new MucMessageListener(jid, actor, log))
-			muc.addParticipantListener(new MucParticipantListener(actor))
+      muc.addParticipantStatusListener(new MucParticipantStatusListener(muc, actor))
 
 			val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
 			connection.addPacketListener(
@@ -67,10 +65,6 @@ class JabberProtocol() extends Actor with ActorLogging {
 				filter)
 
 			muc.join(nickname)
-			muc.getOccupants.foreach { occupant =>
-				actor ! UserPresence(occupant, Presence.Type.available)
-			}
-
 			muc.sendMessage(greeting)
 		}
 
