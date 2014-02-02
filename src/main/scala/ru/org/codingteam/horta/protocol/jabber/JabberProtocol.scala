@@ -1,99 +1,71 @@
-package ru.org.codingteam.horta.actors.messenger
+package ru.org.codingteam.horta.protocol.jabber
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
-import org.jivesoftware.smack.packet.{Presence, Message}
+import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
-import ru.org.codingteam.horta.actors.database.{RegisterStore}
-import ru.org.codingteam.horta.actors.pet.PetDAO
-import ru.org.codingteam.horta.actors.LogParser
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.security.CommonAccess
-import ru.org.codingteam.horta.Configuration
-import scala.collection.JavaConversions._
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import ru.org.codingteam.horta.messages.SendMucMessage
+import ru.org.codingteam.horta.messages.SendChatMessage
+import scala.Some
+import ru.org.codingteam.horta.messages.ChatOpened
+import ru.org.codingteam.horta.messages.Reconnect
+import ru.org.codingteam.horta.messages.JoinRoom
+import ru.org.codingteam.horta.configuration._
 
-class Messenger(val core: ActorRef) extends Actor with ActorLogging {
+class JabberProtocol() extends Actor with ActorLogging {
 	case class RoomDefinition(chat: MultiUserChat, actor: ActorRef)
 
 	import context.dispatcher
 	implicit val timeout = Timeout(1 minute)
 
+  val core = context.actorSelection("/user/core")
+
 	var connection: XMPPConnection = null
-	var parser: ActorRef = null
+  var chats = Map[String, Chat]()
+
 	var privateHandler: ActorRef = null
+  var rooms = Map[String, RoomDefinition]()
 
 	override def preStart() {
-		parser = context.actorOf(Props[LogParser], "log_parser")
-		privateHandler = context.actorOf(Props(new PrivateHandler(self)), "private_handler")
-
-		connection = connect()
-
-		core ! RegisterCommand(CommonAccess, "say", self)
-		core ! RegisterCommand(CommonAccess, "♥", self)
-		core ! RegisterCommand(CommonAccess, "s", self)
-		core ! RegisterCommand(CommonAccess, "mdiff", self)
-		core ! RegisterCommand(CommonAccess, "pet", self)
-
-		core ! RegisterStore("pet", new PetDAO())
+		privateHandler = context.actorOf(Props(new PrivateMessageHandler(self)), "privateHandler")
+    initializeConnection()
 	}
 
-	override def postStop() {
+  override def postStop() {
 		disconnect()
 	}
 
-	var rooms = Map[String, RoomDefinition]()
-	var chats = Map[String, Chat]()
-
 	def receive = {
-		case ExecuteCommand(user, command, arguments) => {
-			for {
-				room <- user.room
-				roomDefinition <- rooms.get(room)
-			} {
-				val actor = roomDefinition.actor
-				command match {
-					case "say" | "♥" => actor ! GenerateCommand(user.roomNick.get, command, arguments)
-					case "s" => actor ! ReplaceCommand(user.roomNick.get, arguments)
-					case "mdiff" => actor ! DiffCommand(user.roomNick.get, arguments)
-					case "pet" => actor ! PetCommand(arguments)
-				}
-			}
-		}
-
 		case Reconnect(closedConnection) if connection == closedConnection =>
 			disconnect()
-            context.children.foreach(context.stop)
-			connection = connect()
+      context.children.foreach(context.stop)
+			initializeConnection()
 
 		case Reconnect(otherConnection) =>
 			log.info(s"Ignored reconnect request from connection $otherConnection")
 
-		case JoinRoom(jid) => {
-			log.info(s"Joining room $jid")
-			val actor = context.system.actorOf(Props(new Room(self, jid)))
+		case JoinRoom(jid, nickname, greeting) => {
+      log.info(s"Joining room $jid")
+			val actor = context.actorOf(Props(new MucMessageHandler(self, jid)), jid)
 
 			val muc = new MultiUserChat(connection, jid)
 			rooms = rooms.updated(jid, RoomDefinition(muc, actor))
 
 			muc.addMessageListener(new MucMessageListener(jid, actor, log))
-			muc.addParticipantListener(new MucParticipantListener(actor))
+      muc.addParticipantStatusListener(new MucParticipantStatusListener(muc, actor))
 
 			val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
 			connection.addPacketListener(
 				new MessageAutoRepeater(self, context.system.scheduler, jid, context.dispatcher),
 				filter)
 
-			muc.join(Configuration.nickname)
-			muc.getOccupants.foreach { occupant =>
-				actor ! UserPresence(occupant, Presence.Type.available)
-			}
-
-			muc.sendMessage("Muhahahaha!")
+			muc.join(nickname)
+			muc.sendMessage(greeting)
 		}
 
 		case ChatOpened(chat) => {
@@ -122,11 +94,11 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 			// Sleep to create reasonable pause after sending:
 			Thread.sleep((1 second).toMillis)
 		}
-
-		case ProcessCommand(user, message) => {
-			core ! ProcessCommand(user, message)
-		}
 	}
+
+  private def initializeConnection() {
+    connection = connect()
+  }
 
 	private def connect(): XMPPConnection = {
 		val server = Configuration.server
@@ -153,8 +125,10 @@ class Messenger(val core: ActorRef) extends Actor with ActorLogging {
 		connection.login(Configuration.login, Configuration.password)
 		log.info("Login succeed")
 
-		Configuration.rooms foreach {
-			case (roomName, jid) => self ! JoinRoom(jid)
+		Configuration.roomDescriptors foreach {
+			case rd =>
+        if(rd.room != null) self ! JoinRoom(rd.room, rd.nickname, rd.message)
+        else log.warning(s"No JID given for room ${rd.id}")
 		}
 
 		connection

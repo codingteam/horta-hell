@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors.messenger
+package ru.org.codingteam.horta.protocol.jabber
 
 import org.jivesoftware.smack.{XMPPConnection, ConnectionListener}
 import akka.actor.ActorRef

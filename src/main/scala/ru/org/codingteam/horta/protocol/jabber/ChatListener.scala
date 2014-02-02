@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors.messenger
+package ru.org.codingteam.horta.protocol.jabber
 
 import akka.pattern.ask
 import org.jivesoftware.smack.{MessageListener, Chat, ChatManagerListener}
