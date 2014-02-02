@@ -1,16 +1,19 @@
 package ru.org.codingteam.horta.messages
 
-import akka.actor.ActorRef
-import ru.org.codingteam.horta.security.{AccessLevel, User}
+import ru.org.codingteam.horta.security.Credential
 
 /**
- * Message for the core actor.
+ * Core system message.
+ * @param credential user credential.
+ * @param text message text.
  */
-@Deprecated
-abstract sealed class CoreMessage
+case class CoreMessage(credential: Credential,
+                       text: String)
 
-@Deprecated
-case class RegisterCommand(level: AccessLevel, name: String, receiver: ActorRef) extends CoreMessage
-
-@Deprecated
-case class ProcessCommand(user: User, message: String) extends CoreMessage
+/**
+ * Request to send response to user.
+ * @param credential user credential.
+ * @param text response text.
+ */
+case class SendResponse(credential: Credential,
+                        text: String)

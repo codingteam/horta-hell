@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.actors.core
+package ru.org.codingteam.horta.core
 
 import scala.util.parsing.combinator._
 import scala.util.matching.Regex

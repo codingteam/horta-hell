@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta
 
-import actors.core.Core
 import akka.actor.{Props, ActorSystem}
+import ru.org.codingteam.horta.core.Core
 
 object Application extends App {
 	val system = ActorSystem("CodingteamSystem")
