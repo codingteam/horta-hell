@@ -28,7 +28,8 @@ class Core extends Actor with ActorLogging {
     Props[FortunePlugin],
     Props[AccessPlugin],
     Props[PetPlugin],
-    Props[MarkovPlugin]
+    Props[MarkovPlugin],
+    Props[VersionPlugin]
   )
 
   /**
