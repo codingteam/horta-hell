@@ -50,4 +50,6 @@ sender phrase as the base.
 
 * `$version` tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
 
+* `$bash` shows a random quote from http://bash.im
+
 * `$♥` - did you know that robots can love too?
