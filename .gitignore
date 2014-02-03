@@ -1,5 +1,7 @@
 /.idea/
 /target/
+/project/target/
+/project/project/target/
 *~
 /*.db
 /*.iml
