@@ -6,9 +6,9 @@ import ru.org.codingteam.horta.messages.SendResponse
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
 import org.joda.time.{DateTime, Period}
 
-class BashPlugin extends CommandPlugin {
+private object BashCommand
 
-  private object BashCommand
+class BashPlugin extends CommandPlugin {
 
   private val bashImForWebUrl = "http://bash.im/forweb/?u"
 
@@ -33,7 +33,7 @@ class BashPlugin extends CommandPlugin {
             val period = new Period(lastRequestDateTime, now)
             var response = ""
 
-            if (period.getSeconds > coolDownPeriod) {
+            if (period.getSeconds > coolDownPeriod) { // TODO: Move to the core facility
               response = s"$number\n$text"
               lastRequestDateTime = now
             }
