@@ -14,6 +14,7 @@ import scala.language.postfixOps
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
+import ru.org.codingteam.horta.plugins.bash.BashPlugin
 
 class Core extends Actor with ActorLogging {
 
@@ -32,7 +33,8 @@ class Core extends Actor with ActorLogging {
     Props[AccessPlugin],
     Props[PetPlugin],
     Props[MarkovPlugin],
-    Props[VersionPlugin]
+    Props[VersionPlugin],
+    Props[BashPlugin]
   )
 
   /**
