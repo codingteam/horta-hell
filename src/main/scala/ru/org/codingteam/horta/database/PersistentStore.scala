@@ -95,7 +95,7 @@ class PersistentStore() extends Actor with ActorLogging {
 
     flyway.setInitOnMigrate(true)
     flyway.setDataSource(dataSource)
-    flyway.setLocations(s"classpath:db/$directory")
+    flyway.setLocations(s"db/$directory")
 
     flyway.migrate()
   }
