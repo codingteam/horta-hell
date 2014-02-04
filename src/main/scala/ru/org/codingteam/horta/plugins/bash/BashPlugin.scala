@@ -12,7 +12,7 @@ class BashPlugin extends CommandPlugin {
 
   private val bashImForWebUrl = "http://bash.im/forweb/?u"
 
-  private val coolDownPeriod = 3
+  private val coolDownPeriod = 5
 
   private var lastRequestDateTime: DateTime = DateTime.now()
 
@@ -24,11 +24,11 @@ class BashPlugin extends CommandPlugin {
                                token: Any,
                                arguments: Array[String]) = {
     token match {
-      case BashCommand => {
-        val bashImFroWebResponse = Source.fromURL(bashImForWebUrl)(scala.io.Codec.UTF8).mkString
+      case BashCommand =>
+        val bashImForWebResponse = Source.fromURL(bashImForWebUrl)(scala.io.Codec.UTF8).mkString
 
-        BashForWebResponseParser(bashImFroWebResponse) match {
-          case Some(BashQuote(number, text)) => {
+        BashForWebResponseParser(bashImForWebResponse) match {
+          case Some(BashQuote(number, text)) =>
             val now = DateTime.now()
             val period = new Period(lastRequestDateTime, now)
             var response = ""
@@ -42,11 +42,9 @@ class BashPlugin extends CommandPlugin {
             }
 
             credential.location ! SendResponse(credential, response)
-          }
 
           case None =>
         }
-      }
 
       case _ =>
     }
