@@ -2,7 +2,6 @@ package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
-import scala.concurrent.duration._
 import ru.org.codingteam.horta.messages._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
@@ -60,11 +59,8 @@ class MarkovPlugin() extends CommandPlugin {
             location ! SendResponse(credential, "я твой Хортец!")
           } else if (Math.random() < 0.01) {
             location ! SendResponse(credential, "BLOOD GORE DESTROY")
-            implicit val executor = context.dispatcher
             for (i <- 1 to 10) {
-              context.system.scheduler.scheduleOnce(i seconds) {
-                user ! GeneratePhrase(credential, 1, true)
-              }
+              user ! GeneratePhrase(credential, 1, true)
             }
           } else {
             user ! GeneratePhrase(credential, length, false)
