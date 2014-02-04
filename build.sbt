@@ -24,7 +24,9 @@ libraryDependencies ++= Seq(
   "com.github.scala-incubator.io" %% "scala-io-file" % "0.4.2",
   "com.h2database" % "h2" % "1.3.173",
   "joda-time" % "joda-time" % "2.3",
-  "org.joda" % "joda-convert" % "1.5"
+  "org.joda" % "joda-convert" % "1.5",
+  "org.apache.commons" % "commons-lang3" % "3.0",
+  "org.jsoup" % "jsoup" % "1.7.3"
 )
 
 com.github.retronym.SbtOneJar.oneJarSettings
