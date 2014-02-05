@@ -28,13 +28,13 @@ class BashPlugin extends CommandPlugin {
         val bashImForWebResponse = Source.fromURL(bashImForWebUrl)(scala.io.Codec.UTF8).mkString
 
         BashForWebResponseParser(bashImForWebResponse) match {
-          case Some(BashQuote(number, text)) =>
+          case Some(BashQuote(number, rate, text)) =>
             val now = DateTime.now()
             val period = new Period(lastRequestDateTime, now)
             var response = ""
 
             if (period.getSeconds > coolDownPeriod) { // TODO: Move to the core facility
-              response = s"$number\n$text"
+              response = s"$number $rate\n$text"
               lastRequestDateTime = now
             }
             else {
