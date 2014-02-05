@@ -79,9 +79,6 @@ class JabberProtocol() extends Actor with ActorLogging {
 				case Some(muc) => muc.chat.sendMessage(message)
 				case None =>
 			}
-
-			// Sleep to create reasonable pause after sending:
-			Thread.sleep((1 second).toMillis)
 		}
 
 		case SendChatMessage(jid, message) => {
@@ -90,9 +87,6 @@ class JabberProtocol() extends Actor with ActorLogging {
 				case Some(chat) => chat.sendMessage(message)
 				case None =>
 			}
-
-			// Sleep to create reasonable pause after sending:
-			Thread.sleep((1 second).toMillis)
 		}
 	}
 
