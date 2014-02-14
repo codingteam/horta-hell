@@ -19,7 +19,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Configuration
 
-Tune example `horta.properties` file. All options are self-explanatory.
+Tune example `horta.properties` file. All options should be self-explanatory.
 
 ## Command system
 
