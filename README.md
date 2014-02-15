@@ -17,6 +17,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     $ sbt run
 
+## Building for deployment
+
+    $ sbt one-jar
+
 ## Configuration
 
 Tune example `horta.properties` file. All options should be self-explanatory.
@@ -43,5 +47,9 @@ Known command list:
 sender phrase as the base.
 
 * `$pet` - Tamagochi-like plugin, contains complex subcommand system. Enter `$pet help` for details.
+
+* `$version` tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
+
+* `$bash` shows a random quote from http://bash.im
 
 * `$♥` - did you know that robots can love too?
