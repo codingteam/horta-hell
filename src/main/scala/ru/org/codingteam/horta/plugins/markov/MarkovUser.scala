@@ -50,7 +50,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       val location = credential.location
 
       getNetwork() map {
-        case network =>
+        network =>
           def generator() = {
             val phrase = generatePhrase(network, length)
             if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase

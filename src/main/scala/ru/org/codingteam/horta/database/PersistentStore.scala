@@ -10,6 +10,7 @@ import scala.language.postfixOps
 import concurrent.Await
 import com.googlecode.flyway.core.Flyway
 import javax.sql.DataSource
+import ru.org.codingteam.horta.configuration.Configuration
 
 case class RegisterStore(plugin: String, store: DAO)
 
@@ -29,9 +30,9 @@ trait DAO {
 
 class PersistentStore() extends Actor with ActorLogging {
 
-  val Url = "jdbc:h2:hell;DB_CLOSE_DELAY=-1"
-  val User = "sa"
-  val Password = ""
+  val Url = Configuration.storageUrl
+  val User = Configuration.storageUser
+  val Password = Configuration.storagePassword
 
 	import context.dispatcher
 
@@ -94,7 +95,7 @@ class PersistentStore() extends Actor with ActorLogging {
 
     flyway.setInitOnMigrate(true)
     flyway.setDataSource(dataSource)
-    flyway.setLocations(s"classpath:db/$directory")
+    flyway.setLocations(s"db/$directory")
 
     flyway.migrate()
   }

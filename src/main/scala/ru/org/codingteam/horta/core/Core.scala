@@ -7,18 +7,22 @@ import ru.org.codingteam.horta.actors.database._
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.security._
+import scala.concurrent.Lock
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
+import ru.org.codingteam.horta.plugins.bash.BashPlugin
 
 class Core extends Actor with ActorLogging {
 
   import context.dispatcher
 
   implicit val timeout = Timeout(60 seconds)
+
+  val delayLock = new Lock()
 
   /**
    * List of plugin props to be started.
@@ -28,7 +32,9 @@ class Core extends Actor with ActorLogging {
     Props[FortunePlugin],
     Props[AccessPlugin],
     Props[PetPlugin],
-    Props[MarkovPlugin]
+    Props[MarkovPlugin],
+    Props[VersionPlugin],
+    Props[BashPlugin]
   )
 
   /**
@@ -49,11 +55,16 @@ class Core extends Actor with ActorLogging {
 
   def receive = {
     case CoreMessage(credential, text) => {
+      delayLock.acquire()
       val command = parseCommand(text)
       command match {
         case Some((name, arguments)) =>
           executeCommand(sender, credential, name, arguments)
         case None =>
+      }
+
+      context.system.scheduler.scheduleOnce(1 second) {
+        delayLock.release()
       }
     }
   }
