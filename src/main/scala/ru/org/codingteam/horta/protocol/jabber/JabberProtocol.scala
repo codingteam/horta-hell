@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.protocol.jabber
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Scheduler}
 import akka.util.Timeout
 import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
@@ -8,6 +8,7 @@ import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.messages._
 import scala.concurrent.duration._
+import scala.concurrent.Lock
 import scala.language.postfixOps
 import ru.org.codingteam.horta.messages.SendMucMessage
 import ru.org.codingteam.horta.messages.SendChatMessage
@@ -22,6 +23,8 @@ class JabberProtocol() extends Actor with ActorLogging {
 
 	import context.dispatcher
 	implicit val timeout = Timeout(1 minute)
+
+  val lock = new Lock()
 
   val core = context.actorSelection("/user/core")
 
@@ -76,23 +79,23 @@ class JabberProtocol() extends Actor with ActorLogging {
 		case SendMucMessage(jid, message) => {
 			val muc = rooms.get(jid)
 			muc match {
-				case Some(muc) => muc.chat.sendMessage(message)
+				case Some(muc) =>
+          muc.chat.sendMessage(message)
+          val deadline = ((message.length * 20) milliseconds).fromNow //TODO make multiplier configurable
+          while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
 				case None =>
 			}
-
-			// Sleep to create reasonable pause after sending:
-			Thread.sleep((1 second).toMillis)
 		}
 
 		case SendChatMessage(jid, message) => {
 			val chat = chats.get(jid)
 			chat match {
-				case Some(chat) => chat.sendMessage(message)
+				case Some(chat) =>
+          chat.sendMessage(message)
+          val deadline = ((message.length * 20) milliseconds).fromNow
+          while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
 				case None =>
 			}
-
-			// Sleep to create reasonable pause after sending:
-			Thread.sleep((1 second).toMillis)
 		}
 	}
 
