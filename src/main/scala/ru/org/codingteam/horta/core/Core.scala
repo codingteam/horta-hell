@@ -22,8 +22,6 @@ class Core extends Actor with ActorLogging {
 
   implicit val timeout = Timeout(60 seconds)
 
-  val delayLock = new Lock()
-
   /**
    * List of plugin props to be started.
    */
@@ -55,16 +53,11 @@ class Core extends Actor with ActorLogging {
 
   def receive = {
     case CoreMessage(credential, text) => {
-      delayLock.acquire()
       val command = parseCommand(text)
       command match {
         case Some((name, arguments)) =>
           executeCommand(sender, credential, name, arguments)
         case None =>
-      }
-
-      context.system.scheduler.scheduleOnce(1 second) {
-        delayLock.release()
       }
     }
   }
