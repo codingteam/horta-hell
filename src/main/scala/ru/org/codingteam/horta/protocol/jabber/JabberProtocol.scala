@@ -64,7 +64,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 
 			val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
 			connection.addPacketListener(
-				new MessageAutoRepeater(self, context.system.scheduler, jid, context.dispatcher),
+				new MessageAutoRepeater(context.system, self, context.system.scheduler, jid, context.dispatcher),
 				filter)
 
 			muc.join(nickname)
@@ -81,7 +81,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 			muc match {
 				case Some(muc) =>
           muc.chat.sendMessage(message)
-          val deadline = ((message.length * 20) milliseconds).fromNow //TODO make multiplier configurable
+          val deadline = ((message.length * 35) milliseconds).fromNow //TODO make multiplier configurable
           while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
 				case None =>
 			}
@@ -92,7 +92,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 			chat match {
 				case Some(chat) =>
           chat.sendMessage(message)
-          val deadline = ((message.length * 20) milliseconds).fromNow
+          val deadline = ((message.length * 35) milliseconds).fromNow
           while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
 				case None =>
 			}
