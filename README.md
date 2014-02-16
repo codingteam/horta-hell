@@ -51,3 +51,19 @@ sender phrase as the base.
 * `$version` tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
 
 * `$bash` shows a random quote from http://bash.im
+
+## Contributing
+
+horta development is open process and we're glad to accept any suggestions and pull requests. When contributing please
+keep in mind our branching model. We're trying to follow the `git-flow` one. E.g. we have two main branches: `master`
+and `develop`.
+
+Code in the `master` branch should be as stable as possible. It is constantly deployed on our server and mostly tested.
+
+Code in the `develop` branch is our "trunk" - new features should be merged here and tested by the developers (and by
+the CI system if present).
+
+When forking, please create new branches from the `develop` branch.
+
+Report any bugs to [the issues list](https://github.com/codingteam/horta-hell/issues). You may ask for support in our
+XMPP conference: `codingteam@conference.jabber.ru`.
