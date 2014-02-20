@@ -1,8 +1,7 @@
-/.idea/
-/target/
-/project/target/
-/project/project/target/
 *~
+target/
+/.idea/
+*.iml
 /*.db
-/*.iml
-/project/*.iml
+/horta.properties
+
