@@ -13,7 +13,7 @@ horta hell is XMPP bot. It is based on the Akka framework.
 
 ## Configuration
 
-Tune example `horta.properties` file. All options should be self-explanatory.
+Copy `horta.properties.example` file to `horta.properties` and tune it. All options should be self-explanatory.
 
 ## Command system
 
