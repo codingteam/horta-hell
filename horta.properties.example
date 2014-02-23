@@ -4,6 +4,8 @@ server=jabber.ru
 nickname=horta hell
 message=Hell installed!
 
+owner=example@example.org
+
 rooms=room1,room2,room3
 room1.room=foo@baz.bar
 room1.nickname=Architect of Fate
@@ -16,6 +18,8 @@ room3.room=fgs@fds.omg
 
 log_directory=/tmp
 log_encoding=UTF-8
+
+markov_messages_per_minute=5
 
 storage.url=jdbc:h2:hell;DB_CLOSE_DELAY=-1
 storage.user=sa
