@@ -14,7 +14,7 @@ class LogParser extends Actor with ActorLogging {
 	def receive = {
 		case DoParsing(roomName, userName) => {
 			val directory = Path.fromString(Configuration.logDirectory) / roomName
-			val network = new Network()
+			val network = new Network(2)
 
 			log.info(s"Reading directory $directory")
       try {
