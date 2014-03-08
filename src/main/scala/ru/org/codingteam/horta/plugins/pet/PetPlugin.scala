@@ -8,7 +8,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import ru.org.codingteam.horta.actors.database.{RegisterStore, StoreOkReply, StoreObject, ReadObject}
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
+import ru.org.codingteam.horta.plugins.{PluginDefinition, CommandDefinition, CommandPlugin}
 import scala.concurrent.Future
 
 class PetPlugin extends CommandPlugin {
@@ -23,7 +23,7 @@ class PetPlugin extends CommandPlugin {
 
   var pets = Map[String, Pet]()
 
-  override def commandDefinitions = List(CommandDefinition(CommonAccess, "pet", null))
+  override def pluginDefinition = PluginDefinition(false, List(CommandDefinition(CommonAccess, "pet", null)))
 
   override def preStart() = {
     store ! RegisterStore("pet", new PetDAO())

@@ -11,8 +11,9 @@ class FortunePlugin extends CommandPlugin {
 
   private val maxLength = 128
 
-  def commandDefinitions: List[CommandDefinition] =
-    List(CommandDefinition(CommonAccess, "fortune", FortuneCommand))
+  def pluginDefinition = PluginDefinition(
+    false,
+    List(CommandDefinition(CommonAccess, "fortune", FortuneCommand)))
 
   private def parseResponse(rawText: String): String = {
     val json = JSON.parseFull(rawText)

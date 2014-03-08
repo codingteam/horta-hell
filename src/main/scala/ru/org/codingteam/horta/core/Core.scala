@@ -40,10 +40,17 @@ class Core extends Actor with ActorLogging {
    */
   var commands = Map[String, List[(ActorRef, CommandDefinition)]]()
 
+    /**
+     * List of plugins receiving all the messages.
+     */
+  var messageReceivers = List[ActorRef]()
+
   val parsers = List(SlashParsers, DollarParsers)
 
   override def preStart() {
-    commands = commandDefinitions()
+    val definitions = pluginDefinitions()
+    messageReceivers = definitions._1.toList
+    commands = definitions._2
     commands foreach (command => log.info(s"Registered command: $command"))
 
     // TODO: What is the Akka way to create these?
@@ -59,25 +66,34 @@ class Core extends Actor with ActorLogging {
           executeCommand(sender, credential, name, arguments)
         case None =>
       }
+
+      for (plugin <- messageReceivers) {
+        plugin ! ProcessMessage(credential, text)
+      }
     }
   }
 
-  private def commandDefinitions(): Map[String, List[(ActorRef, CommandDefinition)]] = {
-    val commandRequests = Future.sequence(
+  /**
+   * @return a tuple (list of message receivers, map (command name => list of command executors)).
+   */
+  private def pluginDefinitions(): (Seq[ActorRef], Map[String, List[(ActorRef, CommandDefinition)]]) = {
+    val definitionRequests = Future.sequence(
       for (plugin <- plugins) yield {
         val actor = context.actorOf(plugin)
-        ask(actor, GetCommands).mapTo[List[CommandDefinition]].map(
-          definitions => definitions.map(
-            definition => (actor, definition)))
+        ask(actor, GetPluginDefinition).mapTo[PluginDefinition].map {
+          case PluginDefinition(messageResolver, commands) =>
+            (actor, messageResolver, commands)
+        }
       })
 
-    val results = Await.result(commandRequests, 60 seconds)
-    val definitions = results.flatten
+    val results = Await.result(definitionRequests, 60 seconds).toStream
+    val messageReceivers = results.filter(_._2).map(_._1)
+    val definitions = results.map(definition => definition._3.map(d => (definition._1, d))).flatten // norkotah
     val groups = definitions.groupBy {
       case (_, CommandDefinition(_, name, _)) => name
-    }
+    } map { case (k, v) => (k, v.toList) } 
 
-    groups
+    (messageReceivers, groups)
   }
 
   private def parseCommand(message: String): Option[(String, Array[String])] = {

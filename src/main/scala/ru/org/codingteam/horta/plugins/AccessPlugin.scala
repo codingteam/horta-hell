@@ -9,11 +9,9 @@ private object AccessCommand
  * Access test plugin. Its work is to respond user privileges to any request.
  */
 class AccessPlugin extends CommandPlugin {
-	/**
-	 * A collection of (token -> scope) pairs, where token defines command token and scope - its scope.
-	 * @return collection.
-	 */
-	def commandDefinitions: List[CommandDefinition] = List(CommandDefinition(CommonAccess, "access", AccessCommand))
+	def pluginDefinition = PluginDefinition(
+    false,
+    List(CommandDefinition(CommonAccess, "access", AccessCommand)))
 
 	override def processCommand (
 		credential: Credential,

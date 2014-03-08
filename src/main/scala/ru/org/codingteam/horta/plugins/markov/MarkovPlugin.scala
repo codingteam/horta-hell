@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import ru.org.codingteam.horta.messages._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
+import ru.org.codingteam.horta.plugins.{PluginDefinition, CommandDefinition, CommandPlugin}
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 import ru.org.codingteam.horta.configuration.{RoomDescriptor, Configuration}
 
@@ -17,10 +17,15 @@ class MarkovPlugin() extends CommandPlugin {
   // TODO: Drop inactive users?
   var users = Map[String, ActorRef]()
 
-  override def commandDefinitions = List(
+  override def pluginDefinition = PluginDefinition(true, List(
     CommandDefinition(CommonAccess, "say", SayCommand),
     CommandDefinition(CommonAccess, "s", ReplaceCommand)
-  )
+  ))
+
+  override def processMessage(credential: Credential, message: String) {
+    val user = getUser(credential)
+    user ! UserPhrase(message)
+  }
 
   override def processCommand(credential: Credential,
                               token: Any,

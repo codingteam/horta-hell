@@ -3,7 +3,7 @@ package ru.org.codingteam.horta.plugins.bash
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 import scala.io.Source
 import ru.org.codingteam.horta.messages.SendResponse
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandPlugin}
+import ru.org.codingteam.horta.plugins.{PluginDefinition, CommandDefinition, CommandPlugin}
 import org.joda.time.{DateTime, Period}
 
 private object BashCommand
@@ -16,8 +16,9 @@ class BashPlugin extends CommandPlugin {
 
   private var lastRequestDateTime: DateTime = DateTime.now()
 
-  def commandDefinitions: List[CommandDefinition] =
-    List(CommandDefinition(CommonAccess, "bash", BashCommand))
+  def pluginDefinition = PluginDefinition(
+    false,
+    List(CommandDefinition(CommonAccess, "bash", BashCommand)))
 
   override def processCommand(
                                credential: Credential,

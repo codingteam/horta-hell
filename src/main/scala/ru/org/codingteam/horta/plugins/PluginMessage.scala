@@ -8,10 +8,9 @@ import ru.org.codingteam.horta.security.Credential
 abstract sealed class PluginMessage
 
 /**
- * This is the first message for plugin to respond. Must be responded with List[CommandDefinition] - collection of
- * command tokens and corresponding scopes.
+ * This is the first message for plugin to respond. Must be responded with PluginDefinition.
  */
-case object GetCommands extends PluginMessage
+case object GetPluginDefinition extends PluginMessage
 
 /**
  * A process command request.
@@ -20,3 +19,10 @@ case object GetCommands extends PluginMessage
  * @param arguments command argument array.
  */
 case class ProcessCommand(user: Credential, token: Any, arguments: Array[String])
+
+/**
+ * A process message request. It can be send to the plugin if it was registered for global message processing.
+ * @param user a user sending the message.
+ * @param message a message sent.
+ */
+case class ProcessMessage(user: Credential, message: String)
