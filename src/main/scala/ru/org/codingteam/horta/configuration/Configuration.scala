@@ -1,12 +1,12 @@
 package ru.org.codingteam.horta.configuration
 
 import java.util.Properties
-import java.io.FileInputStream
+import java.io.{FileInputStream, InputStreamReader}
 
 object Configuration {
 	private lazy val properties = {
 		val properties = new Properties()
-		val stream = new FileInputStream("horta.properties")
+		val stream = new InputStreamReader(new FileInputStream("horta.properties"), "UTF8")
 		try {
 			properties.load(stream)
 		} finally {
