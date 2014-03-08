@@ -9,7 +9,7 @@ class FortunePlugin extends CommandPlugin {
 
   private object FortuneCommand
 
-  private val apiCommand = "http://rexim.me/api/random"
+  private val maxLength = 128
 
   def commandDefinitions: List[CommandDefinition] =
     List(CommandDefinition(CommonAccess, "fortune", FortuneCommand))
@@ -46,10 +46,10 @@ class FortunePlugin extends CommandPlugin {
           val FortuneIdPattern = "([0-9]+)".r
           arguments match {
             case Array(FortuneIdPattern(fortuneId), _*) =>
-              getFortuneByUrl(credential, s"http://rexim.me/api/$fortuneId")
+              getFortuneByUrl(credential, s"http://rexim.me/api/$fortuneId?max_length=$maxLength")
 
             case Array() =>
-              getFortuneByUrl(credential, "http://rexim.me/api/random")
+              getFortuneByUrl(credential, s"http://rexim.me/api/random?max_length=$maxLength")
 
             case _ =>
               credential.location ! SendResponse(credential, "Usage: $fortune [fortune-id:number]")
