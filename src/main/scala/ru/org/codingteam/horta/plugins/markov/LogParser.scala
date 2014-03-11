@@ -3,10 +3,10 @@ package ru.org.codingteam.horta.plugins.markov
 import akka.actor.{Actor, ActorLogging}
 import java.io.File
 import java.util.Scanner
-import ru.org.codingteam.horta.messages.{DoParsing, ParsedPhrase}
+import ru.org.codingteam.horta.messages.DoParsing
 import scalax.file.Path
-import platonus.Network
 import ru.org.codingteam.horta.configuration.Configuration
+import me.fornever.platonus.Network
 
 class LogParser extends Actor with ActorLogging {
 	val regex = "^\\[.*?\\] \\* (.*?)(?: \\*|:) (.*?)$".r
@@ -14,7 +14,7 @@ class LogParser extends Actor with ActorLogging {
 	def receive = {
 		case DoParsing(roomName, userName) => {
 			val directory = Path.fromString(Configuration.logDirectory) / roomName
-			val network = new Network(2)
+			val network = Network(2)
 
 			log.info(s"Reading directory $directory")
       try {
@@ -27,7 +27,7 @@ class LogParser extends Actor with ActorLogging {
             while (scanner.hasNext) {
               val string = scanner.next()
               string match {
-                case regex(nick, message) if nick == userName => network.addPhrase(message)
+                case regex(nick, message) if nick == userName => network.add(LogParser.tokenize(message))
                 case _ =>
               }
             }
@@ -44,4 +44,10 @@ class LogParser extends Actor with ActorLogging {
 			sender ! network
 		}
 	}
+}
+
+object LogParser {
+  def tokenize(message: String) = {
+    message.split("\\s+").toVector
+  }
 }

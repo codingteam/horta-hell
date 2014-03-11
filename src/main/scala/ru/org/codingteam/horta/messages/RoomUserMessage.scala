@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.messages
 
-import platonus.Network
 import ru.org.codingteam.horta.security.Credential
+import me.fornever.platonus.Network
 
 abstract sealed class RoomUserMessage
 

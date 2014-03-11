@@ -4,13 +4,13 @@ import akka.actor.{PoisonPill, Props, ActorLogging, Actor}
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
-import platonus.Network
 import ru.org.codingteam.horta.messages._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import java.util.{Calendar, Locale}
 import scala.concurrent.Future
 import ru.org.codingteam.horta.configuration.Configuration
+import me.fornever.platonus.Network
 
 class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging {
 
@@ -139,7 +139,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
   def addPhrase(phrase: String) = {
     if (!phrase.startsWith("$") && !phrase.startsWith("s/")) {
       network match {
-        case Some(network) => network.addPhrase(phrase)
+        case Some(network) => network.add(LogParser.tokenize(phrase))
         case None => // will add later on log parse
       }
       true
@@ -151,8 +151,8 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
   def generatePhrase(network: Network, length: Integer): String = {
     for (i <- 1 to 25) {
       val phrase = network.generate()
-      if (phrase.split(" ").length >= length) {
-        return phrase
+      if (phrase.length >= length) {
+        return phrase.mkString(" ")
       }
     }
 

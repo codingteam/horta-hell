@@ -9,13 +9,13 @@ scalaVersion := "2.10.3"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
 resolvers ++= Seq(
-  "clojars" at "http://clojars.org/repo/",
-  "clojure-releases" at "http://build.clojure.org/releases"
+  "codingteam" at "http://fornever.me:18080/repository/codingteam",
+  "codingteam-snapshots" at "http://fornever.me:18080/repository/codingteam-snapshots"
 )
 
 libraryDependencies ++= Seq(
   "com.googlecode.flyway" % "flyway-core" % "2.3",
-  "platonus" % "platonus" % "0.1.20",
+  "me.fornever" %% "platonus" % "0.2-SNAPSHOT",
   "com.typesafe.akka" % "akka-actor_2.10" % "2.2.3",
   "org.igniterealtime.smack" % "smack" % "3.2.1",
   "org.igniterealtime.smack" % "smackx" % "3.2.1",
