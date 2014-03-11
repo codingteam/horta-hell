@@ -18,7 +18,7 @@ class PrivateMessageHandler(val protocol: ActorRef) extends Actor with ActorLogg
 
       val credential = getCredential(jid)
 
-      log.info(s"Private message: $message")
+      log.info(s"Private message: <$jid> $text")
       core ! CoreMessage(credential, text)
 		}
 
