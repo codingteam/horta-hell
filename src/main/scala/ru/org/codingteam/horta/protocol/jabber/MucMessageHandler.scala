@@ -66,8 +66,10 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
       val jid = message.getFrom
       val text = message.getBody
 
-      val credential = getCredential(jid)
-      core ! CoreMessage(credential, text)
+      if (text != null) {
+        val credential = getCredential(jid)
+        core ! CoreMessage(credential, text)
+      }
     }
 
     case SendResponse(credential, text) => {

@@ -12,21 +12,22 @@ class PrivateMessageHandler(val protocol: ActorRef) extends Actor with ActorLogg
   val core = context.actorSelection("/user/core")
 
   def receive() = {
-		case UserMessage(message) => {
-			val jid = message.getFrom
-			val text = message.getBody
-
-      val credential = getCredential(jid)
+    case UserMessage(message) => {
+      val jid = message.getFrom
+      val text = message.getBody
 
       log.info(s"Private message: <$jid> $text")
-      core ! CoreMessage(credential, text)
-		}
+      if (text != null) {
+        val credential = getCredential(jid)
+        core ! CoreMessage(credential, text)
+      }
+    }
 
-		case SendResponse(credential, text) => {
+    case SendResponse(credential, text) => {
       val jid = credential.id.get.asInstanceOf[String]
       protocol ! SendChatMessage(jid, text)
-		}
-	}
+    }
+  }
 
   def getCredential(jid: String) = {
     val baseJid = StringUtils.parseBareAddress(jid)
