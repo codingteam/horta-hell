@@ -4,7 +4,7 @@ VAGRANTFILE_API_VERSION = "2"
 
 $script = <<SCRIPT
 apt-get update
-apt-get install -y openjdk-7-jdk scala curl
+apt-get install -y openjdk-7-jdk scala curl git
 wget -O /tmp/sbt.deb http://repo.scala-sbt.org/scalasbt/sbt-native-packages/org/scala-sbt/sbt/0.13.0/sbt.deb --no-verbose
 dpkg -i /tmp/sbt.deb
 SCRIPT
