@@ -15,7 +15,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= Seq(
   "com.googlecode.flyway" % "flyway-core" % "2.3",
-  "me.fornever" %% "platonus" % "0.2-SNAPSHOT",
+  "me.fornever" %% "platonus" % "0.2-SNAPSHOT" changing(),
   "com.typesafe.akka" % "akka-actor_2.10" % "2.2.3",
   "org.igniterealtime.smack" % "smack" % "3.2.1",
   "org.igniterealtime.smack" % "smackx" % "3.2.1",
