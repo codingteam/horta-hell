@@ -62,7 +62,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
       participants = participants - participant + (newParticipant -> access)
       log.info(s"$participant changed nick to $newNick")
 
-    case UserMessage(message) => {
+    case UserMessage(message) =>
       val jid = message.getFrom
       val text = message.getBody
 
@@ -70,12 +70,10 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
         val credential = getCredential(jid)
         core ! CoreMessage(credential, text)
       }
-    }
 
-    case SendResponse(credential, text) => {
+    case SendResponse(credential, text) =>
       val response = prepareResponse(credential.name, text)
       sendMessage(response)
-    }
   }
 
   def getCredential(jid: String) = {
