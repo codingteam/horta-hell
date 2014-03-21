@@ -7,13 +7,18 @@ import ru.org.codingteam.horta.security.Credential
  * @param credential user credential.
  * @param text message text.
  */
-case class CoreMessage(credential: Credential,
-                       text: String)
+case class CoreMessage(credential: Credential, text: String)
 
 /**
  * Request to send response to user.
  * @param credential user credential.
  * @param text response text.
  */
-case class SendResponse(credential: Credential,
-                        text: String)
+case class SendResponse(credential: Credential, text: String)
+
+/**
+ * Request to send response to user through the private message.
+ * @param credential user credential.
+ * @param text response text.
+ */
+case class SendPrivateResponse(credential: Credential, text: String)

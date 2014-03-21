@@ -76,24 +76,27 @@ class JabberProtocol() extends Actor with ActorLogging {
 			sender ! PositiveReply
 		}
 
-		case SendMucMessage(jid, message) => {
-			val muc = rooms.get(jid)
-			muc match {
-				case Some(muc) =>
-          muc.chat.sendMessage(message)
-          val deadline = ((message.length * 35) milliseconds).fromNow //TODO make multiplier configurable
-          while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
-				case None =>
-			}
-		}
+    case SendMucMessage(jid, message) =>
+      val muc = rooms.get(jid)
+      muc match {
+        case Some(muc) =>
+          sendMessage(message, muc.chat.sendMessage)
+        case None =>
+      }
 
-		case SendChatMessage(jid, message) => {
+    case SendPrivateMessage(roomJid, nick, message) =>
+      val muc = rooms.get(roomJid)
+      muc match {
+        case Some(muc) =>
+          sendMessage(message, muc.chat.sendMessage)
+        case None =>
+      }
+
+    case SendChatMessage(jid, message) => {
 			val chat = chats.get(jid)
 			chat match {
 				case Some(chat) =>
-          chat.sendMessage(message)
-          val deadline = ((message.length * 35) milliseconds).fromNow
-          while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
+          sendMessage(message, chat.sendMessage)
 				case None =>
 			}
 		}
@@ -144,4 +147,10 @@ class JabberProtocol() extends Actor with ActorLogging {
 			log.info("Disconnected")
 		}
 	}
+
+  private def sendMessage(message: String, action: String => Unit) {
+    action(message)
+    val deadline = ((message.length * 35) milliseconds).fromNow //TODO make multiplier configurable
+    while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
+  }
 }
