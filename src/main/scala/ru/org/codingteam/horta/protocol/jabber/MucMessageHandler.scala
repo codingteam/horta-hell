@@ -108,7 +108,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
   def sendMessage(credential: Credential, text: String, isPrivate: Boolean) {
     val name = credential.name
     val response = prepareResponse(name, text, isPrivate)
-    val message = if (isPrivate) SendMucMessage(roomJid, response) else SendPrivateMessage(roomJid, name, response)
+    val message = if (isPrivate) SendPrivateMessage(roomJid, name, response) else SendMucMessage(roomJid, response)
     protocol ! message
   }
 

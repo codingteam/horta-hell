@@ -88,7 +88,9 @@ class JabberProtocol() extends Actor with ActorLogging {
       val muc = rooms.get(roomJid)
       muc match {
         case Some(muc) =>
-          sendMessage(message, muc.chat.sendMessage)
+          val jid = s"$roomJid/$nick"
+          val chat = muc.chat.createPrivateChat(jid, null)
+          sendMessage(message, chat.sendMessage)
         case None =>
       }
 

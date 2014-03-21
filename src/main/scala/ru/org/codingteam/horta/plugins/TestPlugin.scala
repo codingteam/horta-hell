@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
-import ru.org.codingteam.horta.messages.SendResponse
+import ru.org.codingteam.horta.messages.{SendPrivateResponse, SendResponse}
 
 private object TestCommand
 
@@ -15,7 +15,10 @@ class TestPlugin extends CommandPlugin {
                               token: Any,
                               arguments: Array[String]) {
     token match {
-      case TestCommand => credential.location ! SendResponse(credential, "test")
+      case TestCommand =>
+        val location = credential.location
+        location ! SendResponse(credential, "test")
+        location ! SendPrivateResponse(credential, "test")
       case _ =>
     }
   }
