@@ -27,14 +27,14 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
 
   def receive = {
     case UserJoined(participant, affilationName) =>
-      val affilation = affilationName match {
+      val affiliation = affilationName match {
         case "owner" => Owner
         case "admin" => Admin
         case _ => User
       }
 
-      log.info(s"$participant joined as $affilation")
-      participants += participant -> affilation
+      log.info(s"$participant joined as $affiliation")
+      participants += participant -> affiliation
 
     case UserLeft(participant) =>
       participants -= participant
