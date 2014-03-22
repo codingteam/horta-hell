@@ -24,4 +24,5 @@ sbt clean
 cp /vagrant/horta.properties ./horta.properties
 
 # Start the daemon:
+cp /vagrant/horta-hell.conf /etc/init/
 start horta-hell
