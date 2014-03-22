@@ -14,7 +14,7 @@ class LogParser extends Actor with ActorLogging {
 	def receive = {
 		case DoParsing(roomName, userName) => {
 			val directory = Path.fromString(Configuration.logDirectory) / roomName
-			var network = Network(2)
+			val network = Network(2)
 
 			log.info(s"Reading directory $directory")
       try {
@@ -28,7 +28,7 @@ class LogParser extends Actor with ActorLogging {
               val string = scanner.next()
               string match {
                 case regex(nick, message) if nick == userName =>
-                  network = network.add(LogParser.tokenize(message))
+                  network.add(LogParser.tokenize(message))
                 case _ =>
               }
             }
