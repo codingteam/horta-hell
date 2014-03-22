@@ -57,13 +57,13 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
           }
 
           val result = if (bloodMode) {
-            generator()
+            (generator(), false)
           } else {
             val currentTime = DateTime.now
             def resetSeries() = {
               firstSeriesMessageTime = Some(currentTime)
               seriesMessages = 1
-              generator()
+              (generator(), false)
             }
 
             firstSeriesMessageTime match {
@@ -71,11 +71,11 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
                 val inSeries = time.plusMillis(seriesTime.toMillis.toInt).isAfter(currentTime)
                 if (inSeries && seriesMessages < Configuration.markovMessagesPerMinute) {
                   seriesMessages += 1
-                  generator()
+                  (generator(), false)
                 } else if (!inSeries) {
                   resetSeries()
                 } else {
-                  s"Message count exceeded, wait for $seriesTime"
+                  (generator(), true)
                 }
 
               case _ =>
@@ -83,7 +83,12 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
             }
           }
 
-          location ! SendResponse(credential, result)
+          result match {
+            case (message, false) =>
+              location ! SendResponse(credential, message)
+            case (message, true) =>
+              location ! SendPrivateResponse(credential, message)
+          }
       }
 
     case ReplaceRequest(credential, from, to) =>

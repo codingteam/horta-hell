@@ -14,6 +14,8 @@ case class JoinRoom(roomJID: String, botName: String, greeting: String) extends 
 
 case class SendMucMessage(toJid: String, message: String) extends MessengerMessage
 
+case class SendPrivateMessage(roomJid: String, nick: String, message: String) extends MessengerMessage
+
 case class SendChatMessage(toJid: String, message: String) extends MessengerMessage
 
 case class ChatOpened(chat: Chat) extends MessengerMessage

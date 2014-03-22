@@ -12,13 +12,12 @@ Copy `horta.properties.example` file to `horta.properties` and tune it. All opti
 
 Horta designed to use the embedded H2 database. You may tune the `storage` parameter group in the configuration file.
 
-### Running
+### Deployment
 
-    $ sbt run
+The recommended way of horta deployment is using of the
+[vagrant-horta-hell](https://github.com/codingteam/vagrant-horta-hell) Vagrant package.
 
-### Building for deployment
-
-    $ sbt one-jar
+For development purposes, you may use the `sbt run` command or any IDE-compatible run activities.
 
 ### Command system
 

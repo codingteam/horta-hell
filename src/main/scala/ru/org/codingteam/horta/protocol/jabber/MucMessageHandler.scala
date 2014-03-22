@@ -3,14 +3,16 @@ package ru.org.codingteam.horta.protocol.jabber
 import akka.actor.{ActorRef, Actor, ActorLogging}
 import ru.org.codingteam.horta.security._
 import java.util.regex.Pattern
+import ru.org.codingteam.horta.messages._
+import scala.Some
 import ru.org.codingteam.horta.messages.OwnershipRevoked
 import ru.org.codingteam.horta.messages.SendMucMessage
 import ru.org.codingteam.horta.messages.UserMessage
 import ru.org.codingteam.horta.messages.AdminRevoked
 import scala.Some
 import ru.org.codingteam.horta.messages.UserLeft
-import ru.org.codingteam.horta.messages.UserJoined
 import ru.org.codingteam.horta.messages.NicknameChanged
+import ru.org.codingteam.horta.messages.UserJoined
 import ru.org.codingteam.horta.messages.CoreMessage
 import ru.org.codingteam.horta.messages.OwnershipGranted
 import ru.org.codingteam.horta.messages.AdminGranted
@@ -27,14 +29,14 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
 
   def receive = {
     case UserJoined(participant, affilationName) =>
-      val affilation = affilationName match {
+      val affiliation = affilationName match {
         case "owner" => Owner
         case "admin" => Admin
         case _ => User
       }
 
-      log.info(s"$participant joined as $affilation")
-      participants += participant -> affilation
+      log.info(s"$participant joined as $affiliation")
+      participants += participant -> affiliation
 
     case UserLeft(participant) =>
       participants -= participant
@@ -62,7 +64,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
       participants = participants - participant + (newParticipant -> access)
       log.info(s"$participant changed nick to $newNick")
 
-    case UserMessage(message) => {
+    case UserMessage(message) =>
       val jid = message.getFrom
       val text = message.getBody
 
@@ -70,12 +72,12 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
         val credential = getCredential(jid)
         core ! CoreMessage(credential, text)
       }
-    }
 
-    case SendResponse(credential, text) => {
-      val response = prepareResponse(credential.name, text)
-      sendMessage(response)
-    }
+    case SendResponse(credential, text) =>
+      sendMessage(credential, text, false)
+
+    case SendPrivateResponse(credential, text) =>
+      sendMessage(credential, text, true)
   }
 
   def getCredential(jid: String) = {
@@ -103,25 +105,32 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
     }
   }
 
-  def sendMessage(message: String) {
-    protocol ! SendMucMessage(roomJid, message)
+  def sendMessage(credential: Credential, text: String, isPrivate: Boolean) {
+    val name = credential.name
+    val response = prepareResponse(name, text, isPrivate)
+    val message = if (isPrivate) SendPrivateMessage(roomJid, name, response) else SendMucMessage(roomJid, response)
+    protocol ! message
   }
 
-  def prepareResponse(recipient: String, text: String) = {
-    var message = text
-    for (nick <- participants.keys.map(nickByJid)) {
-      if (nick != recipient && nick.length > 0) {
-        val quoted = Pattern.quote(nick)
-        val pattern = s"(?<=\\W|^)$quoted(?=\\W|$$)"
-        val replacement = nick.substring(0, 1) + "…"
-        message = message.replaceAll(pattern, replacement)
-      }
-    }
-
-    if (recipient.isEmpty) {
-      message
+  def prepareResponse(recipient: String, text: String, isPrivate: Boolean) = {
+    if (isPrivate) {
+      text
     } else {
-      s"$recipient: $message"
+      var message = text
+      for (nick <- participants.keys.map(nickByJid)) {
+        if (nick != recipient && nick.length > 0) {
+          val quoted = Pattern.quote(nick)
+          val pattern = s"(?<=\\W|^)$quoted(?=\\W|$$)"
+          val replacement = nick.substring(0, 1) + "…"
+          message = message.replaceAll(pattern, replacement)
+        }
+      }
+
+      if (recipient.isEmpty) {
+        message
+      } else {
+        s"$recipient: $message"
+      }
     }
   }
 }
