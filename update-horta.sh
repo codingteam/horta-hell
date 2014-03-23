@@ -17,8 +17,8 @@ git pull
 stop horta-hell
 
 # Build the new version:
-sbt one-jar
-mv target/scala-2.10/*-one-jar.jar ./horta-hell.jar
+sbt assembly
+mv target/scala-2.10/horta-hell-assembly.jar ./horta-hell.jar
 sbt clean
 
 cp /vagrant/horta.properties ./horta.properties
