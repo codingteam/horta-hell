@@ -19,6 +19,12 @@ The recommended way of horta deployment is using of the
 
 For development purposes, you may use the `sbt run` command or any IDE-compatible run activities.
 
+### Building
+
+The production-ready build can be created with the following command:
+
+    sbt assembly
+
 ### Command system
 
 Commands may be entered in MUC (multi-user chat) or private chat with bot (private commands do not work for now).

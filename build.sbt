@@ -28,5 +28,3 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-lang3" % "3.0",
   "org.jsoup" % "jsoup" % "1.7.3"
 )
-
-com.github.retronym.SbtOneJar.oneJarSettings
