@@ -5,8 +5,6 @@ import me.fornever.platonus.Network
 
 abstract sealed class RoomUserMessage
 
-case class SetNetwork(network: Network) extends RoomUserMessage
-
 case class UserPhrase(phrase: String) extends RoomUserMessage
 
 case class AddPhrase(phrase: String) extends RoomUserMessage

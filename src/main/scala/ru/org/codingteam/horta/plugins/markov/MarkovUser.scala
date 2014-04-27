@@ -34,10 +34,6 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
   }
 
   def receive = {
-    case SetNetwork(newNetwork) =>
-      network = Some(newNetwork)
-      lastNetworkTime = Some(Calendar.getInstance)
-
     case UserPhrase(message) =>
       if (addPhrase(message)) {
         lastMessage = Some(message)
@@ -48,47 +44,45 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
 
     case GeneratePhrase(credential, length, bloodMode) =>
       val location = credential.location
+      val network = getNetwork()
 
-      getNetwork() map {
-        network =>
-          def generator() = {
-            val phrase = generatePhrase(network, length)
-            if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase
-          }
+      def generator() = {
+        val phrase = generatePhrase(network, length)
+        if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase
+      }
 
-          val result = if (bloodMode) {
-            (generator(), false)
-          } else {
-            val currentTime = DateTime.now
-            def resetSeries() = {
-              firstSeriesMessageTime = Some(currentTime)
-              seriesMessages = 1
+      val result = if (bloodMode) {
+        (generator(), false)
+      } else {
+        val currentTime = DateTime.now
+        def resetSeries() = {
+          firstSeriesMessageTime = Some(currentTime)
+          seriesMessages = 1
+          (generator(), false)
+        }
+
+        firstSeriesMessageTime match {
+          case Some(time) =>
+            val inSeries = time.plusMillis(seriesTime.toMillis.toInt).isAfter(currentTime)
+            if (inSeries && seriesMessages < Configuration.markovMessagesPerMinute) {
+              seriesMessages += 1
               (generator(), false)
+            } else if (!inSeries) {
+              resetSeries()
+            } else {
+              (generator(), true)
             }
 
-            firstSeriesMessageTime match {
-              case Some(time) =>
-                val inSeries = time.plusMillis(seriesTime.toMillis.toInt).isAfter(currentTime)
-                if (inSeries && seriesMessages < Configuration.markovMessagesPerMinute) {
-                  seriesMessages += 1
-                  (generator(), false)
-                } else if (!inSeries) {
-                  resetSeries()
-                } else {
-                  (generator(), true)
-                }
+          case _ =>
+            resetSeries()
+        }
+      }
 
-              case _ =>
-                resetSeries()
-            }
-          }
-
-          result match {
-            case (message, false) =>
-              location ! SendResponse(credential, message)
-            case (message, true) =>
-              location ! SendPrivateResponse(credential, message)
-          }
+      result match {
+        case (message, false) =>
+          location ! SendResponse(credential, message)
+        case (message, true) =>
+          location ! SendPrivateResponse(credential, message)
       }
 
     case ReplaceRequest(credential, from, to) =>
@@ -116,21 +110,17 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       }
   }
 
-  def getNetwork(): Future[Network] = {
+  def getNetwork(): Network = {
     network match {
       case Some(network) =>
         lastNetworkTime = Some(Calendar.getInstance)
-        Future.successful(network)
+        network
 
       case None =>
-        val parser = context.actorOf(Props[LogParser])
-        val result = parser ? DoParsing(room, nick)
-        result map {
-          case network: Network =>
-            self ! SetNetwork(network)
-            parser ! PoisonPill
-            network
-        }
+        val parsedNetwork = LogParser.parse(log, room, nick)
+        network = Some(parsedNetwork)
+        lastNetworkTime = Some(Calendar.getInstance)
+        parsedNetwork
     }
   }
 
