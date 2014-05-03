@@ -9,7 +9,11 @@ private object TestCommand
  * Test plugin. Its work is to respond "test" to any test request.
  */
 class TestPlugin extends CommandPlugin {
-  def pluginDefinition = PluginDefinition(false, List(CommandDefinition(CommonAccess, "test", TestCommand)))
+  def pluginDefinition = PluginDefinition(
+    "test",
+    false,
+    List(CommandDefinition(CommonAccess, "test", TestCommand)),
+    None)
 
   override def processCommand(credential: Credential,
                               token: Any,

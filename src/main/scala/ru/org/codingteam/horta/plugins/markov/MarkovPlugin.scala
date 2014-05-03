@@ -17,10 +17,11 @@ class MarkovPlugin() extends CommandPlugin {
   // TODO: Drop inactive users?
   var users = Map[String, ActorRef]()
 
-  override def pluginDefinition = PluginDefinition(true, List(
-    CommandDefinition(CommonAccess, "say", SayCommand),
-    CommandDefinition(CommonAccess, "s", ReplaceCommand)
-  ))
+  override def pluginDefinition = PluginDefinition(
+    "markov",
+    true,
+    List(CommandDefinition(CommonAccess, "say", SayCommand), CommandDefinition(CommonAccess, "s", ReplaceCommand)),
+    None)
 
   override def processMessage(credential: Credential, message: String) {
     val user = getUser(credential)

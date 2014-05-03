@@ -7,7 +7,11 @@ import ru.org.codingteam.horta.core.Core
 private object VersionCommand
 
 class VersionPlugin extends CommandPlugin {
-  def pluginDefinition = PluginDefinition(false, List(CommandDefinition(CommonAccess, "version", VersionCommand)))
+  def pluginDefinition = PluginDefinition(
+    "version",
+    false,
+    List(CommandDefinition(CommonAccess, "version", VersionCommand)),
+    None)
 
   override def processCommand(
                                credential: Credential,

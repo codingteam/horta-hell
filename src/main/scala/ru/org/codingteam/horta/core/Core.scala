@@ -4,10 +4,8 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import ru.org.codingteam.horta.actors.database._
-import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.security._
-import scala.concurrent.Lock
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
@@ -15,6 +13,12 @@ import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
+import ru.org.codingteam.horta.plugins.ProcessCommand
+import scala.Some
+import ru.org.codingteam.horta.plugins.CommandDefinition
+import ru.org.codingteam.horta.plugins.PluginDefinition
+import ru.org.codingteam.horta.plugins.ProcessMessage
+import ru.org.codingteam.horta.messages.CoreMessage
 
 class Core extends Actor with ActorLogging {
 
@@ -40,22 +44,24 @@ class Core extends Actor with ActorLogging {
    */
   var commands = Map[String, List[(ActorRef, CommandDefinition)]]()
 
-    /**
-     * List of plugins receiving all the messages.
-     */
+  /**
+   * List of plugins receiving all the messages.
+   */
   var messageReceivers = List[ActorRef]()
 
   val parsers = List(SlashParsers, DollarParsers)
 
   override def preStart() {
-    val definitions = pluginDefinitions()
-    messageReceivers = definitions._1.toList
-    commands = definitions._2
+    val definitions = getPluginDefinitions
+    messageReceivers = Core.getReceivers(definitions)
+    commands = Core.getCommands(definitions)
     commands foreach (command => log.info(s"Registered command: $command"))
 
+    val storages = Core.getStorages(definitions)
+
     // TODO: What is the Akka way to create these?
+    val store = context.actorOf(Props(classOf[PersistentStore], storages), "store")
     val protocol = context.actorOf(Props[JabberProtocol], "jabber")
-    val store = context.actorOf(Props[PersistentStore], "store")
   }
 
   def receive = {
@@ -73,27 +79,12 @@ class Core extends Actor with ActorLogging {
     }
   }
 
-  /**
-   * @return a tuple (list of message receivers, map (command name => list of command executors)).
-   */
-  private def pluginDefinitions(): (Seq[ActorRef], Map[String, List[(ActorRef, CommandDefinition)]]) = {
-    val definitionRequests = Future.sequence(
-      for (plugin <- plugins) yield {
-        val actor = context.actorOf(plugin)
-        ask(actor, GetPluginDefinition).mapTo[PluginDefinition].map {
-          case PluginDefinition(messageResolver, commands) =>
-            (actor, messageResolver, commands)
-        }
-      })
-
-    val results = Await.result(definitionRequests, 60 seconds).toStream
-    val messageReceivers = results.filter(_._2).map(_._1)
-    val definitions = results.map(definition => definition._3.map(d => (definition._1, d))).flatten // norkotah
-    val groups = definitions.groupBy {
-      case (_, CommandDefinition(_, name, _)) => name
-    } map { case (k, v) => (k, v.toList) } 
-
-    (messageReceivers, groups)
+  private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
+    val responses = Future.sequence(for (plugin <- plugins) yield {
+      val actor = context.actorOf(plugin)
+      ask(actor, GetPluginDefinition).mapTo[PluginDefinition].map(definition => (actor, definition))
+    })
+    Await.result(responses, Duration.Inf)
   }
 
   private def parseCommand(message: String): Option[(String, Array[String])] = {
@@ -131,5 +122,30 @@ class Core extends Actor with ActorLogging {
       case RoomAdminAccess => user.access == GlobalAccess || user.access == RoomAdminAccess
       case CommonAccess => true
     }
+  }
+}
+
+object Core {
+  private def getReceivers(pluginDefinitions: List[(ActorRef, PluginDefinition)]): List[ActorRef] = {
+    pluginDefinitions.filter(definition => definition._2.messageReceiver).map(definition => definition._1)
+  }
+
+  private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]
+                           ): Map[String, List[(ActorRef, CommandDefinition)]] = {
+    val commands = for (definition <- pluginDefinitions) yield {
+      val actor = definition._1
+      val pluginDefinition = definition._2
+      for (command <- pluginDefinition.commands) yield (command.name, actor, command)
+    }
+
+    val groups = commands.flatMap(identity).groupBy(_._1).map(tuple => (tuple._1, tuple._2.map {
+        case (_, actor, command) => (actor, command)
+    }))
+
+    groups
+  }
+
+  private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, DAO] = {
+    pluginDefinitions.map(_._2).filter(_.dao.isDefined).map(definition => (definition.name, definition.dao.get)).toMap
   }
 }

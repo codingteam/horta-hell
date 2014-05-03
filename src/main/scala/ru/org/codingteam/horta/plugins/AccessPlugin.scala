@@ -9,9 +9,11 @@ private object AccessCommand
  * Access test plugin. Its work is to respond user privileges to any request.
  */
 class AccessPlugin extends CommandPlugin {
-	def pluginDefinition = PluginDefinition(
+  def pluginDefinition = PluginDefinition(
+    "access",
     false,
-    List(CommandDefinition(CommonAccess, "access", AccessCommand)))
+    List(CommandDefinition(CommonAccess, "access", AccessCommand)),
+    None)
 
 	override def processCommand (
 		credential: Credential,

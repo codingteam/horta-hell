@@ -17,8 +17,10 @@ class BashPlugin extends CommandPlugin {
   private var lastRequestDateTime: DateTime = DateTime.now()
 
   def pluginDefinition = PluginDefinition(
+    "bash",
     false,
-    List(CommandDefinition(CommonAccess, "bash", BashCommand)))
+    List(CommandDefinition(CommonAccess, "bash", BashCommand)),
+    None)
 
   override def processCommand(
                                credential: Credential,
