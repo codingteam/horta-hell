@@ -78,9 +78,10 @@ class PetPlugin extends CommandPlugin {
             case Array("stats", _*) => stats(pet)
             case Array("kill", _*) => kill(room)
             case Array("resurrect", _*) => resurrect(room)
-            case Array("feed", _*) => feed(room)
-            case Array("heal", _*) => heal(room)
+            case Array("feed", _*) => feed(room, credential.name)
+            case Array("heal", _*) => heal(room, credential.name)
             case Array("change", "nick", newNickname, _*) => changeNickname(room, newNickname)
+            case Array("coins", _*) => showCoins(room, credential.name)
             case _ => "Попробуйте $pet help."
           }
 
@@ -96,7 +97,7 @@ class PetPlugin extends CommandPlugin {
     (store ? ReadObject("pet", roomName)).map { response =>
       val pet = response match {
         case Some(PetStatus(nickname, alive, health, hunger)) =>
-          Pet(room, nickname, alive, health, hunger)
+          Pet(room, nickname, alive, health, hunger, Map[String, Int]())
 
         case None =>
           Pet.default(room)
@@ -140,21 +141,35 @@ class PetPlugin extends CommandPlugin {
     }
   }
 
-  def feed(room: String) = {
+  def feed(room: String, username: String) = {
     val pet = pets(room)
     if (pet.alive) {
+      val gotPTC = pet.hunger < 20
       pets = pets.updated(room, pet.copy(hunger = 100))
-      "%s покормлен".format(pet.nickname)
+
+      if (gotPTC) {
+        earnPTC(room, username, 1)
+        s"${pet.nickname} был близок к голодной смерти, но вы его вовремя покормили. Вы зарабатываете 1PTC."
+      } else {
+        s"${pet.nickname} покормлен."
+      }
     } else {
       "Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует."
     }
   }
 
-  def heal(room: String) = {
+  def heal(room: String, username: String) = {
     val pet = pets(room)
     if (pet.alive) {
+      val gotPTC = pet.health < 20
       pets = pets.updated(room, pet.copy(health = 100))
-      "%s здоров".format(pet.nickname)
+
+      if (gotPTC) {
+        earnPTC(room, username, 1)
+        s"${pet.nickname} был совсем плох и, скорее всего, умер если бы вы его вовремя не полечили. Вы зарабатываете 1PTC."
+      } else {
+        s"${pet.nickname} здоров."
+      }
     } else {
       "Невозможно вылечить мертвого питомца."
     }
@@ -168,6 +183,18 @@ class PetPlugin extends CommandPlugin {
     } else {
       "Выяснилось, что нашего питомца при жизни звали %s.".format(newNickname)
     }
+  }
+
+  def showCoins(room: String, username: String) = {
+    val pet = pets(room)
+    val ptc = pet.coins.getOrElse(username, 0)
+    s"У тебя есть ${ptc}PTC"
+  }
+
+  def earnPTC(room: String, username: String, value: Int) = {
+    val pet = pets(room)
+    val coins = pet.coins.getOrElse(username, 0)
+    pets = pets.updated(room, pet.copy(coins = pet.coins.updated(username, coins + value)))
   }
 
   def savePet(room: String) {
