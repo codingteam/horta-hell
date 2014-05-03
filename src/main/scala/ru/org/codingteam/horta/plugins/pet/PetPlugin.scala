@@ -99,8 +99,8 @@ class PetPlugin extends CommandPlugin {
   def initializeRoom(roomName: String, room: ActorRef) = {
     (store ? ReadObject("pet", roomName)).map { response =>
       val pet = response match {
-        case Some(PetStatus(nickname, alive, health, hunger)) =>
-          Pet(room, nickname, alive, health, hunger, Map[String, Int]())
+        case Some(PetStatus(nickname, alive, health, hunger, coins)) =>
+          Pet(room, nickname, alive, health, hunger, coins)
 
         case None =>
           Pet.default(room)
@@ -202,7 +202,7 @@ class PetPlugin extends CommandPlugin {
 
   def savePet(room: String) {
     val pet = pets(room)
-    val state = PetStatus(pet.nickname, pet.alive, pet.health, pet.hunger)
+    val state = PetStatus(pet.nickname, pet.alive, pet.health, pet.hunger, pet.coins)
     for (reply <- store ? StoreObject("pet", Some(room), state)) {
       reply match {
         case StoreOkReply =>

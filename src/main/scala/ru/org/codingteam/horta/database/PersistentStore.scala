@@ -89,6 +89,8 @@ class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLoggin
     flyway.setDataSource(dataSource)
     flyway.setLocations(s"db/$directory")
 
+    // Do our best to fix any errors:
+    flyway.repair()
     flyway.migrate()
   }
 }

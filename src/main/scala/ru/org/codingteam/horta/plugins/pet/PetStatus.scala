@@ -1,3 +1,3 @@
 package ru.org.codingteam.horta.plugins.pet
 
-case class PetStatus(val nickname: String, val alive: Boolean, val health: Integer, val hunger: Integer)
+case class PetStatus(nickname: String, alive: Boolean, health: Int, hunger: Integer, coins: Map[String, Int])
