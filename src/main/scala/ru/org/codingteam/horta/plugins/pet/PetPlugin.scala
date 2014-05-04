@@ -53,7 +53,7 @@ class PetPlugin extends CommandPlugin {
 
           if (hunger <= 0 || health <= 0) {
             alive = false
-            coins = coins.mapValues(_ - 1)
+            coins = coins.mapValues(x => max(0, x - 1))
             sayToEveryone(location, s"$nickname умер в забвении. Все теряют по 1PTC.")
           } else if (hunger <= 10) {
             sayToEveryone(location, s"$nickname пытается сожрать все, что найдет.")
@@ -130,16 +130,16 @@ class PetPlugin extends CommandPlugin {
 
   def kill(room: String, username: String) = {
     val pet = pets(room)
-    val userCoins = pet.coins(username)
+    val userCoins = getPTC(username, pet.coins)
 
     pets = pets.updated(room, pet.copy(
-      coins = pet.coins.updated(username, userCoins - 10),
+      coins = addPTC(username, pet.coins, -10),
       alive = pet.alive && userCoins < 10
     ))
 
     if (pet.alive) {
       if (userCoins < 10) {
-        "У вас не достаточно PTC для совершения столь мерзкого поступка. Требуется не менее 10PTC. Но мы, все равно, их с вас снимаем, и вы уходите в минус."
+        "У вас не достаточно PTC для совершения столь мерзкого поступка. Требуется не менее 10PTC. Но мы, все равно, их с вас снимаем"
       } else {
         "Вы жестоко убили питомца этой конфы. За это вы теряете 10PTC."
       }
@@ -150,7 +150,7 @@ class PetPlugin extends CommandPlugin {
 
   def resurrect(room: String, username: String) = {
     val pet = pets(room)
-    val userCoins = pet.coins(username)
+    val userCoins = getPTC(username, pet.coins)
 
     if (pet.alive) {
       s"${pet.nickname} и так жив. Зачем его воскрешать?"
@@ -159,7 +159,7 @@ class PetPlugin extends CommandPlugin {
         health = 100,
         hunger = 100,
         alive = true,
-        coins = pet.coins.updated(username, userCoins + 3)
+        coins = addPTC(username, pet.coins, 3)
       ))
       "Вы воскресили питомца этой конфы! Это ли не чудо?! За это вы получаете 3PTC."
     }
@@ -168,15 +168,15 @@ class PetPlugin extends CommandPlugin {
   def feed(room: String, username: String) = {
     val pet = pets(room)
     if (pet.alive) {
-      val (userCoins, response) = if (pet.hunger < 20) {
-        (pet.coins(username) + 1, s"${pet.nickname} был близок к голодной смерти, но вы его вовремя покормили. Вы зарабатываете 1PTC.")
+      val (coins, response) = if (pet.hunger < 20) {
+        (addPTC(username, pet.coins, 1), s"${pet.nickname} был близок к голодной смерти, но вы его вовремя покормили. Вы зарабатываете 1PTC.")
       } else {
-        (pet.coins(username), s"${pet.nickname} покормлен.")
+        (pet.coins, s"${pet.nickname} покормлен.")
       }
 
       pets = pets.updated(room, pet.copy(
         hunger = 100,
-        coins = pet.coins.updated(username, userCoins)
+        coins = coins
       ))
 
       response
@@ -188,15 +188,15 @@ class PetPlugin extends CommandPlugin {
   def heal(room: String, username: String) = {
     val pet = pets(room)
     if (pet.alive) {
-      val (userCoins, response) = if (pet.health < 20) {
-        (pet.coins(username) + 1, s"${pet.nickname} был совсем плох и, скорее всего, умер если бы вы его вовремя не полечили. Вы зарабатываете 1PTC.")
+      val (coins, response) = if (pet.health < 20) {
+        (addPTC(username, pet.coins, 1), s"${pet.nickname} был совсем плох и, скорее всего, умер если бы вы его вовремя не полечили. Вы зарабатываете 1PTC.")
       } else {
-        (pet.coins(username), s"${pet.nickname} здоров.")
+        (pet.coins, s"${pet.nickname} здоров.")
       }
 
       pets = pets.updated(room, pet.copy(
         health = 100,
-        coins = pet.coins.updated(username, userCoins)
+        coins = coins
       ))
 
       response
@@ -219,6 +219,15 @@ class PetPlugin extends CommandPlugin {
     val pet = pets(room)
     val ptc = pet.coins.getOrElse(username, 0)
     s"У тебя есть ${ptc}PTC"
+  }
+
+  def addPTC(username: String, coins: Map[String, Int], value: Int) = {
+    val userCoins = coins.getOrElse(username, 0);
+    coins.updated(username, max(0, userCoins + value))
+  }
+
+  def getPTC(username: String, coins: Map[String, Int]) = {
+    coins.getOrElse(username, 0)
   }
 
   def savePet(room: String) {
