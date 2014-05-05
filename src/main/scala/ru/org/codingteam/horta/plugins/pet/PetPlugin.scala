@@ -82,6 +82,7 @@ class PetPlugin extends CommandPlugin {
         for (pet <- petF) {
           val text = arguments match {
             case Array("help", _*) => help
+            case Array("rating", _*) => rating(room)
             case Array("stats", _*) => stats(pet)
             case Array("kill", _*) => kill(room, credential.name)
             case Array("resurrect", _*) => resurrect(room, credential.name)
@@ -116,7 +117,19 @@ class PetPlugin extends CommandPlugin {
     }
   }
 
-  def help = "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick, coins, transfer"
+  def help = "Доступные команды: help, rating, stats, kill, resurrect, feed, heal, change nick, coins, transfer"
+
+  def rating(room: String) = {
+    val pet = pets(room)
+    val coins = pet.coins
+    val users = coins.toStream.sortBy(-_._2).take(10).filter(_._2 > 0)
+
+    "\n" + users.map(user => {
+      val name = user._1
+      val amount = user._2
+      s"$name: $amount"
+    }).mkString("\n")
+  }
 
   def stats(pet: Pet) = {
     if (pet.alive) {
