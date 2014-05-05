@@ -116,7 +116,7 @@ class PetPlugin extends CommandPlugin {
     }
   }
 
-  def help = "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick, coins"
+  def help = "Доступные команды: help, stats, kill, resurrect, feed, heal, change nick, coins, transfer"
 
   def stats(pet: Pet) = {
     if (pet.alive) {
