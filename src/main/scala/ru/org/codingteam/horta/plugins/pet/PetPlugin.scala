@@ -239,7 +239,7 @@ class PetPlugin extends CommandPlugin {
     val pet = pets(room)
     var coins = pet.coins
 
-    if (getPTC(sourceUser, coins) > amount) {
+    if (getPTC(sourceUser, coins) < amount) {
       return s"Недостаточно PTC."
     }
 
