@@ -89,7 +89,7 @@ class PetPlugin extends CommandPlugin {
             case Array("heal", _*) => heal(room, credential.name)
             case Array("change", "nick", newNickname, _*) => changeNickname(room, newNickname)
             case Array("coins", _*) => showCoins(room, credential.name)
-            case Array("transfer", targetName, amount) => transfer(room, credential.name, targetName, amount)
+            case Array("transfer", targetName, amount, _*) => transfer(room, credential.name, targetName, amount)
             case _ => "Попробуйте $pet help."
           }
 
