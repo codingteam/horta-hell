@@ -88,7 +88,7 @@ class PetPlugin extends CommandPlugin {
             case Array("resurrect", _*) => resurrect(room, credential.name)
             case Array("feed", _*) => feed(room, credential.name)
             case Array("heal", _*) => heal(room, credential.name)
-            case Array("change", "nick", newNickname, _*) => changeNickname(room, newNickname)
+            case Array("change", "nick", newNickname, _*) => changeNickname(room, credential.name, newNickname)
             case Array("coins", _*) => showCoins(room, credential.name)
             case Array("transfer", targetName, amount, _*) => transfer(room, credential.name, targetName, amount)
             case _ => "Попробуйте $pet help."
@@ -127,7 +127,7 @@ class PetPlugin extends CommandPlugin {
     "\n" + users.map(user => {
       val name = user._1
       val amount = user._2
-      s"$name: $amount"
+      s"$name: ${amount}PTC"
     }).mkString("\n")
   }
 
@@ -164,7 +164,6 @@ class PetPlugin extends CommandPlugin {
 
   def resurrect(room: String, username: String) = {
     val pet = pets(room)
-    val userCoins = getPTC(username, pet.coins)
 
     if (pet.alive) {
       s"${pet.nickname} и так жив. Зачем его воскрешать?"
@@ -219,9 +218,16 @@ class PetPlugin extends CommandPlugin {
     }
   }
 
-  def changeNickname(room: String, newNickname: String) = {
+  def changeNickname(room: String, changer: String, newNickname: String) = {
     val pet = pets(room)
-    pets = pets.updated(room, pet.copy(nickname = newNickname))
+    var coins = pet.coins
+    if (getPTC(changer, coins) < 1) {
+      "Недостаточно PTC."
+    }
+
+    coins = updatePTC(changer, coins, -1)
+    pets = pets.updated(room, pet.copy(nickname = newNickname, coins = coins))
+
     if (pet.alive) {
       "Теперь нашего питомца зовут %s.".format(newNickname)
     } else {
