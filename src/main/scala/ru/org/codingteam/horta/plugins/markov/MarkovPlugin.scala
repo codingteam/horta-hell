@@ -46,7 +46,7 @@ class MarkovPlugin() extends CommandPlugin {
   def generatePhrase(credential: Credential, arguments: Array[String]) {
     arguments match {
       case Array(_) | Array() =>
-        val length = arguments match {
+        val length = Math.max(1, arguments match {
           case Array(lengthParameter, _*) =>
             try {
               lengthParameter.toInt
@@ -54,7 +54,7 @@ class MarkovPlugin() extends CommandPlugin {
               case _: NumberFormatException => 1
             }
           case _ => 1
-        }
+        })
 
         if (! isMyself(credential)) {
           val user = getUser(credential)
