@@ -218,11 +218,11 @@ class PetPlugin extends CommandPlugin {
     }
   }
 
-  def changeNickname(room: String, changer: String, newNickname: String) = {
+  def changeNickname(room: String, changer: String, newNickname: String): String = {
     val pet = pets(room)
     var coins = pet.coins
     if (getPTC(changer, coins) < 1) {
-      "Недостаточно PTC."
+      return "Недостаточно PTC."
     }
 
     coins = updatePTC(changer, coins, -1)
