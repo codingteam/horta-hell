@@ -55,8 +55,6 @@ second argument, taking the last sender phrase as the base.
 
 * `$say` - query the Markov network (generated for the sender) to generate random phrase.
 
-* `$test` - just a test command.
-
 * `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
 
 ### Log parser
