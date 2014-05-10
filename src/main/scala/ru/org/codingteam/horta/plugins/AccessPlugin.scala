@@ -8,21 +8,19 @@ private object AccessCommand
 /**
  * Access test plugin. Its work is to respond user privileges to any request.
  */
-class AccessPlugin extends CommandPlugin {
-  def pluginDefinition = PluginDefinition(
-    "access",
-    false,
-    List(CommandDefinition(CommonAccess, "access", AccessCommand)),
-    None)
+class AccessPlugin extends BasePlugin with CommandProcessor {
 
-	override def processCommand (
-		credential: Credential,
-		token: Any,
-		arguments: Array[String]) = {
-		token match {
-			case AccessCommand => credential.location ! SendResponse(credential, credential.access.toString)
-			case _ =>
-		}
-	}
+  override def name = "access"
+
+  override def commands = List(CommandDefinition(CommonAccess, "access", AccessCommand))
+
+  override def processCommand(credential: Credential,
+                              token: Any,
+                              arguments: Array[String]) = {
+    token match {
+      case AccessCommand => credential.location ! SendResponse(credential, credential.access.toString)
+      case _ =>
+    }
+  }
 
 }

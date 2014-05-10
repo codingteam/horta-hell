@@ -6,17 +6,15 @@ import ru.org.codingteam.horta.core.Core
 
 private object VersionCommand
 
-class VersionPlugin extends CommandPlugin {
-  def pluginDefinition = PluginDefinition(
-    "version",
-    false,
-    List(CommandDefinition(CommonAccess, "version", VersionCommand)),
-    None)
+class VersionPlugin extends BasePlugin with CommandProcessor {
 
-  override def processCommand(
-                               credential: Credential,
-                               token: Any,
-                               arguments: Array[String]) = {
+  override def name = "version"
+
+  override def commands = List(CommandDefinition(CommonAccess, "version", VersionCommand))
+
+  override def processCommand(credential: Credential,
+                              token: Any,
+                              arguments: Array[String]) = {
     token match {
       case VersionCommand =>
         val version = Option(classOf[Core].getPackage.getImplementationVersion).getOrElse("development")

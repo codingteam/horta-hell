@@ -30,7 +30,6 @@ class Core extends Actor with ActorLogging {
    * List of plugin props to be started.
    */
   val plugins: List[Props] = List(
-    Props[TestPlugin],
     Props[FortunePlugin],
     Props[AccessPlugin],
     Props[PetPlugin],
@@ -127,7 +126,7 @@ class Core extends Actor with ActorLogging {
 
 object Core {
   private def getReceivers(pluginDefinitions: List[(ActorRef, PluginDefinition)]): List[ActorRef] = {
-    pluginDefinitions.filter(definition => definition._2.messageReceiver).map(definition => definition._1)
+    pluginDefinitions.filter(definition => definition._2.notifications.messages).map(definition => definition._1)
   }
 
   private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]

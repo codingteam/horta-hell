@@ -5,17 +5,15 @@ import scala.io.Source
 import scala.util.parsing.json._
 import ru.org.codingteam.horta.messages.SendResponse
 
-class FortunePlugin extends CommandPlugin {
+class FortunePlugin extends BasePlugin with CommandProcessor {
 
   private object FortuneCommand
 
   private val maxLength = 128
 
-  def pluginDefinition = PluginDefinition(
-    "fortune",
-    false,
-    List(CommandDefinition(CommonAccess, "fortune", FortuneCommand)),
-    None)
+  override def name = "fortune"
+
+  override def commands = List(CommandDefinition(CommonAccess, "fortune", FortuneCommand))
 
   private def parseResponse(rawText: String): String = {
     val json = JSON.parseFull(rawText)
@@ -67,4 +65,5 @@ class FortunePlugin extends CommandPlugin {
       case _ => None
     }
   }
+
 }

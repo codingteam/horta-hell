@@ -3,13 +3,23 @@ package ru.org.codingteam.horta.plugins
 import ru.org.codingteam.horta.actors.database.DAO
 
 /**
+ * Description of events.
+ * @param messages true if plugin want to be notified on message receival.
+ * @param rooms true if plugin want to be notified on room entering / leaving.
+ * @param users true if plugin want to be notified on user entering / leaving the room.
+ */
+case class Notifications(messages: Boolean,
+                         rooms: Boolean,
+                         users: Boolean)
+
+/**
  * A plugin definition.
  * @param name plugin name.
- * @param messageReceiver true if this plugin wants to receive every message in the system.
+ * @param notifications description of events plugin want to be notified of.
  * @param commands a list of commands supported by the plugin.
  * @param dao plugin data access object if present.
  */
 case class PluginDefinition(name: String,
-                            messageReceiver: Boolean,
+                            notifications: Notifications,
                             commands: List[CommandDefinition],
                             dao: Option[DAO])

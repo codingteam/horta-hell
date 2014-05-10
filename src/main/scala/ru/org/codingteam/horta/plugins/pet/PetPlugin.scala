@@ -1,25 +1,23 @@
 package ru.org.codingteam.horta.plugins.pet
 
 import akka.actor.ActorRef
-import ru.org.codingteam.horta.messages._
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.actors.database.{StoreOkReply, StoreObject, ReadObject}
+import ru.org.codingteam.horta.actors.database.StoreOkReply
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
-import ru.org.codingteam.horta.plugins.{PluginDefinition, CommandDefinition, CommandPlugin}
+import ru.org.codingteam.horta.plugins._
 import scala.concurrent.Future
 import scala.math._
 import ru.org.codingteam.horta.plugins.pet.commands._
 import ru.org.codingteam.horta.actors.database.StoreObject
 import scala.Some
-import ru.org.codingteam.horta.plugins.PluginDefinition
 import ru.org.codingteam.horta.plugins.CommandDefinition
 import ru.org.codingteam.horta.actors.database.ReadObject
 import ru.org.codingteam.horta.messages.SendResponse
 
-class PetPlugin extends CommandPlugin {
+class PetPlugin extends BasePlugin with CommandProcessor {
 
   case object PetTick
 
@@ -31,7 +29,7 @@ class PetPlugin extends CommandPlugin {
 
   var pets = Map[String, Pet]()
 
-  val commands = {
+  val petCommands = {
     val withoutHelp = Map(
       "rating" -> new RatingCommand,
       "stats" -> new StatsCommand,
@@ -49,14 +47,14 @@ class PetPlugin extends CommandPlugin {
 
   object PetCommandMatcher {
     def unapply(commandName: String): Option[AbstractCommand] =
-      commands.get(commandName)
+      petCommands.get(commandName)
   }
 
-  override def pluginDefinition = PluginDefinition(
-    "pet",
-    false,
-    List(CommandDefinition(CommonAccess, "pet", null)),
-    Some(new PetDAO()))
+  override def name = "pet"
+
+  override def commands = List(CommandDefinition(CommonAccess, "pet", null))
+
+  override def dao = Some(new PetDAO())
 
   override def preStart() = {
     context.system.scheduler.schedule(15 seconds, 360 seconds, self, PetTick)
