@@ -11,6 +11,13 @@ import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 import ru.org.codingteam.horta.plugins.{PluginDefinition, CommandDefinition, CommandPlugin}
 import scala.concurrent.Future
 import scala.math._
+import ru.org.codingteam.horta.plugins.pet.commands._
+import ru.org.codingteam.horta.actors.database.StoreObject
+import scala.Some
+import ru.org.codingteam.horta.plugins.PluginDefinition
+import ru.org.codingteam.horta.plugins.CommandDefinition
+import ru.org.codingteam.horta.actors.database.ReadObject
+import ru.org.codingteam.horta.messages.SendResponse
 
 class PetPlugin extends CommandPlugin {
 
@@ -23,6 +30,27 @@ class PetPlugin extends CommandPlugin {
   val store = context.actorSelection("/user/core/store")
 
   var pets = Map[String, Pet]()
+
+  val commands = {
+    val withoutHelp = Map(
+      "rating" -> new RatingCommand,
+      "stats" -> new StatsCommand,
+      "kill" -> new KillCommand,
+      "resurrect" -> new ResurrectCommand,
+      "feed" -> new FeedCommand,
+      "heal" -> new HealCommand,
+      "change-nick" -> new ChangeNickCommand,
+      "coins" -> new CoinsCommand,
+      "transfer" -> new TransferCommand
+    )
+
+    withoutHelp.updated("help", new HelpCommand(withoutHelp.keys.toList))
+  }
+
+  object PetCommandMatcher {
+    def unapply(commandName: String): Option[AbstractCommand] =
+      commands.get(commandName)
+  }
 
   override def pluginDefinition = PluginDefinition(
     "pet",
@@ -81,16 +109,12 @@ class PetPlugin extends CommandPlugin {
 
         for (pet <- petF) {
           val text = arguments match {
-            case Array("help", _*) => help
-            case Array("rating", _*) => rating(room)
-            case Array("stats", _*) => stats(pet)
-            case Array("kill", _*) => kill(room, credential.name)
-            case Array("resurrect", _*) => resurrect(room, credential.name)
-            case Array("feed", _*) => feed(room, credential.name)
-            case Array("heal", _*) => heal(room, credential.name)
-            case Array("change", "nick", newNickname, _*) => changeNickname(room, credential.name, newNickname)
-            case Array("coins", _*) => showCoins(room, credential.name)
-            case Array("transfer", targetName, amount, _*) => transfer(room, credential.name, targetName, amount)
+            case Array(PetCommandMatcher(command), args@_*) => {
+              val (newPet, response) = command(pet, credential, args.toArray)
+              pets = pets.updated(room, newPet)
+              response
+            }
+
             case _ => "Попробуйте $pet help."
           }
 
@@ -115,167 +139,6 @@ class PetPlugin extends CommandPlugin {
       pets += roomName -> pet
       pet
     }
-  }
-
-  def help = "Доступные команды: help, rating, stats, kill, resurrect, feed, heal, change nick, coins, transfer"
-
-  def rating(room: String) = {
-    val pet = pets(room)
-    val coins = pet.coins
-    val users = coins.toStream.sortBy(-_._2).take(10).filter(_._2 > 0)
-
-    "\n" + users.map(user => {
-      val name = user._1
-      val amount = user._2
-      s"$name: ${amount}PTC"
-    }).mkString("\n")
-  }
-
-  def stats(pet: Pet) = {
-    if (pet.alive) {
-      """
-        |Кличка: %s
-        |Здоровье: %d
-        |Голод: %d""".stripMargin.format(pet.nickname, pet.health, pet.hunger)
-    } else {
-      s"%s мертв. Какие еще статы?".format(pet.nickname)
-    }
-  }
-
-  def kill(room: String, username: String) = {
-    val pet = pets(room)
-    val userCoins = getPTC(username, pet.coins)
-
-    pets = pets.updated(room, pet.copy(
-      coins = updatePTC(username, pet.coins, -10),
-      alive = pet.alive && userCoins < 10
-    ))
-
-    if (pet.alive) {
-      if (userCoins < 10) {
-        "У вас не достаточно PTC для совершения столь мерзкого поступка. Требуется не менее 10PTC. Но мы, все равно, их с вас снимаем"
-      } else {
-        "Вы жестоко убили питомца этой конфы. За это вы теряете 10PTC."
-      }
-    } else {
-      s"${pet.nickname} уже мертв. Но вам этого мало, да? За одну лишь мысль об убийстве питомца с вас снимается 10PTC."
-    }
-  }
-
-  def resurrect(room: String, username: String) = {
-    val pet = pets(room)
-
-    if (pet.alive) {
-      s"${pet.nickname} и так жив. Зачем его воскрешать?"
-    } else {
-      pets = pets.updated(room, pet.copy(
-        health = 100,
-        hunger = 100,
-        alive = true,
-        coins = updatePTC(username, pet.coins, 3)
-      ))
-      "Вы воскресили питомца этой конфы! Это ли не чудо?! За это вы получаете 3PTC."
-    }
-  }
-
-  def feed(room: String, username: String) = {
-    val pet = pets(room)
-    if (pet.alive) {
-      val (coins, response) = if (pet.hunger < 20) {
-        (updatePTC(username, pet.coins, 1), s"${pet.nickname} был близок к голодной смерти, но вы его вовремя покормили. Вы зарабатываете 1PTC.")
-      } else {
-        (pet.coins, s"${pet.nickname} покормлен.")
-      }
-
-      pets = pets.updated(room, pet.copy(
-        hunger = 100,
-        coins = coins
-      ))
-
-      response
-    } else {
-      "Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует."
-    }
-  }
-
-  def heal(room: String, username: String) = {
-    val pet = pets(room)
-    if (pet.alive) {
-      val (coins, response) = if (pet.health < 20) {
-        (updatePTC(username, pet.coins, 1), s"${pet.nickname} был совсем плох и, скорее всего, умер если бы вы его вовремя не полечили. Вы зарабатываете 1PTC.")
-      } else {
-        (pet.coins, s"${pet.nickname} здоров.")
-      }
-
-      pets = pets.updated(room, pet.copy(
-        health = 100,
-        coins = coins
-      ))
-
-      response
-    } else {
-      "Невозможно вылечить мертвого питомца."
-    }
-  }
-
-  def changeNickname(room: String, changer: String, newNickname: String): String = {
-    val pet = pets(room)
-    var coins = pet.coins
-    if (getPTC(changer, coins) < 1) {
-      return "Недостаточно PTC."
-    }
-
-    coins = updatePTC(changer, coins, -1)
-    pets = pets.updated(room, pet.copy(nickname = newNickname, coins = coins))
-
-    if (pet.alive) {
-      "Теперь нашего питомца зовут %s.".format(newNickname)
-    } else {
-      "Выяснилось, что нашего питомца при жизни звали %s.".format(newNickname)
-    }
-  }
-
-  def showCoins(room: String, username: String) = {
-    val pet = pets(room)
-    val ptc = pet.coins.getOrElse(username, 0)
-    s"У тебя есть ${ptc}PTC"
-  }
-
-  def transfer(room: String,
-               sourceUser: String,
-               targetUser: String,
-               amountString: String): String = {
-    val amount = try {
-      Integer.parseInt(amountString)
-    } catch {
-      case _: NumberFormatException => 0
-    }
-
-    if (amount <= 0) {
-      return s"Некорректная сумма."
-    }
-
-    val pet = pets(room)
-    var coins = pet.coins
-
-    if (getPTC(sourceUser, coins) < amount) {
-      return s"Недостаточно PTC."
-    }
-
-    coins = updatePTC(sourceUser, coins, -amount)
-    coins = updatePTC(targetUser, coins, amount)
-
-    pets = pets.updated(room, pet.copy(coins = coins))
-    s"Транзакция успешна."
-  }
-
-  def updatePTC(username: String, coins: Map[String, Int], value: Int) = {
-    val userCoins = coins.getOrElse(username, 0)
-    coins.updated(username, max(0, userCoins + value))
-  }
-
-  def getPTC(username: String, coins: Map[String, Int]) = {
-    coins.getOrElse(username, 0)
   }
 
   def savePet(room: String) {
