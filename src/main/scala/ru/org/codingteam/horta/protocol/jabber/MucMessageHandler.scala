@@ -45,11 +45,11 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
         case _ => User
       }
 
+      addParticipant(participant, affiliation)
       log.info(s"$participant joined as $affiliation")
-      participants += participant -> affiliation
 
     case UserLeft(participant) =>
-      participants -= participant
+      removeParticipant(participant)
       log.info(s"$participant left")
 
     case OwnershipGranted(participant) =>
@@ -71,7 +71,8 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
     case NicknameChanged(participant, newNick) =>
       val newParticipant = jidByNick(newNick)
       val access = participants(participant)
-      participants = participants - participant + (newParticipant -> access)
+      removeParticipant(participant)
+      addParticipant(newParticipant, access)
       log.info(s"$participant changed nick to $newNick")
 
     case UserMessage(message) =>
@@ -142,6 +143,14 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
         s"$recipient: $message"
       }
     }
+  }
+
+  private def addParticipant(participant: String, affinity: Affinity) {
+    participants += participant -> affinity
+  }
+
+  private def removeParticipant(participant: String) {
+    participants -= participant
   }
 
 }
