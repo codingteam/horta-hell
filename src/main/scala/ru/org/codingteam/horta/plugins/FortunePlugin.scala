@@ -1,13 +1,13 @@
 package ru.org.codingteam.horta.plugins
 
+import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 import scala.io.Source
 import scala.util.parsing.json._
-import ru.org.codingteam.horta.messages.SendResponse
+
+private object FortuneCommand
 
 class FortunePlugin extends BasePlugin with CommandProcessor {
-
-  private object FortuneCommand
 
   private val maxLength = 128
 
@@ -35,7 +35,7 @@ class FortunePlugin extends BasePlugin with CommandProcessor {
 
   private def getFortuneByUrl(credential: Credential, url: String) = {
     val rawText = Source.fromURL(url).mkString
-    credential.location ! SendResponse(credential, parseResponse(rawText))
+    Protocol.sendResponse(credential.location, credential, parseResponse(rawText))
   }
 
   override def processCommand(credential: Credential,
@@ -53,12 +53,12 @@ class FortunePlugin extends BasePlugin with CommandProcessor {
               getFortuneByUrl(credential, s"http://rexim.me/api/random?max_length=$maxLength")
 
             case _ =>
-              credential.location ! SendResponse(credential, "Usage: $fortune [fortune-id:number]")
+              Protocol.sendResponse(credential.location, credential, "Usage: $fortune [fortune-id:number]")
           }
         } catch {
           case e: Exception => {
             e.printStackTrace()
-            credential.location ! SendResponse(credential, "[ERROR] Something's wrong!")
+            Protocol.sendResponse(credential.location, credential, "[ERROR] Something's wrong!")
           }
         }
 

@@ -1,10 +1,14 @@
 package ru.org.codingteam.horta.protocol.jabber
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.pattern.{ask, pipe}
+import akka.util.Timeout
 import java.util.regex.Pattern
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.security._
+import scala.concurrent.duration._
 import scala.Some
+import ru.org.codingteam.horta.protocol.{SendMucMessage, SendPrivateMessage, SendPrivateResponse, SendResponse}
 
 /**
  * Multi user chat message handler.
@@ -108,7 +112,11 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Act
     val name = credential.name
     val response = prepareResponse(name, text, isPrivate)
     val message = if (isPrivate) SendPrivateMessage(roomJID, name, response) else SendMucMessage(roomJID, response)
-    protocol ! message
+
+    implicit val timeout = Timeout(60.seconds)
+    import context.dispatcher
+
+    (protocol ? message) pipeTo sender
   }
 
   def prepareResponse(recipient: String, text: String, isPrivate: Boolean) = {

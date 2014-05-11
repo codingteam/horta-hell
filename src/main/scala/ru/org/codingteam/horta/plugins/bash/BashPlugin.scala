@@ -1,10 +1,10 @@
 package ru.org.codingteam.horta.plugins.bash
 
+import org.joda.time.{DateTime, Period}
+import ru.org.codingteam.horta.plugins.{CommandProcessor, CommandDefinition, BasePlugin}
+import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
 import scala.io.Source
-import ru.org.codingteam.horta.messages.SendResponse
-import ru.org.codingteam.horta.plugins.{CommandProcessor, CommandDefinition, BasePlugin}
-import org.joda.time.{DateTime, Period}
 
 private object BashCommand
 
@@ -42,7 +42,7 @@ class BashPlugin extends BasePlugin with CommandProcessor {
               response = "Не так часто, пожалуйста."
             }
 
-            credential.location ! SendResponse(credential, response)
+            Protocol.sendResponse(credential.location, credential, response)
 
           case None =>
         }

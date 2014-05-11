@@ -1,16 +1,15 @@
 package ru.org.codingteam.horta.plugins.markov
 
-import akka.actor.{PoisonPill, Props, ActorLogging, Actor}
-import akka.pattern.ask
+import akka.actor.{Actor, ActorLogging}
 import akka.util.Timeout
+import java.util.{Calendar, Locale}
+import me.fornever.platonus.Network
 import org.joda.time.DateTime
+import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.protocol.Protocol
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import java.util.{Calendar, Locale}
-import scala.concurrent.Future
-import ru.org.codingteam.horta.configuration.Configuration
-import me.fornever.platonus.Network
 
 class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging {
 
@@ -80,9 +79,9 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
 
       result match {
         case (message, false) =>
-          location ! SendResponse(credential, message)
+          Protocol.sendResponse(location, credential, message)
         case (message, true) =>
-          location ! SendPrivateResponse(credential, message)
+          Protocol.sendPrivateResponse(location, credential, message)
       }
 
     case ReplaceRequest(credential, from, to) =>
@@ -92,9 +91,9 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
         case Some(message) =>
           val newMessage = message.replace(from, to)
           lastMessage = Some(newMessage)
-          location ! SendResponse(credential, newMessage)
+          Protocol.sendResponse(location, credential, newMessage)
         case None =>
-          location ! SendResponse(credential, "No messages for you, sorry.")
+          Protocol.sendResponse(location, credential, "No messages for you, sorry.")
       }
 
     case Tick =>

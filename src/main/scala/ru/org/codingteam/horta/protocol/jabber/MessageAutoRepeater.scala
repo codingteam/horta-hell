@@ -4,9 +4,7 @@ import akka.actor.{ActorSystem, ActorRef, Scheduler}
 import concurrent.ExecutionContext
 import org.jivesoftware.smack.PacketListener
 import org.jivesoftware.smack.packet.{Message, Packet}
-import ru.org.codingteam.horta.messages.SendMucMessage
-import scala.concurrent.duration._
-import scala.language.postfixOps
+import ru.org.codingteam.horta.protocol.SendMucMessage
 
 class MessageAutoRepeater(val system: ActorSystem,
                           val messenger: ActorRef,

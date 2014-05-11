@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
+import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
-import ru.org.codingteam.horta.messages.SendResponse
 
 private object AccessCommand
 
@@ -18,7 +18,7 @@ class AccessPlugin extends BasePlugin with CommandProcessor {
                               token: Any,
                               arguments: Array[String]) = {
     token match {
-      case AccessCommand => credential.location ! SendResponse(credential, credential.access.toString)
+      case AccessCommand => Protocol.sendResponse(credential.location, credential, credential.access.toString)
       case _ =>
     }
   }

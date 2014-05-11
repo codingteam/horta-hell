@@ -1,12 +1,12 @@
 package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{ActorRef, Props}
-import akka.pattern.ask
+import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.messages._
-import scala.language.postfixOps
 import ru.org.codingteam.horta.plugins._
+import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
-import ru.org.codingteam.horta.configuration.{RoomDescriptor, Configuration}
+import scala.language.postfixOps
 
 case object SayCommand
 
@@ -61,11 +61,11 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
           val user = getUser(credential)
           val location = credential.location
           if (Math.random() > 0.99) {
-            location ! SendResponse(credential, "пффффш")
-            location ! SendResponse(credential, "шпфффф")
-            location ! SendResponse(credential, "я твой Хортец!")
+            Protocol.sendResponse(location, credential, "пффффш")
+            Protocol.sendResponse(location, credential, "шпфффф")
+            Protocol.sendResponse(location, credential, "я твой Хортец!")
           } else if (Math.random() < 0.01) {
-            location ! SendResponse(credential, "BLOOD GORE DESTROY")
+            Protocol.sendResponse(location, credential, "BLOOD GORE DESTROY")
             for (i <- 1 to 10) {
               user ! GeneratePhrase(credential, 1, true)
             }
@@ -90,7 +90,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
         }
 
         case _ =>
-          location ! SendResponse(credential, "Wrong arguments.")
+          Protocol.sendResponse(location, credential, "Wrong arguments.")
       }
     }
   }
@@ -109,4 +109,5 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
       }
     }
   }
+
 }

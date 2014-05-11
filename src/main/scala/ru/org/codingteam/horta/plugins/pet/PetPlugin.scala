@@ -3,19 +3,16 @@ package ru.org.codingteam.horta.plugins.pet
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import scala.concurrent.duration._
-import scala.language.postfixOps
-import ru.org.codingteam.horta.actors.database.StoreOkReply
-import ru.org.codingteam.horta.security.{Credential, CommonAccess}
+import ru.org.codingteam.horta.actors.database.{ReadObject, StoreObject, StoreOkReply}
 import ru.org.codingteam.horta.plugins._
-import scala.concurrent.Future
-import scala.math._
 import ru.org.codingteam.horta.plugins.pet.commands._
-import ru.org.codingteam.horta.actors.database.StoreObject
+import ru.org.codingteam.horta.protocol.Protocol
+import ru.org.codingteam.horta.security.{Credential, CommonAccess}
+import scala.concurrent.duration._
+import scala.concurrent.Future
+import scala.language.postfixOps
+import scala.math._
 import scala.Some
-import ru.org.codingteam.horta.plugins.CommandDefinition
-import ru.org.codingteam.horta.actors.database.ReadObject
-import ru.org.codingteam.horta.messages.SendResponse
 
 /**
  * Plugin for managing the so-called pet. Distinct pet belongs to every room.
@@ -119,7 +116,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
             case _ => "Попробуйте $pet help."
           }
 
-          credential.location ! SendResponse(credential, text)
+          Protocol.sendResponse(credential.location, credential, text)
         }
 
       case None =>
@@ -170,7 +167,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
 
   def sayToEveryone(location: ActorRef, text: String) {
     val credential = Credential.empty(location)
-    location ! SendResponse(credential, text)
+    Protocol.sendResponse(location, credential, text)
   }
 
 }
