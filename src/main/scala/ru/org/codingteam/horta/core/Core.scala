@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import ru.org.codingteam.horta.actors.database._
-import ru.org.codingteam.horta.messages.{CoreRoomLeave, CoreRoomJoin, CoreMessage}
+import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
@@ -55,7 +55,7 @@ class Core extends Actor with ActorLogging {
   /**
    * List of plugins receiving the user notifications.
    */
-  var userReceivers = List[ActorRef]()
+  var participantReceivers = List[ActorRef]()
 
   val parsers = List(SlashParsers, DollarParsers)
 
@@ -77,6 +77,8 @@ class Core extends Actor with ActorLogging {
     case CoreMessage(credential, text) => processMessage(credential, text)
     case CoreRoomJoin(roomJID, actor) => processRoomJoin(roomJID, actor)
     case CoreRoomLeave(roomJID) => processRoomLeave(roomJID)
+    case CoreParticipantJoined(roomJID, participantJID, actor) => processParticipantJoin(roomJID, participantJID, actor)
+    case CoreParticipantLeft(roomJID, participantJID, actor) => processParticipantLeave(roomJID, participantJID, actor)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
@@ -90,15 +92,15 @@ class Core extends Actor with ActorLogging {
   private def parseNotifications(definitions: List[(ActorRef, PluginDefinition)]) = {
     for ((actor, definition) <- definitions) {
       definition.notifications match {
-        case Notifications(messages, rooms, users) =>
+        case Notifications(messages, rooms, participants) =>
           if (messages) {
             messageReceivers ::= actor
           }
           if (rooms) {
             roomReceivers ::= actor
           }
-          if (users) {
-            userReceivers ::= actor
+          if (participants) {
+            participantReceivers ::= actor
           }
       }
     }
@@ -126,6 +128,18 @@ class Core extends Actor with ActorLogging {
   private def processRoomLeave(roomJID: String) {
     for (plugin <- roomReceivers) {
       plugin ! ProcessRoomLeave(roomJID)
+    }
+  }
+
+  private def processParticipantJoin(roomJID: String, participantJID: String, roomActor: ActorRef) {
+    for (plugin <- participantReceivers) {
+      plugin ! ProcessParticipantJoin(roomJID, participantJID, roomActor)
+    }
+  }
+
+  private def processParticipantLeave(roomJID: String, participantJID: String, roomActor: ActorRef) {
+    for (plugin <- participantReceivers) {
+      plugin ! ProcessParticipantLeave(roomJID, participantJID, roomActor)
     }
   }
 

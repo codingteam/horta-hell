@@ -40,3 +40,19 @@ case class ProcessRoomJoin(roomJID: String, actor: ActorRef)
  * @param roomJID JID of the room.
  */
 case class ProcessRoomLeave(roomJID: String)
+
+/**
+ * A process participant join request.
+ * @param roomJID JID of the room.
+ * @param participantJID JID of the joined participant.
+ * @param actor actor representing the room.
+ */
+case class ProcessParticipantJoin(roomJID: String, participantJID: String, actor: ActorRef)
+
+/**
+ * A process participant leave request.
+ * @param roomJID JID of the room.
+ * @param participantJID JID of the left participant.
+ * @param actor actor representing the room.
+ */
+case class ProcessParticipantLeave(roomJID: String, participantJID: String, actor: ActorRef)

@@ -6,11 +6,11 @@ import ru.org.codingteam.horta.actors.database.DAO
  * Description of events.
  * @param messages true if plugin want to be notified on message receival.
  * @param rooms true if plugin want to be notified on room entering / leaving.
- * @param users true if plugin want to be notified on user entering / leaving the room.
+ * @param participants true if plugin want to be notified on participant entering / leaving the room.
  */
 case class Notifications(messages: Boolean,
                          rooms: Boolean,
-                         users: Boolean)
+                         participants: Boolean)
 
 /**
  * A plugin definition.

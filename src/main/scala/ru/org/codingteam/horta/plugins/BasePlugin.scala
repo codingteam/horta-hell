@@ -21,7 +21,7 @@ abstract class BasePlugin extends Actor with ActorLogging {
    * Plugin notification sources.
    * @return object containing definition of notification sources.
    */
-  protected def notifications = Notifications(messages = false, rooms = false, users = false)
+  protected def notifications = Notifications(messages = false, rooms = false, participants = false)
 
   /**
    * A collection of command definitions.

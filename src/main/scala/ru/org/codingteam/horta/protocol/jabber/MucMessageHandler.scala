@@ -1,27 +1,15 @@
 package ru.org.codingteam.horta.protocol.jabber
 
-import akka.actor.{ActorRef, Actor, ActorLogging}
-import ru.org.codingteam.horta.security._
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import java.util.regex.Pattern
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.security._
 import scala.Some
-import ru.org.codingteam.horta.messages.OwnershipRevoked
-import ru.org.codingteam.horta.messages.SendMucMessage
-import ru.org.codingteam.horta.messages.UserMessage
-import ru.org.codingteam.horta.messages.AdminRevoked
-import scala.Some
-import ru.org.codingteam.horta.messages.UserLeft
-import ru.org.codingteam.horta.messages.NicknameChanged
-import ru.org.codingteam.horta.messages.UserJoined
-import ru.org.codingteam.horta.messages.CoreMessage
-import ru.org.codingteam.horta.messages.OwnershipGranted
-import ru.org.codingteam.horta.messages.AdminGranted
-import ru.org.codingteam.horta.messages.SendResponse
 
 /**
  * Multi user chat message handler.
  */
-class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Actor with ActorLogging {
+class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Actor with ActorLogging {
 
   val core = context.actorSelection("/user/core")
 
@@ -29,11 +17,11 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
 
   override def preStart() {
     super.preStart()
-    core ! CoreRoomJoin(roomJid, self)
+    core ! CoreRoomJoin(roomJID, self)
   }
 
   override def postStop() {
-    core ! CoreRoomLeave(roomJid)
+    core ! CoreRoomLeave(roomJID)
     super.postStop()
   }
 
@@ -102,10 +90,10 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
       case Some(User) => CommonAccess
     }
 
-    Credential(self, accessLevel, Some(roomJid), nickByJid(jid), Some(jid))
+    Credential(self, accessLevel, Some(roomJID), nickByJid(jid), Some(jid))
   }
 
-  def jidByNick(nick: String) = s"$roomJid/$nick"
+  def jidByNick(nick: String) = s"$roomJID/$nick"
 
   def nickByJid(jid: String) = {
     val args = jid.split('/')
@@ -119,7 +107,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
   def sendMessage(credential: Credential, text: String, isPrivate: Boolean) {
     val name = credential.name
     val response = prepareResponse(name, text, isPrivate)
-    val message = if (isPrivate) SendPrivateMessage(roomJid, name, response) else SendMucMessage(roomJid, response)
+    val message = if (isPrivate) SendPrivateMessage(roomJID, name, response) else SendMucMessage(roomJID, response)
     protocol ! message
   }
 
@@ -145,12 +133,14 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
     }
   }
 
-  private def addParticipant(participant: String, affinity: Affinity) {
-    participants += participant -> affinity
+  private def addParticipant(participantJID: String, affinity: Affinity) {
+    participants += participantJID -> affinity
+    core ! CoreParticipantJoined(roomJID, participantJID, self)
   }
 
-  private def removeParticipant(participant: String) {
-    participants -= participant
+  private def removeParticipant(participantJID: String) {
+    participants -= participantJID
+    core ! CoreParticipantLeft(roomJID, participantJID, self)
   }
 
 }
