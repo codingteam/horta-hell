@@ -172,5 +172,5 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
     val credential = Credential.empty(location)
     location ! SendResponse(credential, text)
   }
-  
+
 }
