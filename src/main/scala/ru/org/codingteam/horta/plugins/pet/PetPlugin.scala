@@ -17,7 +17,10 @@ import ru.org.codingteam.horta.plugins.CommandDefinition
 import ru.org.codingteam.horta.actors.database.ReadObject
 import ru.org.codingteam.horta.messages.SendResponse
 
-class PetPlugin extends BasePlugin with CommandProcessor {
+/**
+ * Plugin for managing the so-called pet. Distinct pet belongs to every room.
+ */
+class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
 
   case object PetTick
 
@@ -123,19 +126,35 @@ class PetPlugin extends BasePlugin with CommandProcessor {
     }
   }
 
-  // TODO: Call this method on entering the room. See issue #47 for details.
-  def initializeRoom(roomName: String, room: ActorRef) = {
-    (store ? ReadObject("pet", roomName)).map { response =>
-      val pet = response match {
-        case Some(PetStatus(nickname, alive, health, hunger, coins)) =>
-          Pet(room, nickname, alive, health, hunger, coins)
+  override def processRoomJoin(roomJID: String, actor: ActorRef) {
+    initializeRoom(roomJID, actor)
+  }
 
-        case None =>
-          Pet.default(room)
-      }
+  override def processRoomLeave(roomJID: String) {
+    savePet(roomJID)
+    pets -= roomJID
+  }
 
-      pets += roomName -> pet
-      pet
+  private def initializeRoom(roomJID: String, actor: ActorRef) = {
+    (store ? ReadObject("pet", roomJID)).map {
+      response =>
+        pets.get(roomJID) match {
+          case Some(pet) =>
+            // Defense from possible race conditions:
+            pet
+
+          case None =>
+            val pet = response match {
+              case Some(PetStatus(nickname, alive, health, hunger, coins)) =>
+                Pet(actor, nickname, alive, health, hunger, coins)
+
+              case None =>
+                Pet.default(actor)
+            }
+
+            pets += roomJID -> pet
+            pet
+        }
     }
   }
 
@@ -153,4 +172,5 @@ class PetPlugin extends BasePlugin with CommandProcessor {
     val credential = Credential.empty(location)
     location ! SendResponse(credential, text)
   }
+  
 }

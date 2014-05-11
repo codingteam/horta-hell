@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import ru.org.codingteam.horta.actors.database._
-import ru.org.codingteam.horta.messages.CoreMessage
+import ru.org.codingteam.horta.messages.{CoreRoomLeave, CoreRoomJoin, CoreMessage}
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
@@ -73,19 +73,10 @@ class Core extends Actor with ActorLogging {
     val protocol = context.actorOf(Props[JabberProtocol], "jabber")
   }
 
-  def receive = {
-    case CoreMessage(credential, text) => {
-      val command = parseCommand(text)
-      command match {
-        case Some((name, arguments)) =>
-          executeCommand(sender, credential, name, arguments)
-        case None =>
-      }
-
-      for (plugin <- messageReceivers) {
-        plugin ! ProcessMessage(credential, text)
-      }
-    }
+  override def receive = {
+    case CoreMessage(credential, text) => processMessage(credential, text)
+    case CoreRoomJoin(roomJID, actor) => processRoomJoin(roomJID, actor)
+    case CoreRoomLeave(roomJID) => processRoomLeave(roomJID)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
@@ -110,6 +101,31 @@ class Core extends Actor with ActorLogging {
             userReceivers ::= actor
           }
       }
+    }
+  }
+
+  private def processMessage(credential: Credential, text: String) {
+    val command = parseCommand(text)
+    command match {
+      case Some((name, arguments)) =>
+        executeCommand(sender, credential, name, arguments)
+      case None =>
+    }
+
+    for (plugin <- messageReceivers) {
+      plugin ! ProcessMessage(credential, text)
+    }
+  }
+
+  private def processRoomJoin(roomJID: String, actor: ActorRef) {
+    for (plugin <- roomReceivers) {
+      plugin ! ProcessRoomJoin(roomJID, actor)
+    }
+  }
+
+  private def processRoomLeave(roomJID: String) {
+    for (plugin <- roomReceivers) {
+      plugin ! ProcessRoomLeave(roomJID)
     }
   }
 

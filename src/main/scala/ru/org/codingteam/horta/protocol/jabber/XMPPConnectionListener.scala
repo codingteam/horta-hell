@@ -7,8 +7,9 @@ import ru.org.codingteam.horta.messages.Reconnect
 /**
  * XMPP connection listener.
  */
-class XMPPConnectionListener(val messenger: ActorRef, connection: XMPPConnection) extends ConnectionListener {
-	def connectionClosed () {}
+class XMPPConnectionListener(messenger: ActorRef, connection: XMPPConnection) extends ConnectionListener {
+
+  def connectionClosed () {}
 
 	def connectionClosedOnError (e: Exception) {
 		messenger ! Reconnect(connection)
@@ -19,4 +20,5 @@ class XMPPConnectionListener(val messenger: ActorRef, connection: XMPPConnection
 	def reconnectionSuccessful () {}
 
 	def reconnectionFailed (e: Exception) {}
+
 }

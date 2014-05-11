@@ -1,5 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
+import akka.actor.ActorRef
 import ru.org.codingteam.horta.security.Credential
 
 /**
@@ -26,3 +27,16 @@ case class ProcessCommand(user: Credential, token: Any, arguments: Array[String]
  * @param message a message sent.
  */
 case class ProcessMessage(user: Credential, message: String)
+
+/**
+ * A process room join request.
+ * @param roomJID JID of the room.
+ * @param actor actor representing the room.
+ */
+case class ProcessRoomJoin(roomJID: String, actor: ActorRef)
+
+/**
+ * A process room leave request.
+ * @param roomJID JID of the room.
+ */
+case class ProcessRoomLeave(roomJID: String)

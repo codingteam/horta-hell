@@ -27,6 +27,16 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
 
   var participants = Map[String, Affinity]()
 
+  override def preStart() {
+    super.preStart()
+    core ! CoreRoomJoin(roomJid, self)
+  }
+
+  override def postStop() {
+    core ! CoreRoomLeave(roomJid)
+    super.postStop()
+  }
+
   def receive = {
     case UserJoined(participant, affilationName) =>
       val affiliation = affilationName match {
@@ -133,4 +143,5 @@ class MucMessageHandler(val protocol: ActorRef, val roomJid: String) extends Act
       }
     }
   }
+
 }
