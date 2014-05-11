@@ -4,22 +4,21 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import ru.org.codingteam.horta.actors.database._
+import ru.org.codingteam.horta.messages.CoreMessage
 import ru.org.codingteam.horta.plugins._
+import ru.org.codingteam.horta.plugins.bash.BashPlugin
+import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
+import ru.org.codingteam.horta.plugins.pet.PetPlugin
+import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.security._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
-import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
-import ru.org.codingteam.horta.plugins.pet.PetPlugin
-import ru.org.codingteam.horta.plugins.bash.BashPlugin
-import ru.org.codingteam.horta.plugins.ProcessCommand
 import scala.Some
-import ru.org.codingteam.horta.plugins.CommandDefinition
-import ru.org.codingteam.horta.plugins.PluginDefinition
-import ru.org.codingteam.horta.plugins.ProcessMessage
-import ru.org.codingteam.horta.messages.CoreMessage
 
+/**
+ * Horta core actor. Manages all plugins, routes global messages.
+ */
 class Core extends Actor with ActorLogging {
 
   import context.dispatcher
@@ -48,11 +47,22 @@ class Core extends Actor with ActorLogging {
    */
   var messageReceivers = List[ActorRef]()
 
+  /**
+   * List of plugins receiving room notifications.
+   */
+  var roomReceivers = List[ActorRef]()
+
+  /**
+   * List of plugins receiving the user notifications.
+   */
+  var userReceivers = List[ActorRef]()
+
   val parsers = List(SlashParsers, DollarParsers)
 
   override def preStart() {
     val definitions = getPluginDefinitions
-    messageReceivers = Core.getReceivers(definitions)
+    parseNotifications(definitions)
+
     commands = Core.getCommands(definitions)
     commands foreach (command => log.info(s"Registered command: $command"))
 
@@ -84,6 +94,23 @@ class Core extends Actor with ActorLogging {
       ask(actor, GetPluginDefinition).mapTo[PluginDefinition].map(definition => (actor, definition))
     })
     Await.result(responses, Duration.Inf)
+  }
+
+  private def parseNotifications(definitions: List[(ActorRef, PluginDefinition)]) = {
+    for ((actor, definition) <- definitions) {
+      definition.notifications match {
+        case Notifications(messages, rooms, users) =>
+          if (messages) {
+            messageReceivers ::= actor
+          }
+          if (rooms) {
+            roomReceivers ::= actor
+          }
+          if (users) {
+            userReceivers ::= actor
+          }
+      }
+    }
   }
 
   private def parseCommand(message: String): Option[(String, Array[String])] = {
@@ -122,12 +149,10 @@ class Core extends Actor with ActorLogging {
       case CommonAccess => true
     }
   }
+
 }
 
 object Core {
-  private def getReceivers(pluginDefinitions: List[(ActorRef, PluginDefinition)]): List[ActorRef] = {
-    pluginDefinitions.filter(definition => definition._2.notifications.messages).map(definition => definition._1)
-  }
 
   private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]
                            ): Map[String, List[(ActorRef, CommandDefinition)]] = {
@@ -138,7 +163,7 @@ object Core {
     }
 
     val groups = commands.flatMap(identity).groupBy(_._1).map(tuple => (tuple._1, tuple._2.map {
-        case (_, actor, command) => (actor, command)
+      case (_, actor, command) => (actor, command)
     }))
 
     groups
@@ -147,4 +172,5 @@ object Core {
   private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, DAO] = {
     pluginDefinitions.map(_._2).filter(_.dao.isDefined).map(definition => (definition.name, definition.dao.get)).toMap
   }
+
 }
