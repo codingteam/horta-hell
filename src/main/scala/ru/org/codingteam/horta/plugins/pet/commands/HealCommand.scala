@@ -9,7 +9,7 @@ class HealCommand extends AbstractCommand {
 
     if (pet.alive) {
       val (coins, response) = if (pet.health < 20) {
-        (PtcUtils.updatePTC(username, pet.coins, 1), s"${pet.nickname} был совсем плох и, скорее всего, умер если бы вы его вовремя не полечили. Вы зарабатываете 1PTC.")
+        (PtcUtils.updatePTC(username, pet.coins, 1), s"${pet.nickname} был совсем плох и, скорее всего, умер бы, если бы вы его вовремя не полечили. Вы зарабатываете 1PTC.")
       } else {
         (pet.coins, s"${pet.nickname} здоров.")
       }
