@@ -81,9 +81,9 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
             alive = false
             coins = coins.mapValues(x => max(0, x - 1))
             sayToEveryone(location, s"$nickname умер в забвении. Все теряют по 1PTC.")
-          } else if (hunger <= 10) {
+          } else if (hunger <= 10 && pet.hunger > 10) {
             sayToEveryone(location, s"$nickname пытается сожрать все, что найдет.")
-          } else if (health <= 10) {
+          } else if (health <= 10 && pet.health > 10) {
             sayToEveryone(location, s"$nickname забился в самый темный угол конфы и смотрит больными глазами в одну точку.")
           }
 
