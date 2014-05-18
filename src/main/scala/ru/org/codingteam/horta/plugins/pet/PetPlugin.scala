@@ -3,7 +3,7 @@ package ru.org.codingteam.horta.plugins.pet
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
-import ru.org.codingteam.horta.actors.database.{ReadObject, StoreObject, StoreOkReply}
+import ru.org.codingteam.horta.database.{ReadObject, StoreObject}
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.pet.commands._
 import ru.org.codingteam.horta.protocol.Protocol
@@ -24,8 +24,6 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
   import context.dispatcher
 
   implicit val timeout = Timeout(60 seconds)
-
-  val store = context.actorSelection("/user/core/store")
 
   var pets = Map[String, Pet]()
 
@@ -160,7 +158,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
     val state = PetStatus(pet.nickname, pet.alive, pet.health, pet.hunger, pet.coins)
     for (reply <- store ? StoreObject("pet", Some(room), state)) {
       reply match {
-        case StoreOkReply =>
+        case Some(_) =>
       }
     }
   }

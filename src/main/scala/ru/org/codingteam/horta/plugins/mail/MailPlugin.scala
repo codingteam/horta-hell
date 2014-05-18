@@ -1,10 +1,14 @@
 package ru.org.codingteam.horta.plugins.mail
 
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, ParticipantProcessor, BasePlugin}
-import ru.org.codingteam.horta.security.{Credential, CommonAccess}
-import ru.org.codingteam.horta.protocol.Protocol
 import akka.actor.ActorRef
+import akka.pattern.ask
+import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
+import ru.org.codingteam.horta.database.{DeleteObject, StoreObject, ReadObject}
+import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, ParticipantProcessor, BasePlugin}
+import ru.org.codingteam.horta.protocol.Protocol
+import ru.org.codingteam.horta.security.{Credential, CommonAccess}
+import scala.concurrent.duration._
 import scala.concurrent.Future
 
 private object SendMailCommand
@@ -16,11 +20,15 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
   import context.dispatcher
 
+  implicit val timeout = Timeout(60.seconds)
+
+  private val maxMessageCount = 10
+
   override def name = "mail"
 
   override def commands = List(CommandDefinition(CommonAccess, "send", SendMailCommand))
 
-  // TODO: Implement DAO.
+  override def dao = Some(new MailDAO())
 
   override def processCommand(credential: Credential,
                               token: Any,
@@ -57,20 +65,38 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
     Protocol.sendPrivateResponse(location, receiver, message) map {
       case true =>
-      case false => saveMessage(sender.roomName.get, receiverNick, message)
+        Protocol.sendResponse(location, sender, "Сообщение доставлено")
+
+      case false =>
+        val room = sender.roomName.get
+
+        readMessages(room, receiverNick) map { messages =>
+          val count = messages.count(_ => true)
+          if (count > maxMessageCount) {
+            Protocol.sendResponse(location, sender, "Очередь сообщений указанного пользователя переполнена")
+          }
+
+          saveMessage(room, receiverNick, message) map { saveStatus =>
+            if (saveStatus) {
+              Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
+            } else {
+              Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
+            }
+          }
+        }
     }
   }
 
-  private def saveMessage(room: String, receiverNick: String, message: String) {
-    // TODO: Save the message.
+  private def saveMessage(room: String, receiverNick: String, message: String): Future[Boolean] = {
+    (store ? StoreObject(name, Some((room, receiverNick)), message)).mapTo[Boolean]
   }
 
   private def readMessages(room: String, receiverNick: String): Future[Seq[MailMessage]] = {
-    throw new Exception("Not implemented") // TODO: Read messages from the database.
+    (store ? ReadObject(name, (room, receiverNick))).mapTo[Seq[MailMessage]]
   }
 
   private def deleteMessage(id: Int) {
-    throw new Exception("Not implemented") // TODO: Delete message from the database.
+    store ? DeleteObject(name, id)
   }
 
 }

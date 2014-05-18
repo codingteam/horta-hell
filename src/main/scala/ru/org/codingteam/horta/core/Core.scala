@@ -3,7 +3,7 @@ package ru.org.codingteam.horta.core
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import ru.org.codingteam.horta.actors.database._
+import ru.org.codingteam.horta.database.{DAO, PersistentStore}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin

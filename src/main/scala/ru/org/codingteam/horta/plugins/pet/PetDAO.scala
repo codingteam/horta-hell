@@ -1,12 +1,12 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import ru.org.codingteam.horta.actors.database.DAO
+import ru.org.codingteam.horta.database.DAO
 import java.sql.Connection
 
 class PetDAO extends DAO {
   override def directoryName = "pet"
 
-  override def store(connection: Connection, id: Option[Any], obj: Any): Any = {
+  override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = {
     id match {
       case Some(room) =>
         val roomName = room.asInstanceOf[String]
@@ -21,7 +21,7 @@ class PetDAO extends DAO {
               insert(connection, roomName, obj)
             }
 
-            null
+            Some(null)
           } finally {
             resultSet.close()
           }
@@ -58,6 +58,8 @@ class PetDAO extends DAO {
       select.close()
     }
   }
+
+  override def delete(connection: Connection, id: Any): Boolean = false
 
   private def readCoins(connection: Connection, room: String): Map[String, Int] = {
     val statement = connection.prepareStatement(
