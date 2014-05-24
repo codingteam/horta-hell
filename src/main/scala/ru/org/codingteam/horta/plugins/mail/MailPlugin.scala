@@ -22,7 +22,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
   implicit val timeout = Timeout(60.seconds)
 
-  private val maxMessageCount = 10
+  private val maxMessageCount = 5
 
   override def name = "mail"
 
@@ -49,7 +49,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
     for (messages <- readMessages(roomJID, participantNick);
          message <- messages) {
-      Protocol.sendPrivateResponse(actor, receiver, message.text) map {
+      Protocol.sendPrivateResponse(actor, receiver, prepareText(message)) map {
         case true => deleteMessage(message.id.get)
         case false =>
       }
@@ -61,15 +61,15 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
   private def sendMail(sender: Credential, receiverNick: String, message: String) {
     // First try to send the message right now:
     val location = sender.location
+    val senderNick = sender.name
     val receiver = Credential.forNick(location, receiverNick)
 
-    Protocol.sendPrivateResponse(location, receiver, message) map {
+    Protocol.sendPrivateResponse(location, receiver, prepareText(senderNick, message)) map {
       case true =>
         Protocol.sendResponse(location, sender, "Сообщение доставлено")
 
       case false =>
         val room = sender.roomName.get
-        val senderNick = sender.name
 
         readMessages(room, receiverNick) map { messages =>
           val count = messages.length
@@ -83,6 +83,12 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
           }
         }
     }
+  }
+
+  private def prepareText(message: MailMessage): String = prepareText(message.senderNick, message.text)
+
+  private def prepareText(senderNick: String, text: String): String = {
+    s"Сообщение от $senderNick: $text"
   }
 
   private def saveMessage(room: String, senderNick: String, receiverNick: String, message: String): Future[Boolean] = {
