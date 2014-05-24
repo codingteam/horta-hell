@@ -50,7 +50,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     for (messages <- readMessages(roomJID, participantNick);
          message <- messages) {
       Protocol.sendPrivateResponse(actor, receiver, message.text) map {
-        case true => deleteMessage(message.id)
+        case true => deleteMessage(message.id.get)
         case false =>
       }
     }
@@ -69,30 +69,33 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
       case false =>
         val room = sender.roomName.get
+        val senderNick = sender.name
 
         readMessages(room, receiverNick) map { messages =>
-          val count = messages.count(_ => true)
+          val count = messages.length
           if (count > maxMessageCount) {
             Protocol.sendResponse(location, sender, "Очередь сообщений указанного пользователя переполнена")
           }
 
-          saveMessage(room, receiverNick, message) map { saveStatus =>
-            if (saveStatus) {
-              Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
-            } else {
-              Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
-            }
+          saveMessage(room, senderNick, receiverNick, message) map {
+            case true => Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
+            case false => Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
           }
         }
     }
   }
 
-  private def saveMessage(room: String, receiverNick: String, message: String): Future[Boolean] = {
-    (store ? StoreObject(name, Some((room, receiverNick)), message)).mapTo[Boolean]
+  private def saveMessage(room: String, senderNick: String, receiverNick: String, message: String): Future[Boolean] = {
+    (store ? StoreObject(name, None, MailMessage(None, room, senderNick, receiverNick, message))).map {
+      case Some(_) => true
+      case None => false
+    }
   }
 
   private def readMessages(room: String, receiverNick: String): Future[Seq[MailMessage]] = {
-    (store ? ReadObject(name, (room, receiverNick))).mapTo[Seq[MailMessage]]
+    (store ? ReadObject(name, (room, receiverNick))) map {
+      case Some(messages: Seq[MailMessage]) => messages
+    }
   }
 
   private def deleteMessage(id: Int) {
