@@ -47,6 +47,9 @@ Known command list:
 
 * `$fortune` - shows a fortune from @rexim database.
 
+* `$mail receiver message` - send the mail to the user. Please note that bot determines the receiver by nickname only.
+If the nickname is not registered on server, someone else may take the nick and receive your mail. Be careful!
+
 * `$pet` - Tamagochi-like plugin, contains internal subcommand system. Enter `$pet help` for details. Distinct pets are
 created for every room.
 
