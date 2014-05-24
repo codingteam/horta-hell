@@ -75,11 +75,11 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
           val count = messages.length
           if (count > maxMessageCount) {
             Protocol.sendResponse(location, sender, "Очередь сообщений указанного пользователя переполнена")
-          }
-
-          saveMessage(room, senderNick, receiverNick, message) map {
-            case true => Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
-            case false => Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
+          } else {
+            saveMessage(room, senderNick, receiverNick, message) map {
+              case true => Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
+              case false => Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
+            }
           }
         }
     }
