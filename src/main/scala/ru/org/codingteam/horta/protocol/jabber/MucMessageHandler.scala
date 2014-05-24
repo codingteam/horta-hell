@@ -142,13 +142,23 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Act
   }
 
   private def addParticipant(participantJID: String, affinity: Affinity) {
+    val oldSize = participants.size
     participants += participantJID -> affinity
-    core ! CoreParticipantJoined(roomJID, participantJID, self)
+    val changed = oldSize != participants.size
+
+    if (changed) {
+      core ! CoreParticipantJoined(roomJID, participantJID, self)
+    }
   }
 
   private def removeParticipant(participantJID: String) {
+    val oldSize = participants.size
     participants -= participantJID
-    core ! CoreParticipantLeft(roomJID, participantJID, self)
+    val changed = oldSize != participants.size
+
+    if (changed) {
+      core ! CoreParticipantLeft(roomJID, participantJID, self)
+    }
   }
 
 }

@@ -9,6 +9,7 @@ import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.configuration._
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.{SendChatMessage, SendMucMessage, SendPrivateMessage}
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.Lock
 import scala.language.postfixOps
@@ -85,8 +86,15 @@ class JabberProtocol() extends Actor with ActorLogging {
       sender ! (muc match {
         case Some(muc) =>
           val jid = s"$roomJid/$nick"
-          val chat = muc.chat.createPrivateChat(jid, null)
-          sendMessage(message, chat.sendMessage)
+
+          // TODO: This check is unreliable, implement something better. ~ ForNeVeR
+          val occupants = muc.chat.getOccupants
+          if (occupants.asScala.contains(jid)) {
+            val chat = muc.chat.createPrivateChat(jid, null)
+            sendMessage(message, chat.sendMessage)
+          } else {
+            false
+          }
         case None =>
           false
       })

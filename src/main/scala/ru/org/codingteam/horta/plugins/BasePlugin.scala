@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
 import akka.actor.{Actor, ActorLogging}
-import ru.org.codingteam.horta.actors.database.DAO
+import ru.org.codingteam.horta.database.DAO
 
 /**
  * CommandPlugin class used as base for all command plugins.
@@ -10,6 +10,9 @@ abstract class BasePlugin extends Actor with ActorLogging {
   def receive = {
     case GetPluginDefinition => sender ! pluginDefinition
   }
+
+  protected val core = context.actorSelection("/user/core")
+  protected val store = context.actorSelection("/user/core/store")
 
   /**
    * Plugin name.

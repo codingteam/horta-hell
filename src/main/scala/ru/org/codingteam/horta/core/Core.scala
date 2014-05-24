@@ -3,10 +3,11 @@ package ru.org.codingteam.horta.core
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
-import ru.org.codingteam.horta.actors.database._
+import ru.org.codingteam.horta.database.{DAO, PersistentStore}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
+import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
@@ -31,6 +32,7 @@ class Core extends Actor with ActorLogging {
   val plugins: List[Props] = List(
     Props[FortunePlugin],
     Props[AccessPlugin],
+    Props[MailPlugin],
     Props[PetPlugin],
     Props[MarkovPlugin],
     Props[VersionPlugin],

@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.actors.database.DAO
+import ru.org.codingteam.horta.database.DAO
 
 /**
  * Description of events.

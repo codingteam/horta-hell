@@ -18,4 +18,5 @@ case class Credential(location: ActorRef,
 
 object Credential {
   def empty(location: ActorRef) = Credential(location, CommonAccess, None, "", None)
+  def forNick(location: ActorRef, nick: String) = Credential(location, CommonAccess, None, nick, None)
 }
