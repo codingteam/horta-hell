@@ -15,7 +15,7 @@ case object ReplaceCommand
 class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProcessor {
 
   // TODO: Drop inactive users?
-  var users = Map[String, ActorRef]()
+  var users = Map[UserIdentity, ActorRef]()
 
   override def name = "markov"
 
@@ -41,7 +41,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
   }
 
   def isMyself(credential: Credential): Boolean = {
-    (Configuration.roomDescriptors find {rd => rd.room == credential.roomName.getOrElse("")} map {rd => rd.nickname} getOrElse(Configuration.dftName)) == credential.name
+    (Configuration.roomDescriptors find { rd => rd.room == credential.roomName.getOrElse("")} map { rd => rd.nickname} getOrElse (Configuration.dftName)) == credential.name
   }
 
   def generatePhrase(credential: Credential, arguments: Array[String]) {
@@ -57,7 +57,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
           case _ => 1
         })
 
-        if (! isMyself(credential)) {
+        if (!isMyself(credential)) {
           val user = getUser(credential)
           val location = credential.location
           if (Math.random() > 0.99) {
@@ -80,9 +80,8 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
 
   def replace(credential: Credential, arguments: Array[String]) {
     val location = credential.location
-    val nick = credential.name
 
-    if (! isMyself(credential)) {
+    if (!isMyself(credential)) {
       arguments match {
         case Array(from, to, _*) if from != "" => {
           val user = getUser(credential)
@@ -98,15 +97,15 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
   def getUser(credential: Credential) = {
     val roomName = credential.roomName.getOrElse("")
     val name = credential.name
+    val identity = UserIdentity(roomName, name)
 
-    val user = users.get(credential.name)
+    val user = users.get(identity)
     user match {
       case Some(u) => u
-      case None => {
+      case None =>
         val user = context.actorOf(Props(new MarkovUser(roomName, name)))
-        users = users.updated(name, user)
+        users = users.updated(identity, user)
         user
-      }
     }
   }
 
