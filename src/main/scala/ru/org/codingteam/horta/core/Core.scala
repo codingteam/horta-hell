@@ -16,6 +16,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 import scala.Some
+import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
 
 /**
  * Horta core actor. Manages all plugins, routes global messages.
@@ -32,6 +33,7 @@ class Core extends Actor with ActorLogging {
   val plugins: List[Props] = List(
     Props[FortunePlugin],
     Props[AccessPlugin],
+    Props[WtfPlugin],
     Props[MailPlugin],
     Props[PetPlugin],
     Props[MarkovPlugin],
