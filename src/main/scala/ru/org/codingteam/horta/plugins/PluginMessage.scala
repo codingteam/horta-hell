@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
 import akka.actor.ActorRef
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.security.Credential
 
 /**
@@ -23,36 +24,41 @@ case class ProcessCommand(user: Credential, token: Any, arguments: Array[String]
 
 /**
  * A process message request. It can be send to the plugin if it was registered for global message processing.
+ * @param time time of an event.
  * @param user a user sending the message.
  * @param message a message sent.
  */
-case class ProcessMessage(user: Credential, message: String)
+case class ProcessMessage(time: DateTime, user: Credential, message: String)
 
 /**
  * A process room join request.
+ * @param time time of an event.
  * @param roomJID JID of the room.
  * @param actor actor representing the room.
  */
-case class ProcessRoomJoin(roomJID: String, actor: ActorRef)
+case class ProcessRoomJoin(time: DateTime, roomJID: String, actor: ActorRef)
 
 /**
  * A process room leave request.
+ * @param time time of an event.
  * @param roomJID JID of the room.
  */
-case class ProcessRoomLeave(roomJID: String)
+case class ProcessRoomLeave(time: DateTime, roomJID: String)
 
 /**
  * A process participant join request.
+ * @param time time of an event.
  * @param roomJID JID of the room.
  * @param participantJID JID of the joined participant.
  * @param actor actor representing the room.
  */
-case class ProcessParticipantJoin(roomJID: String, participantJID: String, actor: ActorRef)
+case class ProcessParticipantJoin(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef)
 
 /**
  * A process participant leave request.
+ * @param time time of an event.
  * @param roomJID JID of the room.
  * @param participantJID JID of the left participant.
  * @param actor actor representing the room.
  */
-case class ProcessParticipantLeave(roomJID: String, participantJID: String, actor: ActorRef)
+case class ProcessParticipantLeave(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef)

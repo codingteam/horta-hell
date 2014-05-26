@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{ActorRef, Props}
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
@@ -24,7 +25,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
     CommandDefinition(CommonAccess, "s", ReplaceCommand)
   )
 
-  override def processMessage(credential: Credential, message: String) {
+  override def processMessage(time: DateTime, credential: Credential, message: String) {
     val user = getUser(credential)
     user ! UserPhrase(message)
   }

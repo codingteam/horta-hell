@@ -4,6 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
+import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.{SendChatMessage, SendResponse}
 import ru.org.codingteam.horta.security.{CommonAccess, Credential, GlobalAccess}
@@ -23,7 +24,7 @@ class PrivateMessageHandler(val protocol: ActorRef) extends Actor with ActorLogg
       log.info(s"Private message: <$jid> $text")
       if (text != null) {
         val credential = getCredential(jid)
-        core ! CoreMessage(credential, text)
+        core ! CoreMessage(Clock.now, credential, text)
       }
 
     case SendResponse(credential, text) =>

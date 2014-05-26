@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.core
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{DAO, PersistentStore}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
@@ -76,11 +77,11 @@ class Core extends Actor with ActorLogging {
   }
 
   override def receive = {
-    case CoreMessage(credential, text) => processMessage(credential, text)
-    case CoreRoomJoin(roomJID, actor) => processRoomJoin(roomJID, actor)
-    case CoreRoomLeave(roomJID) => processRoomLeave(roomJID)
-    case CoreParticipantJoined(roomJID, participantJID, actor) => processParticipantJoin(roomJID, participantJID, actor)
-    case CoreParticipantLeft(roomJID, participantJID, actor) => processParticipantLeave(roomJID, participantJID, actor)
+    case CoreMessage(time, credential, text) => processMessage(time, credential, text)
+    case CoreRoomJoin(time, roomJID, actor) => processRoomJoin(time, roomJID, actor)
+    case CoreRoomLeave(time, roomJID) => processRoomLeave(time, roomJID)
+    case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
+    case CoreParticipantLeft(time, roomJID, participantJID, actor) => processParticipantLeave(time, roomJID, participantJID, actor)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
@@ -108,7 +109,7 @@ class Core extends Actor with ActorLogging {
     }
   }
 
-  private def processMessage(credential: Credential, text: String) {
+  private def processMessage(time: DateTime, credential: Credential, text: String) {
     val command = parseCommand(text)
     command match {
       case Some((name, arguments)) =>
@@ -117,31 +118,31 @@ class Core extends Actor with ActorLogging {
     }
 
     for (plugin <- messageReceivers) {
-      plugin ! ProcessMessage(credential, text)
+      plugin ! ProcessMessage(time, credential, text)
     }
   }
 
-  private def processRoomJoin(roomJID: String, actor: ActorRef) {
+  private def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef) {
     for (plugin <- roomReceivers) {
-      plugin ! ProcessRoomJoin(roomJID, actor)
+      plugin ! ProcessRoomJoin(time, roomJID, actor)
     }
   }
 
-  private def processRoomLeave(roomJID: String) {
+  private def processRoomLeave(time: DateTime, roomJID: String) {
     for (plugin <- roomReceivers) {
-      plugin ! ProcessRoomLeave(roomJID)
+      plugin ! ProcessRoomLeave(time, roomJID)
     }
   }
 
-  private def processParticipantJoin(roomJID: String, participantJID: String, roomActor: ActorRef) {
+  private def processParticipantJoin(time: DateTime, roomJID: String, participantJID: String, roomActor: ActorRef) {
     for (plugin <- participantReceivers) {
-      plugin ! ProcessParticipantJoin(roomJID, participantJID, roomActor)
+      plugin ! ProcessParticipantJoin(time, roomJID, participantJID, roomActor)
     }
   }
 
-  private def processParticipantLeave(roomJID: String, participantJID: String, roomActor: ActorRef) {
+  private def processParticipantLeave(time: DateTime, roomJID: String, participantJID: String, roomActor: ActorRef) {
     for (plugin <- participantReceivers) {
-      plugin ! ProcessParticipantLeave(roomJID, participantJID, roomActor)
+      plugin ! ProcessParticipantLeave(time, roomJID, participantJID, roomActor)
     }
   }
 

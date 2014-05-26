@@ -4,11 +4,12 @@ import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import java.util.regex.Pattern
+import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.protocol.{SendMucMessage, SendPrivateMessage, SendPrivateResponse, SendResponse}
 import ru.org.codingteam.horta.security._
 import scala.concurrent.duration._
 import scala.Some
-import ru.org.codingteam.horta.protocol.{SendMucMessage, SendPrivateMessage, SendPrivateResponse, SendResponse}
 
 /**
  * Multi user chat message handler.
@@ -21,11 +22,11 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Act
 
   override def preStart() {
     super.preStart()
-    core ! CoreRoomJoin(roomJID, self)
+    core ! CoreRoomJoin(Clock.now, roomJID, self)
   }
 
   override def postStop() {
-    core ! CoreRoomLeave(roomJID)
+    core ! CoreRoomLeave(Clock.now, roomJID)
     super.postStop()
   }
 
@@ -73,7 +74,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Act
 
       if (text != null) {
         val credential = getCredential(jid)
-        core ! CoreMessage(credential, text)
+        core ! CoreMessage(Clock.now, credential, text)
       }
 
     case SendResponse(credential, text) =>
@@ -147,7 +148,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Act
     val changed = oldSize != participants.size
 
     if (changed) {
-      core ! CoreParticipantJoined(roomJID, participantJID, self)
+      core ! CoreParticipantJoined(Clock.now, roomJID, participantJID, self)
     }
   }
 
@@ -157,7 +158,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Act
     val changed = oldSize != participants.size
 
     if (changed) {
-      core ! CoreParticipantLeft(roomJID, participantJID, self)
+      core ! CoreParticipantLeft(Clock.now, roomJID, participantJID, self)
     }
   }
 
