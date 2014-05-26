@@ -12,6 +12,9 @@ Copy `horta.properties.example` file to `horta.properties` and tune it. All opti
 
 Horta designed to use the embedded H2 database. You may tune the `storage` parameter group in the configuration file.
 
+By default horta will use the configuration file `horta.properties` from the current directory but it will read the path
+to the configuration file from the program arguments.
+
 ### Deployment
 
 The recommended way of horta deployment is using of the

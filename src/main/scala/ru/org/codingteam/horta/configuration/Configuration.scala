@@ -1,12 +1,19 @@
 package ru.org.codingteam.horta.configuration
 
-import java.util.Properties
 import java.io.{FileInputStream, InputStreamReader}
+import java.util.Properties
 
 object Configuration {
+
+  def initialize(configPath: String) {
+    configFilePath = Some(configPath)
+  }
+
+  private var configFilePath: Option[String] = None
+
   private lazy val properties = {
     val properties = new Properties()
-    val stream = new InputStreamReader(new FileInputStream("horta.properties"), "UTF8")
+    val stream = new InputStreamReader(new FileInputStream(configFilePath.get), "UTF8")
     try {
       properties.load(stream)
     } finally {
