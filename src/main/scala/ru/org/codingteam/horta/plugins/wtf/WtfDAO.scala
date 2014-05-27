@@ -41,7 +41,7 @@ class WtfDAO extends DAO {
           """
             |select id, definition, author
             |from wtf
-            |where room = ? and word = ?
+            |where room = ? and UPPER(word) = UPPER(?)
           """.stripMargin)
         try {
           query.setString(1, room)
