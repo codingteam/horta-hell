@@ -57,19 +57,22 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
     }
   }
 
-  private def updateDefinition(credential: Credential, room: String, word: String, definition: String): Unit = {
-    store ? ReadObject(name, (room, word)) map {
-      case Some(wtfDefinition: WtfDefinition) => store ? DeleteObject(name, wtfDefinition.id.get) map {
-        case true => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
-          case Some(_) => sendResponse(credential, "Определение обновлено.")
-          case None => sendResponse(credential, "Не удалось обновить определение.")
+  private def updateDefinition(credential: Credential, room: String, word: String, definition: String): Unit =
+    (word.trim, definition.trim) match {
+      case ("", _) => sendResponse(credential, "Нельзя определить пустую строку")
+      case (word, "") => deleteDefinition(credential, room, word)
+      case (word, definition) => store ? ReadObject(name, (room, word)) map {
+        case Some(wtfDefinition: WtfDefinition) => store ? DeleteObject(name, wtfDefinition.id.get) map {
+          case true => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
+            case Some(_) => sendResponse(credential, "Определение обновлено.")
+            case None => sendResponse(credential, "Не удалось обновить определение.")
+          }
+          case false => sendResponse(credential, "Не удалось обновить определение.")
         }
-        case false => sendResponse(credential, "Не удалось обновить определение.")
-      }
-      case None => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
-        case Some(_) => sendResponse(credential, "Определение добавлено.")
-        case None => sendResponse(credential, "Не удалось добавить определение.")
-      }
+        case None => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
+          case Some(_) => sendResponse(credential, "Определение добавлено.")
+          case None => sendResponse(credential, "Не удалось добавить определение.")
+        }
     }
   }
 
