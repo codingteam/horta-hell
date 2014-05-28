@@ -8,6 +8,7 @@ import ru.org.codingteam.horta.database.{DAO, PersistentStore}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
+import ru.org.codingteam.horta.plugins.log.LogPlugin
 import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
@@ -33,6 +34,7 @@ class Core extends Actor with ActorLogging {
   val plugins: List[Props] = List(
     Props[FortunePlugin],
     Props[AccessPlugin],
+    Props[LogPlugin],
     Props[MailPlugin],
     Props[PetPlugin],
     Props[MarkovPlugin],
