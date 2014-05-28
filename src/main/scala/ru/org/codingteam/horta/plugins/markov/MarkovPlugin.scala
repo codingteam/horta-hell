@@ -42,7 +42,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
   }
 
   def isMyself(credential: Credential): Boolean = {
-    (Configuration.roomDescriptors find { rd => rd.room == credential.roomName.getOrElse("")} map { rd => rd.nickname} getOrElse (Configuration.dftName)) == credential.name
+    (Configuration.roomDescriptors find { rd => rd.room == credential.roomId.getOrElse("")} map { rd => rd.nickname} getOrElse (Configuration.dftName)) == credential.name
   }
 
   def generatePhrase(credential: Credential, arguments: Array[String]) {
@@ -96,7 +96,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
   }
 
   def getUser(credential: Credential) = {
-    val roomName = credential.roomName.getOrElse("")
+    val roomName = credential.roomId.getOrElse("")
     val name = credential.name
     val identity = UserIdentity(roomName, name)
 

@@ -10,11 +10,6 @@ class LogDAO extends DAO {
 
   override def directoryName: String = "log"
 
-  private abstract sealed case class EventType(name: String)
-  private case object EnterType extends EventType("enter")
-  private case object LeaveType extends EventType("leave")
-  private case object MessageType extends EventType("message")
-
   /**
    * Store an object in the database.
    * @param connection connection to access the database.

@@ -70,7 +70,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
         Protocol.sendResponse(location, sender, "Сообщение доставлено")
 
       case false =>
-        val room = sender.roomName.get
+        val room = sender.roomId.get
 
         readMessages(room, receiverNick) map { messages =>
           val count = messages.length
