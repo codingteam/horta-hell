@@ -1,13 +1,16 @@
 package ru.org.codingteam.horta.plugins.log
 
-import ru.org.codingteam.horta.plugins.{MessageProcessor, ParticipantProcessor, BasePlugin}
 import akka.actor.ActorRef
-import ru.org.codingteam.horta.security.Credential
 import org.joda.time.DateTime
+import ru.org.codingteam.horta.plugins.{BasePlugin, MessageProcessor, ParticipantProcessor}
+import ru.org.codingteam.horta.database.DAO
+import ru.org.codingteam.horta.security.Credential
 
 class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcessor {
 
-  override protected def name: String = "logger"
+  override protected def name: String = "log"
+
+  override protected def dao: Option[DAO] = Some(new LogDAO())
 
   override protected def processParticipantLeave(time: DateTime,
                                                  roomJID: String,
