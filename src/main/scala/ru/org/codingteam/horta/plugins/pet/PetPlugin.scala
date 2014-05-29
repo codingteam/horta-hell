@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.plugins.pet
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{ReadObject, StoreObject}
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.pet.commands._
@@ -121,11 +122,11 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
     }
   }
 
-  override def processRoomJoin(roomJID: String, actor: ActorRef) {
+  override def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef) {
     initializeRoom(roomJID, actor)
   }
 
-  override def processRoomLeave(roomJID: String) {
+  override def processRoomLeave(time: DateTime, roomJID: String) {
     savePet(roomJID)
     pets -= roomJID
   }

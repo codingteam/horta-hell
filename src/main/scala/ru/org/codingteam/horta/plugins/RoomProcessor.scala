@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
 import akka.actor.ActorRef
+import org.joda.time.DateTime
 
 /**
  * Trait for plugin that receives the notifications of room joining.
@@ -8,10 +9,10 @@ import akka.actor.ActorRef
 trait RoomProcessor extends BasePlugin {
 
   override def receive = {
-    case ProcessRoomJoin(roomJID, actor) =>
-      processRoomJoin(roomJID, actor)
-    case ProcessRoomLeave(roomJID) =>
-      processRoomLeave(roomJID)
+    case ProcessRoomJoin(time, roomJID, actor) =>
+      processRoomJoin(time, roomJID, actor)
+    case ProcessRoomLeave(time, roomJID) =>
+      processRoomLeave(time, roomJID)
     case other => super.receive(other)
   }
 
@@ -19,15 +20,17 @@ trait RoomProcessor extends BasePlugin {
 
   /**
    * Process joining the room.
+   * @param time time of an event.
    * @param roomJID JID of the room.
    * @param actor actor representing the room.
    */
-  protected def processRoomJoin(roomJID: String, actor: ActorRef)
+  protected def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef)
 
   /**
    * Process leaving the room.
+   * @param time time of an event.
    * @param roomJID JID of the room.
    */
-  protected def processRoomLeave(roomJID: String)
+  protected def processRoomLeave(time: DateTime, roomJID: String)
 
 }
