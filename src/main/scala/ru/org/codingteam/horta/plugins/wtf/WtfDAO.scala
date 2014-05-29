@@ -4,7 +4,8 @@ import java.sql.{Connection, Statement}
 import ru.org.codingteam.horta.database.DAO
 
 class WtfDAO extends DAO {
-  override def directoryName = "wtf"
+
+  override def schema = "wtf"
 
   override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] =
     obj match {
@@ -77,4 +78,5 @@ class WtfDAO extends DAO {
         }
       }
     }
+
 }

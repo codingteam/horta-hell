@@ -17,7 +17,12 @@ case class ReadObject(plugin: String, id: Any)
 case class DeleteObject(plugin: String, id: Any)
 
 trait DAO {
-  def directoryName: String
+
+  /**
+   * Schema name for current DAO.
+   * @return schema name.
+   */
+  def schema: String
 
   /**
    * Store an object in the database.
@@ -43,6 +48,7 @@ trait DAO {
    * @return true if object was successfully deleted, false otherwise.
    */
   def delete(connection: Connection, id: Any): Boolean
+
 }
 
 class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLogging {
@@ -54,7 +60,7 @@ class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLoggin
   implicit val timeout = Timeout(60 seconds)
 
   var dataSource: DataSource = null
-  var initializedDirectories = Set[String]()
+  var initializedSchemas = Set[String]()
 
   override def preStart() {
     dataSource = JdbcConnectionPool.create(Url, User, Password)
@@ -99,10 +105,10 @@ class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLoggin
   }
 
   private def initializeDatabase(dao: DAO) {
-    val directory = dao.directoryName
-    if (!initializedDirectories.contains(directory)) {
-      initializeScript(directory)
-      initializedDirectories += directory
+    val schema = dao.schema
+    if (!initializedSchemas.contains(schema)) {
+      initializeScript(schema)
+      initializedSchemas += schema
     }
   }
 
@@ -115,12 +121,13 @@ class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLoggin
     }
   }
 
-  private def initializeScript(directory: String) {
+  private def initializeScript(schema: String) {
     val flyway = new Flyway()
 
     flyway.setInitOnMigrate(true)
     flyway.setDataSource(dataSource)
-    flyway.setLocations(s"db/$directory")
+    flyway.setLocations(s"db/$schema")
+    flyway.setTable(schema + "_version")
 
     // Do our best to fix any errors:
     flyway.repair()

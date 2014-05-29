@@ -8,7 +8,7 @@ import ru.org.codingteam.horta.database.DAO
  */
 class LogDAO extends DAO {
 
-  override def directoryName: String = "log"
+  override def schema: String = "log"
 
   /**
    * Store an object in the database.

@@ -4,7 +4,8 @@ import ru.org.codingteam.horta.database.DAO
 import java.sql.Connection
 
 class PetDAO extends DAO {
-  override def directoryName = "pet"
+
+  override def schema = "pet"
 
   override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = {
     id match {
@@ -157,4 +158,5 @@ class PetDAO extends DAO {
       statement.close()
     }
   }
+
 }

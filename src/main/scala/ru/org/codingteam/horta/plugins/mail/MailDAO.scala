@@ -5,7 +5,7 @@ import ru.org.codingteam.horta.database.DAO
 
 class MailDAO extends DAO {
 
-  override def directoryName = "mail"
+  override def schema = "mail"
 
   /**
    * Store new message in a database.
