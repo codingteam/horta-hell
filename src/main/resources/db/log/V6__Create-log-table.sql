@@ -1,4 +1,4 @@
-create table mail (
+create table log (
   id integer auto_increment primary key,
   time timestamp,
   room varchar(255),

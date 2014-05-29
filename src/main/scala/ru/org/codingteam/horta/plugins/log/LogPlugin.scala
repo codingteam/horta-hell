@@ -50,7 +50,7 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
                              sender: String,
                              eventType: EventType,
                              text: String) {
-    val message = LogMessage(None, time, roomJID, sender, EnterType, text)
+    val message = LogMessage(None, time, roomJID, sender, eventType, text)
     store ? StoreObject(name, None, message)
   }
 

@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins.log
 
-import java.sql.Connection
+import java.sql.{Connection, Statement, Timestamp}
 import ru.org.codingteam.horta.database.DAO
 
 /**
@@ -17,7 +17,32 @@ class LogDAO extends DAO {
    * @param obj stored object.
    * @return stored object id (or None if object was not stored).
    */
-  override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = ???
+  override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = {
+    val LogMessage(_, time, room, sender, eventType, text) = obj
+    val query = connection.prepareStatement(
+      """
+        |insert into log (time, room, sender, type, message)
+        |values (?, ?, ?, ?, ?)
+      """.stripMargin, Statement.RETURN_GENERATED_KEYS)
+    try {
+      query.setTimestamp(1, new Timestamp(time.getMillis))
+      query.setString(2, room)
+      query.setString(3, sender)
+      query.setString(4, eventType.name)
+      query.setString(5, text)
+
+      query.executeUpdate()
+      val resultSet = query.getGeneratedKeys
+      try {
+        resultSet.next()
+        Some(resultSet.getLong(1))
+      } finally {
+        resultSet.close()
+      }
+    } finally {
+      query.close()
+    }
+  }
 
   /**
    * Delete an object from the database.
