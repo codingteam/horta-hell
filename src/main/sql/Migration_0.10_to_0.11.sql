@@ -1,7 +1,8 @@
 -- This script will help you to migrate existing 0.10 horta installation to 0.11.
 -- 1. Update the horta code.
 -- 2. Start horta.
--- 3. Make sure it initialized the databases for every plugin (you can do it by executing the wtf command).
+-- 3. Make sure it initialized the databases for every plugin (you can do it by executing the wtf, pet and send
+-- commands).
 -- 4. Stop horta.
 -- 5. Execute the following script:
 update "pet_version" set "success" = true;
