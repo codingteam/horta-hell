@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.plugins
 
 import akka.actor.ActorRef
+import org.joda.time.DateTime
 
 /**
  * Trait for plugin that receives the notifications of participant joining and leaving from the room.
@@ -8,10 +9,10 @@ import akka.actor.ActorRef
 trait ParticipantProcessor extends BasePlugin {
 
   override def receive = {
-    case ProcessParticipantJoin(roomJID, participantJID, actor) =>
-      processParticipantJoin(roomJID, participantJID, actor)
-    case ProcessParticipantLeave(roomJID, participantJID, actor) =>
-      processParticipantLeave(roomJID, participantJID, actor)
+    case ProcessParticipantJoin(time, roomJID, participantJID, actor) =>
+      processParticipantJoin(time, roomJID, participantJID, actor)
+    case ProcessParticipantLeave(time, roomJID, participantJID, actor) =>
+      processParticipantLeave(time, roomJID, participantJID, actor)
     case other => super.receive(other)
   }
 
@@ -19,18 +20,20 @@ trait ParticipantProcessor extends BasePlugin {
 
   /**
    * Process participant joining the room.
+   * @param time time of an event.
    * @param roomJID JID of the room.
    * @param participantJID JID of the participant.
    * @param actor actor representing the room.
    */
-  protected def processParticipantJoin(roomJID: String, participantJID: String, actor: ActorRef)
+  protected def processParticipantJoin(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef)
 
   /**
    * Process participant leaving the room.
+   * @param time time of an event.
    * @param roomJID JID of the room.
    * @param participantJID JID of the participant.
    * @param actor actor representing the room.
    */
-  protected def processParticipantLeave(roomJID: String, participantJID: String, actor: ActorRef)
+  protected def processParticipantLeave(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef)
 
 }

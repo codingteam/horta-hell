@@ -96,7 +96,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
   }
 
   override def processCommand(credential: Credential, token: Any, arguments: Array[String]) {
-    credential.roomName match {
+    credential.roomId match {
       case Some(room) =>
         val petF = pets.get(room) match {
           case Some(p) => Future.successful(p)

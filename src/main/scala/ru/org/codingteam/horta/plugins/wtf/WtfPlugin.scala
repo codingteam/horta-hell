@@ -35,14 +35,14 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
   }
 
   private def performWtfCommand(credential: Credential, arguments: Array[String]): Unit =
-    (credential.roomName, arguments) match {
+    (credential.roomId, arguments) match {
       case (Some(room), Array(word)) => showDefinition(credential, room, word)
       case (Some(room), Array(word, definition)) => updateDefinition(credential, room, word, definition)
       case _ => sendResponse(credential, "Invalid arguments")
     }
 
   private def performWtfDeleteCommand(credential: Credential, arguments: Array[String]): Unit = {
-    (credential.roomName, arguments) match {
+    (credential.roomId, arguments) match {
       case (Some(room), Array(word)) => deleteDefinition(credential, room, word)
       case _ => sendResponse(credential, "Invalid arguments")
     }

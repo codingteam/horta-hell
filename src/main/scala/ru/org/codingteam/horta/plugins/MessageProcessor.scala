@@ -1,5 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.security.Credential
 
 /**
@@ -8,7 +9,7 @@ import ru.org.codingteam.horta.security.Credential
 trait MessageProcessor extends BasePlugin {
 
   override def receive = {
-    case ProcessMessage(credential, message) => processMessage(credential, message)
+    case ProcessMessage(time, credential, message) => processMessage(time, credential, message)
     case other => super.receive(other)
   }
 
@@ -16,10 +17,12 @@ trait MessageProcessor extends BasePlugin {
 
   /**
    * Process a message.
+   * @param time time of an event.
    * @param credential a credential of message sender.
    * @param message a message text.
    */
-  protected def processMessage(credential: Credential,
-                               message: String) = ()
+  protected def processMessage(time: DateTime,
+                               credential: Credential,
+                               message: String)
 
 }

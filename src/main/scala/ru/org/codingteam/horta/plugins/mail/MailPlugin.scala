@@ -4,6 +4,7 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{DeleteObject, StoreObject, ReadObject}
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, ParticipantProcessor, BasePlugin}
 import ru.org.codingteam.horta.protocol.Protocol
@@ -43,7 +44,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     }
   }
 
-  override def processParticipantJoin(roomJID: String, participantJID: String, actor: ActorRef) {
+  override def processParticipantJoin(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef) {
     val participantNick = StringUtils.parseResource(participantJID)
     val receiver = Credential.forNick(actor, participantNick)
 
@@ -56,7 +57,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     }
   }
 
-  override def processParticipantLeave(roomJID: String, participantJID: String, actor: ActorRef) {}
+  override def processParticipantLeave(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef) {}
 
   private def sendMail(sender: Credential, receiverNick: String, message: String) {
     // First try to send the message right now:
@@ -69,7 +70,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
         Protocol.sendResponse(location, sender, "Сообщение доставлено")
 
       case false =>
-        val room = sender.roomName.get
+        val room = sender.roomId.get
 
         readMessages(room, receiverNick) map { messages =>
           val count = messages.length
