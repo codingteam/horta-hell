@@ -11,6 +11,7 @@ Using
 Copy `horta.properties.example` file to `horta.properties` and tune it. All options should be self-explanatory.
 
 Horta designed to use the embedded H2 database. You may tune the `storage` parameter group in the configuration file.
+Note that `AUTO_SERVER` parameter should be set to `TRUE` for coordinated database access of multiple applications.
 
 By default horta will use the configuration file `horta.properties` from the current directory but it will read the path
 to the configuration file from the program arguments.

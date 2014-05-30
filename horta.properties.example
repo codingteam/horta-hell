@@ -21,6 +21,6 @@ log_encoding=UTF-8
 
 markov_messages_per_minute=5
 
-storage.url=jdbc:h2:hell;DB_CLOSE_DELAY=-1
+storage.url=jdbc:h2:hell;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
 storage.user=sa
 storage.password=
