@@ -7,6 +7,7 @@ apt-get update
 apt-get install -y openjdk-7-jdk scala curl git
 wget -O /tmp/sbt.deb http://repo.scala-sbt.org/scalasbt/sbt-native-packages/org/scala-sbt/sbt/0.13.0/sbt.deb --no-verbose
 dpkg -i /tmp/sbt.deb
+update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
 SCRIPT
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
