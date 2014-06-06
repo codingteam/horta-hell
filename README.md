@@ -62,6 +62,10 @@ second argument, taking the last sender phrase as the base.
 * `$send receiver message` - send the mail to the user. Please note that bot determines the receiver by nickname only.
 If the nickname is not registered on server, someone else may take the nick and receive your mail. Be careful!
 
+* `$wtf <word> [definition]` - stores a definition of a word in the
+  bot's database. If used without the definition argument, shows the
+  stored definition. To delete a definition use `$wtf-delete <word>`.
+
 * `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
 
 ### Log parser
