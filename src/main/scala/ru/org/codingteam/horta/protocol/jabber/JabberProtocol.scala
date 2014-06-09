@@ -53,7 +53,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 
     case JoinRoom(jid, nickname, greeting) =>
       log.info(s"Joining room $jid")
-      val actor = context.actorOf(Props(new MucMessageHandler(self, jid)), jid)
+      val actor = context.actorOf(Props(new MucMessageHandler(self, jid, nickname)), jid)
 
       val muc = new MultiUserChat(connection, jid)
       rooms = rooms.updated(jid, RoomDefinition(muc, actor))

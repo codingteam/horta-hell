@@ -14,11 +14,11 @@ import scala.Some
 /**
  * Multi user chat message handler.
  */
-class MucMessageHandler(val protocol: ActorRef, val roomJID: String) extends Actor with ActorLogging {
+class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nickname: String) extends Actor with ActorLogging {
 
   val core = context.actorSelection("/user/core")
 
-  var participants = Map[String, Affinity]()
+  var participants = Map[String, Affinity](s"$roomJID/$nickname" -> User)
 
   override def preStart() {
     super.preStart()
