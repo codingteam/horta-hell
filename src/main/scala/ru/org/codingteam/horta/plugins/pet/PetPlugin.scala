@@ -15,12 +15,12 @@ import scala.language.postfixOps
 import scala.math._
 import scala.Some
 
+case object PetTick
+
 /**
  * Plugin for managing the so-called pet. Distinct pet belongs to every room.
  */
 class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
-
-  case object PetTick
 
   import context.dispatcher
 
