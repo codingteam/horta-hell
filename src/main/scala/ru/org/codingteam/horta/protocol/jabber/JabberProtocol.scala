@@ -164,7 +164,7 @@ class JabberProtocol() extends Actor with ActorLogging {
     }
 
     val deadline = ((message.length * 35) milliseconds).fromNow //TODO make multiplier configurable
-    while (deadline.hasTimeLeft()) {} //empty loop instead of wait to avoid context switching
+    Thread.sleep(deadline.timeLeft.toMillis)
 
     result
   }
