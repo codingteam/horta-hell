@@ -10,6 +10,7 @@ import ru.org.codingteam.horta.protocol.{SendMucMessage, SendPrivateMessage, Sen
 import ru.org.codingteam.horta.security._
 import scala.concurrent.duration._
 import scala.Some
+import org.jivesoftware.smack.util.StringUtils
 
 /**
  * Multi user chat message handler.
@@ -101,12 +102,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
   def jidByNick(nick: String) = s"$roomJID/$nick"
 
   def nickByJid(jid: String) = {
-    val args = jid.split('/')
-    if (args.length > 1) {
-      args(1)
-    } else {
-      args(0)
-    }
+      StringUtils.parseResource(jid)
   }
 
   def sendMessage(credential: Credential, text: String, isPrivate: Boolean) {
