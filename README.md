@@ -1,10 +1,11 @@
 vagrant-horta-hell
 ==================
 
-This is a [Vagrant](http://www.vagrantup.com/) image for the
-[horta-hell](https://github.com/codingteam/horta-hell)
+This is a [Vagrant](http://www.vagrantup.com/) image for
+[horta-hell](https://github.com/codingteam/horta-hell) and
+[horta-web](https://github.com/codingteam/horta-hell) applications
 deployment. Vagrant is a virtual enviromnent manager, horta-hell is an
-XMPP bot.
+XMPP bot, horta-web is a web interface for it.
 
 Prerequisites
 -------------
@@ -37,13 +38,26 @@ Currently horta uses the access to host directory for parsing the chat
 logs. This directory should be defined in the host's `HORTA_LOGS`
 environment variable before starting the vagrant image.
 
-Updating the horta
-------------------
+Configuring the horta-web
+-------------------------
 
-This package designed to run the last stable horta version (usually
-the one from the `master` branch of horta repository).
+You should place the `horta-web-app.conf` configuration file inside the
+image directory. Copy the initial `conf/application.conf` file from
+the [horta-web](https://github.com/codingteam/horta-hell) package and
+change the paths you want.
 
-There is no default horta version embedded with the package. All
+By default horta-web will use host's 80 port for web interface
+access. If you want to change this port, feel free to modify
+`Vagrantfile`.
+
+Updating the packages
+---------------------
+
+This package designed to run the last stable horta-hell and horta-web
+versions (usually the ones from the `master` branches of the
+corresponding repositories).
+
+There are no default packages versions embedded with the image. All
 update actions should be taken manually.
 
 When first started the virtual machine (or at any point when you're
@@ -55,5 +69,6 @@ After that invoke the update script:
 
     $ sudo /vagrant/update-horta.sh
 
-This script will take care of cloning or updating the horta source
-code, (re-)compiling, (re-)installing and (re-)starting the horta.
+This script will take care of cloning or updating the source code of
+all embedded packages, (re-)compiling, (re-)installing and
+(re-)starting the services.
