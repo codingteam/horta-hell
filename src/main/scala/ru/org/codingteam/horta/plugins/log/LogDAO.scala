@@ -1,12 +1,17 @@
 package ru.org.codingteam.horta.plugins.log
 
 import java.sql.{Connection, Statement, Timestamp}
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.DAO
+
+case class GetMessages(room: String, phrase: String)
 
 /**
  * Data access object for room log storage.
  */
 class LogDAO extends DAO {
+
+  val MAX_MESSAGES_IN_RESULT = 5
 
   override def schema: String = "log"
 
@@ -58,6 +63,45 @@ class LogDAO extends DAO {
    * @param id object id.
    * @return stored object or None if object not found.
    */
-  override def read(connection: Connection, id: Any): Option[Any] = ???
+  override def read(connection: Connection, id: Any): Option[Any] = {
+    id match {
+      case GetMessages(room, phrase) =>
+        queryRoomMessages(connection, room, phrase)
+    }
+  }
+
+  private def queryRoomMessages(connection: Connection, room: String, phrase: String): Option[Seq[LogMessage]] = {
+    val query = connection.prepareStatement(
+      """
+        |select top(?) id, time, sender, type, message
+        |from log
+        |where message like ?
+      """.stripMargin)
+    try {
+      query.setInt(1, MAX_MESSAGES_IN_RESULT)
+      query.setString(2, s"%$phrase%")
+
+      var result = List[LogMessage]()
+      val resultSet = query.executeQuery()
+      try {
+        while (resultSet.next()) {
+          val id = Some(resultSet.getInt("id"))
+          val time = new DateTime(resultSet.getTimestamp("time").getTime)
+          val sender = resultSet.getString("sender")
+          val eventType = EventType(resultSet.getString("type"))
+          val text = resultSet.getString("message")
+
+          val message = LogMessage(id, time, room, sender, eventType, text)
+          result +:= message
+        }
+
+        Some(result)
+      } finally {
+        resultSet.close()
+      }
+    } finally {
+      query.close()
+    }
+  }
 
 }
