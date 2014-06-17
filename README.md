@@ -59,6 +59,8 @@ second argument, taking the last sender phrase as the base.
 
 * `$say` - query the Markov network (generated for the sender) to generate random phrase.
 
+* `$search phrase` - will search conference log for the selected phrase.
+
 * `$send receiver message` - send the mail to the user. Please note that bot determines the receiver by nickname only.
 If the nickname is not registered on server, someone else may take the nick and receive your mail. Be careful!
 
