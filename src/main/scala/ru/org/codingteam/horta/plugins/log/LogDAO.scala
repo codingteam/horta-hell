@@ -75,11 +75,12 @@ class LogDAO extends DAO {
       """
         |select top(?) id, time, sender, type, message
         |from log
-        |where message like ?
+        |where room = ? and message like ?
       """.stripMargin)
     try {
       query.setInt(1, MAX_MESSAGES_IN_RESULT)
-      query.setString(2, s"%$phrase%")
+      query.setString(2, room)
+      query.setString(3, s"%$phrase%")
 
       var result = List[LogMessage]()
       val resultSet = query.executeQuery()
