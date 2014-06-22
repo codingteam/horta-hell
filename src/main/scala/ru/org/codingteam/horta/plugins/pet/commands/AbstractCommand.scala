@@ -1,8 +1,8 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
-import ru.org.codingteam.horta.plugins.pet.Pet
+import ru.org.codingteam.horta.plugins.pet.PetData
 import ru.org.codingteam.horta.security.Credential
 
-trait AbstractCommand extends ((Pet, Credential, Array[String]) => (Pet, String)) {
+trait AbstractCommand extends ((PetData, Credential, Array[String]) => (PetData, String)) {
 
 }

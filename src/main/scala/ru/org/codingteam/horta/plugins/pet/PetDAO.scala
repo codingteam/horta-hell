@@ -1,7 +1,8 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import ru.org.codingteam.horta.database.DAO
 import java.sql.Connection
+
+import ru.org.codingteam.horta.database.DAO
 
 class PetDAO extends DAO {
 
@@ -43,7 +44,7 @@ class PetDAO extends DAO {
       try {
         if (resultSet.next()) {
           Some(
-            PetStatus(
+            PetData(
               resultSet.getString("nickname"),
               resultSet.getBoolean("alive"),
               resultSet.getInt("health"),
@@ -86,43 +87,39 @@ class PetDAO extends DAO {
   }
 
   private def insert(connection: Connection, room: String, obj: Any) {
-    obj match {
-      case PetStatus(nickname, alive, health, hunger, coins) =>
-        val statement = connection.prepareStatement(
-          "INSERT INTO pet (room, nickname, alive, health, hunger) VALUES (?, ?, ?, ?, ?)")
-        try {
-          statement.setString(1, room)
-          statement.setString(2, nickname)
-          statement.setBoolean(3, alive)
-          statement.setInt(4, health)
-          statement.setInt(5, hunger)
-          statement.executeUpdate()
+    val PetData(nickname, alive, health, hunger, coins) = obj
+    val statement = connection.prepareStatement(
+      "INSERT INTO pet (room, nickname, alive, health, hunger) VALUES (?, ?, ?, ?, ?)")
+    try {
+      statement.setString(1, room)
+      statement.setString(2, nickname)
+      statement.setBoolean(3, alive)
+      statement.setInt(4, health)
+      statement.setInt(5, hunger)
+      statement.executeUpdate()
 
-          insertCoins(connection, room, coins)
-        } finally {
-          statement.close()
-        }
+      insertCoins(connection, room, coins)
+    } finally {
+      statement.close()
     }
   }
 
   private def update(connection: Connection, room: String, obj: Any) {
-    obj match {
-      case PetStatus(nickname, alive, health, hunger, coins) =>
-        val statement = connection.prepareStatement(
-          "UPDATE pet SET nickname = ?, alive = ?, health = ?, hunger = ? WHERE room = ?")
-        try {
-          statement.setString(1, nickname)
-          statement.setBoolean(2, alive)
-          statement.setInt(3, health)
-          statement.setInt(4, hunger)
-          statement.setString(5, room)
-          statement.executeUpdate()
+    val PetData(nickname, alive, health, hunger, coins) = obj
+    val statement = connection.prepareStatement(
+      "UPDATE pet SET nickname = ?, alive = ?, health = ?, hunger = ? WHERE room = ?")
+    try {
+      statement.setString(1, nickname)
+      statement.setBoolean(2, alive)
+      statement.setInt(3, health)
+      statement.setInt(4, hunger)
+      statement.setString(5, room)
+      statement.executeUpdate()
 
-          deleteCoins(connection, room)
-          insertCoins(connection, room, coins)
-        } finally {
-          statement.close()
-        }
+      deleteCoins(connection, room)
+      insertCoins(connection, room, coins)
+    } finally {
+      statement.close()
     }
   }
 
