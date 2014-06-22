@@ -44,8 +44,7 @@ class PetDAO extends DAO {
       try {
         if (resultSet.next()) {
           Some(
-            Pet(
-              None,
+            PetData(
               resultSet.getString("nickname"),
               resultSet.getBoolean("alive"),
               resultSet.getInt("health"),
@@ -88,7 +87,7 @@ class PetDAO extends DAO {
   }
 
   private def insert(connection: Connection, room: String, obj: Any) {
-    val Pet(_, nickname, alive, health, hunger, coins) = obj
+    val PetData(nickname, alive, health, hunger, coins) = obj
     val statement = connection.prepareStatement(
       "INSERT INTO pet (room, nickname, alive, health, hunger) VALUES (?, ?, ?, ?, ?)")
     try {
@@ -106,7 +105,7 @@ class PetDAO extends DAO {
   }
 
   private def update(connection: Connection, room: String, obj: Any) {
-    val Pet(_, nickname, alive, health, hunger, coins) = obj
+    val PetData(nickname, alive, health, hunger, coins) = obj
     val statement = connection.prepareStatement(
       "UPDATE pet SET nickname = ?, alive = ?, health = ?, hunger = ? WHERE room = ?")
     try {

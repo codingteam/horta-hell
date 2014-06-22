@@ -1,10 +1,10 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
-import ru.org.codingteam.horta.plugins.pet.{PtcUtils, Pet}
+import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
 import ru.org.codingteam.horta.security.Credential
 
 class HealCommand extends AbstractCommand {
-  override def apply(pet: Pet, credential: Credential, args: Array[String]): (Pet, String) = {
+  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
     val username = credential.name
 
     if (pet.alive) {

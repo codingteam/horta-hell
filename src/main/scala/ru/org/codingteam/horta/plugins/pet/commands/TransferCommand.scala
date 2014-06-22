@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
-import ru.org.codingteam.horta.plugins.pet.{PtcUtils, Pet}
+import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
 import ru.org.codingteam.horta.security.Credential
 
 object TransferAmountMatcher {
@@ -12,7 +12,7 @@ object TransferAmountMatcher {
 }
 
 class TransferCommand extends AbstractCommand {
-  override def apply(pet: Pet, credential: Credential, args: Array[String]): (Pet, String) = {
+  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
     val sourceUser = credential.name
     args match {
       case Array(targetUser, TransferAmountMatcher(amount), _*) => {
