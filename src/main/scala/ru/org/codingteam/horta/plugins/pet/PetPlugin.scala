@@ -65,7 +65,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
         val roomName = pair._1
         val pet = pair._2
 
-        val location = pet.location
+        val Some(location) = pet.location
         val nickname = pet.nickname
         var alive = pet.alive
         var health = pet.health
@@ -141,8 +141,8 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
 
           case None =>
             val pet = response match {
-              case Some(PetStatus(nickname, alive, health, hunger, coins)) =>
-                Pet(actor, nickname, alive, health, hunger, coins)
+              case Some(Pet(_, nickname, alive, health, hunger, coins)) =>
+                Pet(Some(actor), nickname, alive, health, hunger, coins)
 
               case None =>
                 Pet.default(actor)
@@ -156,8 +156,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
 
   def savePet(room: String) {
     val pet = pets(room)
-    val state = PetStatus(pet.nickname, pet.alive, pet.health, pet.hunger, pet.coins)
-    for (reply <- store ? StoreObject("pet", Some(room), state)) {
+    for (reply <- store ? StoreObject("pet", Some(room), pet)) {
       reply match {
         case Some(_) =>
       }
