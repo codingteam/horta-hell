@@ -88,6 +88,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
 
   private def setPetData(pet: PetData) {
     val Some(_) = Await.result(store ? StoreObject("pet", Some(roomId), pet), 5 minutes)
+    petData = Some(pet)
   }
 
   private def readStoredData(): Option[PetData] = {
