@@ -10,9 +10,10 @@ class ChangeNickCommand extends AbstractCommand {
     (nickName.length + charactersPerPetcoin - 1) / charactersPerPetcoin
   }
 
-  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
-    args match {
-      case Array(newNickname, _*) => {
+  private def changeNickname(pet: PetData, credential: Credential, newNickname: String): (PetData, String) = {
+    newNickname match {
+      case "" => (pet, "Пустая строка в качестве клички неприемлема")
+      case _ => {
         val coins = pet.coins
         val changer = credential.name
         val price = calcPriceOfNickname(newNickname)
@@ -28,9 +29,13 @@ class ChangeNickCommand extends AbstractCommand {
           (pet, s"Недостаточно PTC. Требуется ${price}PTC за данную кличку.")
         }
       }
+    }
+  }
 
-      case _ =>
-        (pet, "Попробуй $pet help change-nick")
+  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
+    args match {
+      case Array(newNickname, _*) => changeNickname(pet, credential, newNickname.trim)
+      case _ => (pet, "Попробуй $pet help change-nick")
     }
   }
 }
