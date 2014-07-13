@@ -102,7 +102,7 @@ class DiceRoller extends BasePlugin with CommandProcessor {
             }
           }
           else {
-            response = getRandom( 100, 1 ).toString
+            response = getRandom( 1, 100 ).toString
           }
         }
 
