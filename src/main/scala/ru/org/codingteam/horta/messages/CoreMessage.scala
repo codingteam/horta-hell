@@ -28,6 +28,15 @@ case class CoreRoomJoin(time: DateTime, roomJID: String, roomActor: ActorRef)
 case class CoreRoomLeave(time: DateTime, roomJID: String)
 
 /**
+ * Core room topic changed message. Sent when entering the room or when admin changed the topic.
+ * @param time the time of an event.
+ * @param roomId room identifier.
+ * @param text new topic text.
+ * @param roomActor actor representing the room.
+ */
+case class CoreRoomTopicChanged(time: DateTime, roomId: String, text: String, roomActor: ActorRef)
+
+/**
  * Core participant joined message.
  * @param time time of an event.
  * @param roomJID JID of the room participant joined in.

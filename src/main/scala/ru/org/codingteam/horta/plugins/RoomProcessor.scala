@@ -13,6 +13,8 @@ trait RoomProcessor extends BasePlugin {
       processRoomJoin(time, roomJID, actor)
     case ProcessRoomLeave(time, roomJID) =>
       processRoomLeave(time, roomJID)
+    case ProcessRoomTopicChange(time, roomId, text) =>
+      processRoomTopicChange(time, roomId, text)
     case other => super.receive(other)
   }
 
@@ -32,5 +34,13 @@ trait RoomProcessor extends BasePlugin {
    * @param roomJID JID of the room.
    */
   protected def processRoomLeave(time: DateTime, roomJID: String)
+
+  /**
+   * Process room topic change.
+   * @param time time of an event.
+   * @param roomId room identifier.
+   * @param text new topic text.
+   */
+  protected def processRoomTopicChange(time: DateTime, roomId: String, text: String) {}
 
 }

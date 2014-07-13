@@ -46,6 +46,14 @@ case class ProcessRoomJoin(time: DateTime, roomJID: String, actor: ActorRef)
 case class ProcessRoomLeave(time: DateTime, roomJID: String)
 
 /**
+ * A process room leave request.
+ * @param time time of an event.
+ * @param roomId room identifier.
+ * @param text new topic text.
+ */
+case class ProcessRoomTopicChange(time: DateTime, roomId: String, text: String)
+
+/**
  * A process participant join request.
  * @param time time of an event.
  * @param roomJID JID of the room.

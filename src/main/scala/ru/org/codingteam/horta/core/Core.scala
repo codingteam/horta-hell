@@ -8,18 +8,18 @@ import ru.org.codingteam.horta.database.{DAO, PersistentStore}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
+import ru.org.codingteam.horta.plugins.dice.DiceRoller
 import ru.org.codingteam.horta.plugins.log.LogPlugin
 import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
+import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.security._
+
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import scala.Some
-import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
-import ru.org.codingteam.horta.plugins.dice.DiceRoller
 
 /**
  * Horta core actor. Manages all plugins, routes global messages.
@@ -86,6 +86,7 @@ class Core extends Actor with ActorLogging {
     case CoreMessage(time, credential, text) => processMessage(time, credential, text)
     case CoreRoomJoin(time, roomJID, actor) => processRoomJoin(time, roomJID, actor)
     case CoreRoomLeave(time, roomJID) => processRoomLeave(time, roomJID)
+    case CoreRoomTopicChanged(time, roomId, text, actor) => processRoomTopicChanged(time, roomId, text, actor)
     case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
     case CoreParticipantLeft(time, roomJID, participantJID, actor) => processParticipantLeave(time, roomJID, participantJID, actor)
   }
@@ -137,6 +138,12 @@ class Core extends Actor with ActorLogging {
   private def processRoomLeave(time: DateTime, roomJID: String) {
     for (plugin <- roomReceivers) {
       plugin ! ProcessRoomLeave(time, roomJID)
+    }
+  }
+
+  private def processRoomTopicChanged(time: DateTime, roomId: String, text: String, roomActor: ActorRef) {
+    for (plugin <- roomReceivers) {
+      plugin ! ProcessRoomTopicChange(time, roomId, text)
     }
   }
 

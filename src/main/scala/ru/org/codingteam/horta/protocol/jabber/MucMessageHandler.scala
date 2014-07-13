@@ -1,16 +1,17 @@
 package ru.org.codingteam.horta.protocol.jabber
 
+import java.util.regex.Pattern
+
 import akka.actor.{Actor, ActorLogging, ActorRef}
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
-import java.util.regex.Pattern
+import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.{SendMucMessage, SendPrivateMessage, SendPrivateResponse, SendResponse}
 import ru.org.codingteam.horta.security._
+
 import scala.concurrent.duration._
-import scala.Some
-import org.jivesoftware.smack.util.StringUtils
 
 /**
  * Multi user chat message handler.
@@ -73,9 +74,13 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
       val jid = message.getFrom
       val text = message.getBody
 
-      if (text != null) {
-        val credential = getCredential(jid)
-        core ! CoreMessage(Clock.now, credential, text)
+      (jid, text) match {
+        case (`roomJID`, _) =>
+          core ! CoreRoomTopicChanged(Clock.now, roomJID, text, self)
+        case (_, _) if text != null =>
+          val credential = getCredential(jid)
+          core ! CoreMessage(Clock.now, credential, text)
+        case _ =>
       }
 
     case SendResponse(credential, text) =>
