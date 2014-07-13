@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.plugins.dice
 import ru.org.codingteam.horta.plugins.{CommandProcessor, CommandDefinition, BasePlugin}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
+import ru.org.codingteam.horta.plugins.fun.FunnyAnswers
 import scala.io.Source
 import scala.util.Random
 import scala.collection.mutable.ListBuffer
@@ -80,26 +81,28 @@ class DiceRoller extends BasePlugin with CommandProcessor {
       case DiceCommand =>
         var response = ""
 
+        var answer = new FunnyAnswers
+
         if( Math.random() > 0.90 ) {
-          response = funAnswers( getRandom( 0, 2 ) )
+          response = answer.getRandomAnswer
         }
         else {
           if( arguments.length > 1 ) {
             val someFaces = toInt( arguments( 0 ) )
             val someCcount = toInt( arguments( 1 ) )
 
-            val faces = someFaces.getOrElse( 20 )
+            val faces = someFaces.getOrElse( 100 )
             val count = someCcount.getOrElse( 1 )
 
-            if( count > 0 || faces > 1 ) {
-              response = diceRoll(faces, count)
+            if( count > 0 && faces > 1 ) {
+              response = diceRoll( faces, count )
             }
             else {
-              response = errorResponse
+              response = answer.getRandomAnswer
             }
           }
           else {
-            response = errorResponse
+            response = getRandom( 1, 100 ).toString
           }
         }
 
