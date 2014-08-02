@@ -17,7 +17,12 @@ To start your plugin with the Horta you should add the corresponding `akka.actor
 Base types
 ----------
 
-TODO: Write about a `BasePlugin`.
+It is a good idea to derive your plugin from the `ru.org.codingteam.horta.plugins.BasePlugin` type. This type provides
+some common plugin functionality. Inheritots should override `name` property. You also should override `dao` property if
+your plugin wants to store some data in the database, see the `Database` section below.
+
+There are some base traits that helps you to implement shared plugin functionality such as command or message
+processing. These traits are described in the following sections.
 
 ## `CommandProcessor`
 
