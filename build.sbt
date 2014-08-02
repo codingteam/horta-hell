@@ -10,7 +10,9 @@ scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
 resolvers ++= Seq(
   "codingteam" at "http://fornever.me:18080/repository/codingteam",
-  "codingteam-snapshots" at "http://fornever.me:18080/repository/codingteam-snapshots"
+  "codingteam-snapshots" at "http://fornever.me:18080/repository/codingteam-snapshots",
+  Resolver.sonatypeRepo("releases") // added as a solution for https://issues.scala-lang.org/browse/SI-8772
+                                    // this is temporary, I hope hope hope
 )
 
 libraryDependencies ++= Seq(
