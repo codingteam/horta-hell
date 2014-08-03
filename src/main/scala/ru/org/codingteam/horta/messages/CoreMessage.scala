@@ -50,6 +50,11 @@ case class CoreParticipantJoined(time: DateTime, roomJID: String, participantJID
  * @param time time of an event.
  * @param roomJID JID of the room participant left from.
  * @param participantJID participant JID.
+ * @param reason event reason (kicked, renamed, banned etc.).
  * @param roomActor actor representing the room.
  */
-case class CoreParticipantLeft(time: DateTime, roomJID: String, participantJID: String, roomActor: ActorRef)
+case class CoreParticipantLeft(time: DateTime,
+                               roomJID: String,
+                               participantJID: String,
+                               reason: LeaveReason,
+                               roomActor: ActorRef)

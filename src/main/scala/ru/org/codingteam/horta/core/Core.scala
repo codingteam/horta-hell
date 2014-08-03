@@ -88,7 +88,8 @@ class Core extends Actor with ActorLogging {
     case CoreRoomLeave(time, roomJID) => processRoomLeave(time, roomJID)
     case CoreRoomTopicChanged(time, roomId, text, actor) => processRoomTopicChanged(time, roomId, text, actor)
     case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
-    case CoreParticipantLeft(time, roomJID, participantJID, actor) => processParticipantLeave(time, roomJID, participantJID, actor)
+    case CoreParticipantLeft(time, roomJID, participantJID, reason, actor) =>
+      processParticipantLeave(time, roomJID, participantJID, reason, actor)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
@@ -153,9 +154,13 @@ class Core extends Actor with ActorLogging {
     }
   }
 
-  private def processParticipantLeave(time: DateTime, roomJID: String, participantJID: String, roomActor: ActorRef) {
+  private def processParticipantLeave(time: DateTime,
+                                      roomJID: String,
+                                      participantJID: String,
+                                      reason: LeaveReason,
+                                      roomActor: ActorRef) {
     for (plugin <- participantReceivers) {
-      plugin ! ProcessParticipantLeave(time, roomJID, participantJID, roomActor)
+      plugin ! ProcessParticipantLeave(time, roomJID, participantJID, reason, roomActor)
     }
   }
 

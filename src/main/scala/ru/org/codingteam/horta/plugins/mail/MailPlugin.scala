@@ -6,6 +6,7 @@ import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{DeleteObject, StoreObject, ReadObject}
+import ru.org.codingteam.horta.messages.LeaveReason
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, ParticipantProcessor, BasePlugin}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
@@ -57,7 +58,11 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     }
   }
 
-  override def processParticipantLeave(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef) {}
+  override def processParticipantLeave(time: DateTime,
+                                       roomJID: String,
+                                       participantJID: String,
+                                       reason: LeaveReason,
+                                       actor: ActorRef) {}
 
   private def sendMail(sender: Credential, receiverNick: String, message: String) {
     // First try to send the message right now:
