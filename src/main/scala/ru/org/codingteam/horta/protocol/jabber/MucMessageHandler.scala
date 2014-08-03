@@ -45,7 +45,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
 
     case UserLeft(participant, reason) =>
       removeParticipant(participant, reason)
-      log.info(s"$participant left")
+      log.info(s"$participant left, reason: $reason")
 
     case OwnershipGranted(participant) =>
       participants = participants.updated(participant, Owner)
