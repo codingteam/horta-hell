@@ -21,6 +21,8 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
 
   import context.dispatcher
 
+  val maxMessageLength = 50
+
   override protected def name: String = "log"
 
   override protected def dao: Option[DAO] = Some(new LogDAO())
@@ -79,7 +81,15 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
   private def getSearchResponse(room:String, phrase: String): Future[String] = {
     (store ? ReadObject(name, GetMessages(room, phrase))) map {
       case Some(messages: Seq[LogMessage]) =>
-        messages.map(message => s"${message.time} ${message.sender} ${message.text}").mkString("\n")
+        messages.map(message => s"${message.time} ${message.sender} ${prepareMessageText(message.text)}").mkString("\n")
+    }
+  }
+
+  private def prepareMessageText(text: String) = {
+    if (text.length > maxMessageLength) {
+      text.substring(0, maxMessageLength - 1) + "…"
+    } else {
+      text
     }
   }
 
