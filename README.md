@@ -94,5 +94,7 @@ the CI system if present).
 
 When forking, please create new branches from the `develop` branch.
 
+If you want to write new plugin for Horta, [read the following documentation](docs/How-to-write-a-plugin.md).
+
 Report any bugs to [the issues list](https://github.com/codingteam/horta-hell/issues). You may ask for support in our
 XMPP conference: `codingteam@conference.jabber.ru`.
