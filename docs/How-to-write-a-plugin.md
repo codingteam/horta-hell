@@ -78,7 +78,7 @@ only once automatically when your plugin accesses the database first time.
 ### Data access
 
 To access the data you should create a *data access object*. It should be derived from the
-`ru.org.codingteam.horta.database` trait. This trait provides a light protocol that your plugin should follow. Then
+`ru.org.codingteam.horta.database.DAO` trait. This trait provides a light protocol that your plugin should follow. Then
 publish your DAO to the system through overridden `BasePlugin` `dao` property.
 
 After that, use asynchronous storage interface. Horta creates special `store` actor (you may access it with protected 
