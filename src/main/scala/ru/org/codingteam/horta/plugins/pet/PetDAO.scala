@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import java.sql.Connection
+import java.sql.{Connection, Timestamp}
+import org.joda.time.DateTime
 
 import ru.org.codingteam.horta.database.DAO
 
@@ -49,6 +50,7 @@ class PetDAO extends DAO {
               resultSet.getBoolean("alive"),
               resultSet.getInt("health"),
               resultSet.getInt("hunger"),
+	      new DateTime(resultSet.getTimestamp("birth")),
               readCoins(connection, roomName)))
         } else {
           None
@@ -87,15 +89,16 @@ class PetDAO extends DAO {
   }
 
   private def insert(connection: Connection, room: String, obj: Any) {
-    val PetData(nickname, alive, health, hunger, coins) = obj
+    val PetData(nickname, alive, health, hunger, birth, coins) = obj
     val statement = connection.prepareStatement(
-      "INSERT INTO pet (room, nickname, alive, health, hunger) VALUES (?, ?, ?, ?, ?)")
+      "INSERT INTO pet (room, nickname, alive, health, hunger, birth) VALUES (?, ?, ?, ?, ?, ?)")
     try {
       statement.setString(1, room)
       statement.setString(2, nickname)
       statement.setBoolean(3, alive)
       statement.setInt(4, health)
       statement.setInt(5, hunger)
+      statement.setTimestamp(6, new Timestamp(birth.getMillis))
       statement.executeUpdate()
 
       insertCoins(connection, room, coins)
@@ -105,15 +108,16 @@ class PetDAO extends DAO {
   }
 
   private def update(connection: Connection, room: String, obj: Any) {
-    val PetData(nickname, alive, health, hunger, coins) = obj
+    val PetData(nickname, alive, health, hunger, birth, coins) = obj
     val statement = connection.prepareStatement(
-      "UPDATE pet SET nickname = ?, alive = ?, health = ?, hunger = ? WHERE room = ?")
+      "UPDATE pet SET nickname = ?, alive = ?, health = ?, hunger = ?, birth = ? WHERE room = ?")
     try {
       statement.setString(1, nickname)
       statement.setBoolean(2, alive)
       statement.setInt(3, health)
       statement.setInt(4, hunger)
-      statement.setString(5, room)
+      statement.setString(6, room)
+      statement.setTimestamp(5, new Timestamp(birth.getMillis))
       statement.executeUpdate()
 
       deleteCoins(connection, room)

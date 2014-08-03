@@ -3,5 +3,6 @@ create table Pet (
   nickname varchar(255),
   alive boolean,
   health integer,
-  hunger integer
+  hunger integer,
+  birth timestamp
 )
