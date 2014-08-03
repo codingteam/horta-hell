@@ -116,8 +116,8 @@ class PetDAO extends DAO {
       statement.setBoolean(2, alive)
       statement.setInt(3, health)
       statement.setInt(4, hunger)
-      statement.setString(6, room)
       statement.setTimestamp(5, new Timestamp(birth.getMillis))
+      statement.setString(6, room)
       statement.executeUpdate()
 
       deleteCoins(connection, room)
