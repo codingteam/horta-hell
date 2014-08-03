@@ -50,7 +50,7 @@ class PetDAO extends DAO {
               resultSet.getBoolean("alive"),
               resultSet.getInt("health"),
               resultSet.getInt("hunger"),
-	      new DateTime(resultSet.getTimestamp("birth")),
+              new DateTime(resultSet.getTimestamp("birth")),
               readCoins(connection, roomName)))
         } else {
           None

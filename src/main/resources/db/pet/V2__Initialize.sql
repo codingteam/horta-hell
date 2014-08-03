@@ -4,5 +4,4 @@ create table Pet (
   alive boolean,
   health integer,
   hunger integer,
-  birth timestamp
 )
