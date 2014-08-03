@@ -6,6 +6,7 @@ import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{ReadObject, DAO, StoreObject}
+import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
@@ -30,18 +31,19 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
   override protected def commands: List[CommandDefinition] = List(
     CommandDefinition(CommonAccess, "search", SearchLogCommand))
 
-  override protected def processParticipantLeave(time: DateTime,
-                                                 roomJID: String,
-                                                 participantJID: String,
-                                                 actor: ActorRef) {
-    saveLogMessage(time, roomJID, participantJID, EnterType)
-  }
-
   override protected def processParticipantJoin(time: DateTime,
                                                 roomJID: String,
                                                 participantJID: String,
                                                 actor: ActorRef) {
-    saveLogMessage(time, roomJID, participantJID, LeaveType)
+    saveLogMessage(time, roomJID, participantJID, EnterType)
+  }
+
+  override protected def processParticipantLeave(time: DateTime,
+                                                 roomJID: String,
+                                                 participantJID: String,
+                                                 reason: LeaveReason,
+                                                 actor: ActorRef) {
+    saveLogMessage(time, roomJID, participantJID, LeaveType, getReasonText(reason))
   }
 
   override protected def processMessage(time: DateTime, credential: Credential, message: String) {
@@ -76,6 +78,15 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
                              text: String) {
     val message = LogMessage(None, time, roomJID, sender, eventType, text)
     store ? StoreObject(name, None, message)
+  }
+
+  private def getReasonText(reason: LeaveReason) = {
+    reason match {
+      case UserLeftReason(text) => s"User left: $text"
+      case UserKickedReason(text) => s"User kicked: $text"
+      case UserBannedReason(text) => s"User banned: $text"
+      case UserRenamed(_) => reason.text
+    }
   }
 
   private def getSearchResponse(room:String, phrase: String): Future[String] = {

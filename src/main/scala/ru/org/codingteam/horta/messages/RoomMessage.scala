@@ -2,8 +2,19 @@ package ru.org.codingteam.horta.messages
 
 import org.jivesoftware.smack.packet.Message
 
+abstract sealed class LeaveReason {
+  def text: String
+}
+
+case class UserLeftReason(text: String) extends LeaveReason
+case class UserKickedReason(text: String) extends LeaveReason
+case class UserBannedReason(text: String) extends LeaveReason
+case class UserRenamed(newNick: String) extends LeaveReason {
+  override def text = "renamed to " + newNick
+}
+
 case class UserJoined(participant: String, affilation: String)
-case class UserLeft(participant: String)
+case class UserLeft(participant: String, reason: LeaveReason = UserLeftReason(""))
 case class OwnershipGranted(participant: String)
 case class OwnershipRevoked(participant: String)
 case class AdminGranted(participant: String)

@@ -2,6 +2,7 @@ package ru.org.codingteam.horta.plugins
 
 import akka.actor.ActorRef
 import org.joda.time.DateTime
+import ru.org.codingteam.horta.messages.LeaveReason
 import ru.org.codingteam.horta.security.Credential
 
 /**
@@ -67,6 +68,11 @@ case class ProcessParticipantJoin(time: DateTime, roomJID: String, participantJI
  * @param time time of an event.
  * @param roomJID JID of the room.
  * @param participantJID JID of the left participant.
+ * @param reason event reason.
  * @param actor actor representing the room.
  */
-case class ProcessParticipantLeave(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef)
+case class ProcessParticipantLeave(time: DateTime,
+                                   roomJID: String,
+                                   participantJID: String,
+                                   reason: LeaveReason,
+                                   actor: ActorRef)

@@ -43,9 +43,9 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
       addParticipant(participant, affiliation)
       log.info(s"$participant joined as $affiliation")
 
-    case UserLeft(participant) =>
-      removeParticipant(participant)
-      log.info(s"$participant left")
+    case UserLeft(participant, reason) =>
+      removeParticipant(participant, reason)
+      log.info(s"$participant left, reason: $reason")
 
     case OwnershipGranted(participant) =>
       participants = participants.updated(participant, Owner)
@@ -66,7 +66,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
     case NicknameChanged(participant, newNick) =>
       val newParticipant = jidByNick(newNick)
       val access = participants(participant)
-      removeParticipant(participant)
+      removeParticipant(participant, UserRenamed(newNick))
       addParticipant(newParticipant, access)
       log.info(s"$participant changed nick to $newNick")
 
@@ -153,13 +153,13 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
     }
   }
 
-  private def removeParticipant(participantJID: String) {
+  private def removeParticipant(participantJID: String, reason: LeaveReason) {
     val oldSize = participants.size
     participants -= participantJID
     val changed = oldSize != participants.size
 
     if (changed) {
-      core ! CoreParticipantLeft(Clock.now, roomJID, participantJID, self)
+      core ! CoreParticipantLeft(Clock.now, roomJID, participantJID, reason, self)
     }
   }
 

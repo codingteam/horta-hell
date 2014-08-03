@@ -35,4 +35,12 @@ class MucParticipantStatusListener(muc: MultiUserChat, room: ActorRef) extends D
   override def nicknameChanged(participant: String, newNickname: String) {
     room ! NicknameChanged(participant, newNickname)
   }
+
+  override def kicked(participant: String, actor: String, reason: String) {
+    room ! UserLeft(participant, UserKickedReason(reason))
+  }
+
+  override def banned(participant: String, actor: String, reason: String) {
+    room ! UserLeft(participant, UserBannedReason(reason))
+  }
 }
