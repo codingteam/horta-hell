@@ -135,11 +135,13 @@ class PetDAO extends DAO {
       """.stripMargin)
     try {
       coins foreach {
-        case (nick, amount) if amount > 0 =>
-          statement.setString(1, room)
-          statement.setString(2, nick)
-          statement.setInt(3, amount)
-          statement.executeUpdate()
+        case (nick, amount) =>
+          if (amount > 0) {
+            statement.setString(1, room)
+            statement.setString(2, nick)
+            statement.setInt(3, amount)
+            statement.executeUpdate()
+          }
       }
     } finally {
       statement.close()
