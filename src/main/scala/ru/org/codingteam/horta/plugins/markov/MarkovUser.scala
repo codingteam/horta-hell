@@ -6,6 +6,7 @@ import java.util.{Calendar, Locale}
 import me.fornever.platonus.Network
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.configuration.Configuration
+import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.Protocol
 import scala.concurrent.duration._
@@ -53,7 +54,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       val result = if (bloodMode) {
         (generator(), false)
       } else {
-        val currentTime = DateTime.now
+        val currentTime = Clock.now
         def resetSeries() = {
           firstSeriesMessageTime = Some(currentTime)
           seriesMessages = 1

@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
-import org.joda.time.DateTime
-import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
+import ru.org.codingteam.horta.core.Clock
+import ru.org.codingteam.horta.plugins.pet.{PetData, PtcUtils}
 import ru.org.codingteam.horta.security.Credential
 
 class ResurrectCommand extends AbstractCommand {
@@ -13,7 +13,7 @@ class ResurrectCommand extends AbstractCommand {
       val newPet = pet.copy(
         health = 100,
         hunger = 100,
-	birth = new DateTime(),
+        birth = Clock.now,
         alive = true,
         coins = PtcUtils.updatePTC(username, pet.coins, 3)
       )
