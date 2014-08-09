@@ -10,7 +10,7 @@ abstract sealed class MessengerMessage
  */
 case class Reconnect(connection: XMPPConnection) extends MessengerMessage
 
-case class JoinRoom(roomJID: String, botName: String, greeting: String) extends MessengerMessage
+case class JoinRoom(roomJID: String, botName: String, greeting: Option[String]) extends MessengerMessage
 
 case class ChatOpened(chat: Chat) extends MessengerMessage
 
