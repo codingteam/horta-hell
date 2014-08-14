@@ -57,7 +57,7 @@ class FortunePlugin extends BasePlugin with CommandProcessor {
           }
         } catch {
           case e: Exception => {
-            e.printStackTrace()
+            log.error(e, "Fortune error")
             Protocol.sendResponse(credential.location, credential, "[ERROR] Something's wrong!")
           }
         }
