@@ -7,7 +7,7 @@ import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandPr
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
-import scala.io.Source
+import scala.io.{Codec, Source}
 
 private object HtmlReaderCommand
 
@@ -42,9 +42,10 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
                   connection.connect()
 
                   val code = connection.getResponseCode
+                  val encoding = Option(connection.getContentEncoding).getOrElse("UTF-8")
                   responseText.append("HTTP: ").append(code).append(", ")
 
-                  val doc = Jsoup.parse(Source.fromURL(url).take(headerSize).mkString)
+                  val doc = Jsoup.parse(Source.fromURL(url)(Codec(encoding)).take(headerSize).mkString)
                   val title = doc.title()
                   responseText.append(title)
                 case _ => throw new java.net.MalformedURLException()
