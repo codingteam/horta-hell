@@ -14,6 +14,7 @@ import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
 import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
+import ru.org.codingteam.horta.plugins.htmlreader.HtmlReaderPlugin
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.plugins.htmlreader.HtmlReaderPlugin
 import ru.org.codingteam.horta.security._
