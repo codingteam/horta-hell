@@ -33,16 +33,20 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
           try {
             arguments match {
               case Array(url) => {
+                new URL(url) match {
+                  case u if (u.getProtocol() == "http" || u.getProtocol() == "https") => {
+                    var connection = (u.openConnection()).asInstanceOf[HttpURLConnection]
+                    connection.setRequestMethod("GET")
+                    connection.connect()
+                    val code = connection.getResponseCode();
+                    responseText.append("HTTP: ").append(code).append(", ")
 
-                val connection = ((new URL(url)).openConnection()).asInstanceOf[HttpURLConnection]
-                connection.setRequestMethod("GET");
-                connection.connect();
-                val code = connection.getResponseCode();
-                responseText.append("HTTP: ").append(code).append(", ")
-
-                val doc = Jsoup.parse(Source.fromURL(url).take(headerSize).mkString)
-                val title = doc.title()
-                responseText.append(title)
+                    val doc = Jsoup.parse(Source.fromURL(url).take(headerSize).mkString)
+                    val title = doc.title()
+                    responseText.append(title)
+                  }
+                  case _ => throw new java.net.MalformedURLException()                  
+                }
               }
               case _ =>
                 Protocol.sendResponse(credential.location, credential, usageText)
