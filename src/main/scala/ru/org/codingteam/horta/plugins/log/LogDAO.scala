@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins.log
 
 import java.sql.{Connection, Statement, Timestamp}
-import org.joda.time.DateTime
+import org.joda.time.{DateTimeZone, DateTime}
 import ru.org.codingteam.horta.database.DAO
 
 case class GetMessages(room: String, phrase: String)
@@ -87,7 +87,7 @@ class LogDAO extends DAO {
       try {
         while (resultSet.next()) {
           val id = Some(resultSet.getInt("id"))
-          val time = new DateTime(resultSet.getTimestamp("time").getTime)
+          val time = new DateTime(resultSet.getTimestamp("time").getTime, DateTimeZone.UTC)
           val sender = resultSet.getString("sender")
           val eventType = EventType(resultSet.getString("type"))
           val text = resultSet.getString("message")

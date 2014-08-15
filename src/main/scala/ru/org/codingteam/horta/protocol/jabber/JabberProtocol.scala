@@ -2,18 +2,18 @@ package ru.org.codingteam.horta.protocol.jabber
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
-import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection, XMPPException}
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
+import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection, XMPPException}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.configuration._
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.{SendChatMessage, SendMucMessage, SendPrivateMessage}
+
 import scala.collection.JavaConverters._
-import scala.concurrent.duration._
 import scala.concurrent.Lock
+import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.Some
 
 class JabberProtocol() extends Actor with ActorLogging {
 
@@ -67,7 +67,10 @@ class JabberProtocol() extends Actor with ActorLogging {
         filter)
 
       muc.join(nickname)
-      muc.sendMessage(greeting)
+      greeting match {
+        case Some(message) => muc.sendMessage(message)
+        case None =>
+      }
 
     case ChatOpened(chat) => {
       chats = chats.updated(chat.getParticipant, chat)
@@ -138,7 +141,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 
     Configuration.roomDescriptors foreach {
       case rd =>
-        if (rd.room != null) self ! JoinRoom(rd.room, rd.nickname, rd.message)
+        if (rd.room != null) self ! JoinRoom(rd.room, rd.nickname, Option(rd.message))
         else log.warning(s"No JID given for room ${rd.id}")
     }
 

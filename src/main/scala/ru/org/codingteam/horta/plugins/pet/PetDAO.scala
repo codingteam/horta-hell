@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins.pet
 
 import java.sql.{Connection, Timestamp}
-import org.joda.time.DateTime
+import org.joda.time.{DateTimeZone, DateTime}
 
 import ru.org.codingteam.horta.database.DAO
 
@@ -50,7 +50,7 @@ class PetDAO extends DAO {
               resultSet.getBoolean("alive"),
               resultSet.getInt("health"),
               resultSet.getInt("hunger"),
-              new DateTime(resultSet.getTimestamp("birth")),
+              new DateTime(resultSet.getTimestamp("birth"), DateTimeZone.UTC),
               readCoins(connection, roomName)))
         } else {
           None
@@ -136,10 +136,12 @@ class PetDAO extends DAO {
     try {
       coins foreach {
         case (nick, amount) =>
-          statement.setString(1, room)
-          statement.setString(2, nick)
-          statement.setInt(3, amount)
-          statement.executeUpdate()
+          if (amount > 0) {
+            statement.setString(1, room)
+            statement.setString(2, nick)
+            statement.setInt(3, amount)
+            statement.executeUpdate()
+          }
       }
     } finally {
       statement.close()
