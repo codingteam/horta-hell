@@ -1,12 +1,13 @@
 package ru.org.codingteam.horta.plugins.htmlreader
 
-import ru.org.codingteam.horta.plugins.{CommandProcessor, CommandDefinition, BasePlugin}
-import ru.org.codingteam.horta.security.{Credential, CommonAccess}
-import ru.org.codingteam.horta.protocol.Protocol
+import java.net.{HttpURLConnection, URL}
+
 import org.jsoup.Jsoup
-import akka.event.Logging
+import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
+import ru.org.codingteam.horta.protocol.Protocol
+import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+
 import scala.io.Source
-import java.net.{URL, HttpURLConnection}
 
 private object HtmlReaderCommand
 
@@ -28,47 +29,43 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
                               token: Any,
                               arguments: Array[String]) {
     token match {
-      case HtmlReaderCommand => {
-        var responseText = new StringBuilder()
-          try {
-            arguments match {
-              case Array(url) => {
-                new URL(url) match {
-                  case u if (u.getProtocol() == "http" || u.getProtocol() == "https") => {
-                    var connection = (u.openConnection()).asInstanceOf[HttpURLConnection]
-                    connection.setRequestMethod("GET")
-                    connection.connect()
-                    val code = connection.getResponseCode();
-                    responseText.append("HTTP: ").append(code).append(", ")
+      case HtmlReaderCommand =>
+        val responseText = new StringBuilder()
+        try {
+          arguments match {
+            case Array(address) =>
+              val url = new URL(address)
+              url.getProtocol match {
+                case "http" | "https" =>
+                  val connection = url.openConnection().asInstanceOf[HttpURLConnection]
+                  connection.setRequestMethod("GET")
+                  connection.connect()
 
-                    val doc = Jsoup.parse(Source.fromURL(url).take(headerSize).mkString)
-                    val title = doc.title()
-                    responseText.append(title)
-                  }
-                  case _ => throw new java.net.MalformedURLException()                  
-                }
+                  val code = connection.getResponseCode
+                  responseText.append("HTTP: ").append(code).append(", ")
+
+                  val doc = Jsoup.parse(Source.fromURL(url).take(headerSize).mkString)
+                  val title = doc.title()
+                  responseText.append(title)
+                case _ => throw new java.net.MalformedURLException()
               }
-              case _ =>
-                Protocol.sendResponse(credential.location, credential, usageText)
-            }
-          } catch {
-            case e @ (_: java.net.MalformedURLException | _: java.lang.IllegalArgumentException) => {
-              responseText.append(malformedUrl)
-            }
-            case e @ (_: org.jsoup.HttpStatusException | _: java.io.IOException) => {
-              responseText.append(httpResponseNotOK)
-            }
-            case e: java.net.UnknownHostException => {
-              responseText.append(unknownHost)
-            }
-            case e: Exception => {
-              log.error(e, e.toString())
-              Protocol.sendResponse(credential.location, credential, "[ERROR] Something's wrong!")
-            }
+            case _ =>
+              Protocol.sendResponse(credential.location, credential, usageText)
           }
-        if (!responseText.isEmpty) {
-          Protocol.sendResponse(credential.location, credential, responseText.toString)
-          }
+        } catch {
+          case e@(_: java.net.MalformedURLException | _: java.lang.IllegalArgumentException) =>
+            responseText.append(malformedUrl)
+          case e: java.net.UnknownHostException =>
+            responseText.append(unknownHost)
+          case e@(_: org.jsoup.HttpStatusException | _: java.io.IOException) =>
+            log.error(e, "HTTP exception")
+            responseText.append(httpResponseNotOK)
+          case e: Exception =>
+            log.error(e, e.toString)
+            Protocol.sendResponse(credential.location, credential, "[ERROR] Something's wrong!")
+        }
+        if (responseText.nonEmpty) {
+          Protocol.sendResponse(credential.location, credential, responseText.toString())
         }
 
       case _ => None
