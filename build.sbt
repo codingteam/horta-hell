@@ -9,8 +9,8 @@ scalaVersion := "2.10.4"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
 resolvers ++= Seq(
-  "codingteam" at "http://fornever.me:18080/repository/codingteam",
-  "codingteam-snapshots" at "http://fornever.me:18080/repository/codingteam-snapshots"
+  "codingteam" at "http://archiva.fornever.me/repository/codingteam",
+  "codingteam-snapshots" at "http://archiva.fornever.me/repository/codingteam-snapshots"
 )
 
 libraryDependencies ++= Seq(
