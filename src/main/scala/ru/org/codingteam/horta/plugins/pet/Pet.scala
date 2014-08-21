@@ -14,8 +14,6 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.math._
 
-import ru.org.codingteam.horta.plugins.pet.PtcUtils
-
 class Pet(roomId: String, location: ActorRef) extends Actor {
 
   import context.dispatcher
