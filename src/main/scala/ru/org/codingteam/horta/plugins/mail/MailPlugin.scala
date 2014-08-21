@@ -38,7 +38,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     token match {
       case SendMailCommand =>
         arguments match {
-          case Array(receiver, message) => sendMail(credential, receiver, message)
+          case Array(receiver, message) if receiver.nonEmpty => sendMail(credential, receiver, message)
           case _ => Protocol.sendResponse(credential.location, credential, "Invalid arguments.")
         }
       case _ =>
