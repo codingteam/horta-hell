@@ -14,6 +14,8 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.math._
 
+import ru.org.codingteam.horta.plugins.pet.PtcUtils
+
 class Pet(roomId: String, location: ActorRef) extends Actor {
 
   import context.dispatcher
@@ -39,6 +41,45 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
     var hunger = pet.hunger
     var coins = pet.coins
 
+    val aggressiveAttack = List(
+      " яростно набрасывается на ",
+      " накидывается на ",
+      " прыгает, выпустив когти, на ",
+      " от жуткого голода с рыком впивается в бедро "
+    )
+
+    val searchingForFood = List(
+      " пытается сожрать все, что найдет",
+      " рыщет в поисках пищи",
+      " жалобно скулит и просит еды",
+      " рычит от голода",
+      " тихонько поскуливает от боли в пустом желудке",
+      " скребёт пол в попытке найти пропитание",
+      " переворачивает всё вверх дном в поисках еды",
+      " ловит зубами блох, пытаясь ими наесться",
+      " грызёт ножку стола, изображая вселенский голод",
+      " демонстративно гремит миской, требовательно ворча",
+      " плотоядно смотрит на окружающих, обнажив зубы",
+      " старательно принюхивается, пытаясь уловить хоть какой-нибудь запах съестного",
+      " плачет от голода, утирая слёзы хвостом"
+    )
+
+    val becomeDead = List(
+      " умер в забвении с гримасой страдания на морде",
+      " корчится в муках и умирает",
+      " агонизирует, сжимая зубы в предсмертных судорогах",
+      " издал тихий рык и испустил дух"
+    )
+
+    val lowHealth = List(
+      " забился в самый темный угол конфы и смотрит больными глазами в одну точку",
+      " лежит и еле дышит, хвостиком едва колышет",
+      " жалобно поскуливает, волоча заднюю лапу",
+      " завалился на бок и окинул замутнённым болью взором конфу",
+      " едва дышит, издавая хриплые звуки и отхаркивая кровавую пену"
+    )
+
+
     if (pet.alive) {
       health -= 1
       hunger -= 2
@@ -46,11 +87,16 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
       if (hunger <= 0 || health <= 0) {
         alive = false
         coins = coins.mapValues(x => max(0, x - 1))
-        sayToEveryone(location, s"$nickname умер в забвении. Все теряют по 1PTC.")
-      } else if (hunger <= 10 && pet.hunger > 10) {
-        sayToEveryone(location, s"$nickname пытается сожрать все, что найдет.")
-      } else if (health <= 10 && pet.health > 10) {
-        sayToEveryone(location, s"$nickname забился в самый темный угол конфы и смотрит больными глазами в одну точку.")
+        sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
+      } else if (hunger <= 10 && pet.hunger > 7) {
+        sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
+        if (pet.randomGen.nextInt(10) == 0) {
+          val victim = pet.randomChoice(coins.keys.toList)
+          PtcUtils.updatePTC(victim, coins, -5)
+          sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + s". $victim теряет 5PTC.")
+        }
+      } else if (health <= 10 && pet.health > 9) {
+        sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
       }
 
       pet.copy(alive = alive, health = health, hunger = hunger, coins = coins)
