@@ -93,11 +93,12 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         coins = coins.mapValues(x => max(0, x - 1))
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
       } else if (hunger <= 10 && pet.hunger > 7) {
-        sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
         if (pet.randomGen.nextInt(10) == 0) {
           val victim = pet.randomChoice(coins.keys.toList)
           PtcUtils.updatePTC(victim, coins, -5)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(loosePTC) + s". $victim теряет 5PTC.")
+        } else {
+          sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
         }
       } else if (health <= 10 && pet.health > 9) {
         sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
