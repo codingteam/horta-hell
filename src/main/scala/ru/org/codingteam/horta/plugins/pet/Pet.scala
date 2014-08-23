@@ -99,7 +99,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
           val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
           val possible_victims = map.keys map ((x: String) => StringUtils.parseResource(x))
           val victim = pet.randomChoice((coins.keys.toSet & possible_victims.toSet).toList)
-          PtcUtils.updatePTC(victim, coins, -5)
+          PtcUtils.updatePTC(victim, coins, -3)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 5PTC.")
           hunger = 100
         } else {
