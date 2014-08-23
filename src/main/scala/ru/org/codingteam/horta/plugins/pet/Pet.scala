@@ -8,6 +8,7 @@ import ru.org.codingteam.horta.plugins.pet.Pet.PetTick
 import ru.org.codingteam.horta.plugins.pet.commands.AbstractCommand
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.Credential
+import ru.org.codingteam.horta.messages.GetParticipants
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -94,7 +95,9 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
       } else if (hunger == 16 || hunger <= 10 && pet.hunger > 7) { // hunger == 16 just adds more stochastic behaviour
         if (pet.randomGen.nextInt(10) == 0 && coins.keys.size > 0) {
-          val victim = pet.randomChoice(coins.keys.toList)
+          val map = Await.result(location ? GetParticipants(), 5 minutes).asInstanceOf[Map[String, Any]]
+          val possible_victims = map.keys map ((x: String) => x.split("/")(1))
+          val victim = pet.randomChoice((coins.keys.toSet & possible_victims.toSet).toList)
           PtcUtils.updatePTC(victim, coins, -5)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 5PTC.")
         } else {
