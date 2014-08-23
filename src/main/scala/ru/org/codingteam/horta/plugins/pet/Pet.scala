@@ -101,6 +101,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
           val victim = pet.randomChoice((coins.keys.toSet & possible_victims.toSet).toList)
           PtcUtils.updatePTC(victim, coins, -5)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 5PTC.")
+          hunger = 100
         } else {
           sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
         }
