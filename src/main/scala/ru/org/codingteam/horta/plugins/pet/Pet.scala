@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.plugins.pet
 import akka.actor.{Actor, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
+import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.database.{ReadObject, StoreObject}
 import ru.org.codingteam.horta.plugins.pet.Pet.PetTick
 import ru.org.codingteam.horta.plugins.pet.commands.AbstractCommand
@@ -95,8 +96,8 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
       } else if (hunger == 16 || hunger <= 10 && pet.hunger > 7) { // hunger == 16 just adds more stochastic behaviour
         if (pet.randomGen.nextInt(10) == 0 && coins.keys.size > 0) {
-          val map = Await.result(location ? GetParticipants(), 5 minutes).asInstanceOf[Map[String, Any]]
-          val possible_victims = map.keys map ((x: String) => x.split("/")(1))
+          val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
+          val possible_victims = map.keys map ((x: String) => StringUtils.parseResource(x))
           val victim = pet.randomChoice((coins.keys.toSet & possible_victims.toSet).toList)
           PtcUtils.updatePTC(victim, coins, -5)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 5PTC.")
