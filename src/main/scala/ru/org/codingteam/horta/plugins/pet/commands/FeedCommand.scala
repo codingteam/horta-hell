@@ -22,7 +22,7 @@ class FeedCommand extends AbstractCommand {
     " с рыком набросился на "
   )
 
-  val loosePTC = List(
+  val losePTC = List(
     ", вцепившись зубами в ногу и выдирая кусок ткани штанов с кошельком",
     ", едва давая увернуться ценой потери выпавшего кошелька",
     ", сжирая одежду и кошелёк"
@@ -48,19 +48,19 @@ class FeedCommand extends AbstractCommand {
         if (pet.hunger < 10) {
           if (pet.randomGen.nextInt(5) == 0) {
             c = PtcUtils.updatePTC(username, pet.coins, -5)
-            r = s"${pet.nickname}" + pet.randomChoice(attackWhileFeeding) + username + pet.randomChoice(loosePTC) + s". Вы теряете 5PTC, зато ${pet.nickname} накормлен."
-            }
-          } else {
+            r = s"${pet.nickname}" + pet.randomChoice(attackWhileFeeding) + username + pet.randomChoice(losePTC) + s". Вы теряете 5PTC, зато ${pet.nickname} накормлен."
+          }
+        } else {
           c = PtcUtils.updatePTC(username, pet.coins, 1)
           r = s"${pet.nickname}" + pet.randomChoice(successfulFeeding) + ". Вы зарабатываете 1PTC."
-          }
-        (c, r)
-        } else {
-        (pet.coins, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
         }
-      (pet.copy(hunger = 100, coins = coins), response)
+        (c, r)
       } else {
-        (pet, "Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует.")
+        (pet.coins, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
+      }
+      (pet.copy(hunger = 100, coins = coins), response)
+    } else {
+      (pet, "Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует.")
     }
   }
 }

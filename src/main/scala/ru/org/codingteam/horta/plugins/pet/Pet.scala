@@ -46,7 +46,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
       " с рыком впивается в бедро "
     )
 
-    val loosePTC = List(
+    val losePTC = List(
       " от голода, крепко вцепившись зубами и выдирая кусок ткани штанов с кошельком",
       " раздирая в клочья одежду от голода и давая едва увернуться ценой потери выпавшего кошелька",
       " от жуткого голода, сжирая одежду и кошелёк"
@@ -96,7 +96,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         if (pet.randomGen.nextInt(10) == 0 && coins.keys.size > 0) {
           val victim = pet.randomChoice(coins.keys.toList)
           PtcUtils.updatePTC(victim, coins, -5)
-          sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(loosePTC) + s". $victim теряет 5PTC.")
+          sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 5PTC.")
         } else {
           sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
         }
