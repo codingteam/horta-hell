@@ -7,9 +7,9 @@ import ru.org.codingteam.horta.messages._
 class MucParticipantStatusListener(muc: MultiUserChat, room: ActorRef) extends DefaultParticipantStatusListener {
   override def joined(participant: String) {
     val occupant = muc.getOccupant(participant)
-    val affilation = occupant.getAffiliation
+    val affiliation = occupant.getAffiliation
 
-    room ! UserJoined(participant, affilation)
+    room ! UserJoined(participant, affiliation)
   }
 
   override def left(participant: String) {

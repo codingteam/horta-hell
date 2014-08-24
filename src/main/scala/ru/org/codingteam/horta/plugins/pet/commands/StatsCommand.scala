@@ -12,7 +12,7 @@ class StatsCommand extends AbstractCommand {
       """
         |Кличка: %s
         |Здоровье: %d
-        |Голод: %d
+        |Сытость: %d
         |Возраст: %d часов""".stripMargin.format(pet.nickname, pet.health, pet.hunger, age.toStandardHours.getHours)
     } else {
       s"%s мертв. Какие еще статы?".format(pet.nickname)
