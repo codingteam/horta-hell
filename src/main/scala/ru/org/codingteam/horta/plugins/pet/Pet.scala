@@ -103,7 +103,9 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 5PTC.")
           hunger = 100
         } else {
-          sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
+          if (pet.randomGen.nextInt(3) != 0) {
+            sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
+          }
         }
       } else if (health <= 10 && pet.health > 9) {
         sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
