@@ -46,8 +46,8 @@ class FeedCommand extends AbstractCommand {
     val username = credential.name
 
     if (pet.alive) {
-      val (feed, coins, response) = if (pet.hunger < 20) {
-        if (pet.hunger < 10) {
+      val (feed, coins, response) = if (pet.satiation < 20) {
+        if (pet.satiation < 10) {
           if (pet.randomGen.nextInt(2) == 0) {
             (false,
               PtcUtils.updatePTC(username, pet.coins, -1),
@@ -65,7 +65,7 @@ class FeedCommand extends AbstractCommand {
       } else {
         (true, pet.coins, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
       }
-      (pet.copy(hunger = if (feed) 100 else pet.hunger, coins = coins), response)
+      (pet.copy(satiation = if (feed) 100 else pet.satiation, coins = coins), response)
     } else {
       (pet, "Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует.")
     }

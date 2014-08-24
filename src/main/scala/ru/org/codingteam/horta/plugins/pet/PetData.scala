@@ -7,7 +7,7 @@ import java.util.Random
 case class PetData(nickname: String,
                    alive: Boolean,
                    health: Int,
-                   hunger: Int,
+                   satiation: Int,
                    birth: DateTime,
                    coins: Map[String, Int]) {
   val randomGen = new Random(System.currentTimeMillis())

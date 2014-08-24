@@ -12,7 +12,7 @@ class ResurrectCommand extends AbstractCommand {
       val username = credential.name
       val newPet = pet.copy(
         health = 100,
-        hunger = 100,
+        satiation = 100,
         birth = Clock.now,
         alive = true,
         coins = PtcUtils.updatePTC(username, pet.coins, 3)

@@ -49,7 +49,7 @@ class PetDAO extends DAO {
               resultSet.getString("nickname"),
               resultSet.getBoolean("alive"),
               resultSet.getInt("health"),
-              resultSet.getInt("hunger"),
+              resultSet.getInt("satiation"),
               new DateTime(resultSet.getTimestamp("birth"), DateTimeZone.UTC),
               readCoins(connection, roomName)))
         } else {
@@ -89,15 +89,15 @@ class PetDAO extends DAO {
   }
 
   private def insert(connection: Connection, room: String, obj: Any) {
-    val PetData(nickname, alive, health, hunger, birth, coins) = obj
+    val PetData(nickname, alive, health, satiation, birth, coins) = obj
     val statement = connection.prepareStatement(
-      "INSERT INTO pet (room, nickname, alive, health, hunger, birth) VALUES (?, ?, ?, ?, ?, ?)")
+      "INSERT INTO pet (room, nickname, alive, health, satiation, birth) VALUES (?, ?, ?, ?, ?, ?)")
     try {
       statement.setString(1, room)
       statement.setString(2, nickname)
       statement.setBoolean(3, alive)
       statement.setInt(4, health)
-      statement.setInt(5, hunger)
+      statement.setInt(5, satiation)
       statement.setTimestamp(6, new Timestamp(birth.getMillis))
       statement.executeUpdate()
 
@@ -108,14 +108,14 @@ class PetDAO extends DAO {
   }
 
   private def update(connection: Connection, room: String, obj: Any) {
-    val PetData(nickname, alive, health, hunger, birth, coins) = obj
+    val PetData(nickname, alive, health, satiation, birth, coins) = obj
     val statement = connection.prepareStatement(
-      "UPDATE pet SET nickname = ?, alive = ?, health = ?, hunger = ?, birth = ? WHERE room = ?")
+      "UPDATE pet SET nickname = ?, alive = ?, health = ?, satiation = ?, birth = ? WHERE room = ?")
     try {
       statement.setString(1, nickname)
       statement.setBoolean(2, alive)
       statement.setInt(3, health)
-      statement.setInt(4, hunger)
+      statement.setInt(4, satiation)
       statement.setTimestamp(5, new Timestamp(birth.getMillis))
       statement.setString(6, room)
       statement.executeUpdate()

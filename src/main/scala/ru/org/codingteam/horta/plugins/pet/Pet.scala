@@ -38,7 +38,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
     val nickname = pet.nickname
     var alive = pet.alive
     var health = pet.health
-    var hunger = pet.hunger
+    var satiation = pet.satiation
     var coins = pet.coins
 
     val aggressiveAttack = List(
@@ -88,20 +88,20 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
 
     if (pet.alive) {
       health -= 1
-      hunger -= 2
+      satiation -= 2
 
-      if (hunger <= 0 || health <= 0) {
+      if (satiation <= 0 || health <= 0) {
         alive = false
         coins = coins.mapValues(x => max(0, x - 1))
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
-      } else if (hunger <= 12 && pet.hunger > 5 && pet.hunger % 3 == 0) { // 12, 9, 6
+      } else if (satiation <= 12 && pet.satiation > 5 && pet.satiation % 3 == 0) { // 12, 9, 6
         if (pet.randomGen.nextInt(10) == 0 && coins.keys.size > 0) {
           val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
-          val possible_victims = map.keys map ((x: String) => StringUtils.parseResource(x))
-          val victim = pet.randomChoice((coins.keys.toSet & possible_victims.toSet).toList)
+          val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
+          val victim = pet.randomChoice((coins.keys.toSet & possibleVictims.toSet).toList)
           PtcUtils.updatePTC(victim, coins, -3)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 5PTC.")
-          hunger = 100
+          satiation = 100
         } else {
           if (pet.randomGen.nextInt(3) != 0) {
             sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
@@ -111,7 +111,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
       }
 
-      pet.copy(alive = alive, health = health, hunger = hunger, coins = coins)
+      pet.copy(alive = alive, health = health, satiation = satiation, coins = coins)
     } else {
       pet
     }
