@@ -88,6 +88,9 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
 
     case SendPrivateResponse(credential, text) =>
       sendMessage(credential, text, true)
+
+    case GetParticipants() =>
+      sender ! participants
   }
 
   def getCredential(jid: String) = {
