@@ -94,7 +94,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         alive = false
         coins = coins.mapValues(x => max(0, x - 1))
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
-      } else if (satiation <= 12 && pet.satiation > 5 && pet.satiation % 3 == 0) { // 12, 9, 6
+      } else if (satiation <= 12 && satiation > 5 && satiation % 3 == 0) { // 12, 9, 6
         if (pet.randomGen.nextInt(10) == 0 && coins.keys.size > 0) {
           val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
           val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
