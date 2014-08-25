@@ -45,7 +45,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
       petCommands.get(commandName)
   }
 
-  override def name = "pet"
+  override def name = PetPlugin.name
 
   override def commands = List(CommandDefinition(CommonAccess, "pet", null))
 
@@ -93,4 +93,8 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
     }
   }
 
+}
+
+object PetPlugin {
+  def name = "pet"
 }

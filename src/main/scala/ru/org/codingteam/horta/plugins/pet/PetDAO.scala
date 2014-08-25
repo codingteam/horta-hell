@@ -5,6 +5,9 @@ import org.joda.time.{DateTimeZone, DateTime}
 
 import ru.org.codingteam.horta.database.DAO
 
+case class PetCoinsId(room: String)
+case class PetCoinTransaction(name: String, state1: Map[String, Int], state2: Map[String, Int])
+
 class PetDAO extends DAO {
 
   override def schema = "pet"
