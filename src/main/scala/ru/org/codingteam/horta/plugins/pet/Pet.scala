@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import akka.actor.{Actor, ActorRef}
+import akka.actor.{Props, Actor, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
@@ -14,7 +14,6 @@ import ru.org.codingteam.horta.messages.GetParticipants
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import scala.math._
 
 class Pet(roomId: String, location: ActorRef) extends Actor {
 
@@ -24,9 +23,11 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
 
   private val store = context.actorSelection("/user/core/store")
   private var petData: Option[PetData] = None
+  private var coins: ActorRef = null
   
   override def preStart() {
     context.system.scheduler.schedule(15 seconds, 360 seconds, self, Pet.PetTick)
+    coins = context.actorOf(Props(new PetCoinStorage(roomId)))
   } 
 
   override def receive = {
@@ -39,7 +40,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
     var alive = pet.alive
     var health = pet.health
     var satiation = pet.satiation
-    var coins = pet.coins
+    val coinHolders = Await.result((coins ? GetPTC()).mapTo[Map[String, Int]], 1.minute).keys
 
     val aggressiveAttack = List(
       " яростно набрасывается на ",
@@ -85,21 +86,20 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
       " едва дышит, издавая хриплые звуки и отхаркивая кровавую пену"
     )
 
-
     if (pet.alive) {
       health -= 1
       satiation -= 2
 
       if (satiation <= 0 || health <= 0) {
         alive = false
-        coins = coins.mapValues(x => max(0, x - 1))
+        coins ! UpdateAllPTC("pet death", -1)
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
       } else if (satiation <= 12 && satiation > 5 && satiation % 3 == 0) { // 12, 9, 6
-        if (pet.randomGen.nextInt(10) == 0 && coins.keys.size > 0) {
+        if (pet.randomGen.nextInt(10) == 0 && coinHolders.size > 0) {
           val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
           val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
-          val victim = pet.randomChoice((coins.keys.toSet & possibleVictims.toSet).toList)
-          coins = PtcUtils.updatePTC(victim, coins, -3)
+          val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
+          coins ! UpdateUserPTCWithOverflow("pet aggressive attack", victim, -3)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 3PTC.")
           satiation = 100
         } else {
@@ -111,7 +111,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
       }
 
-      pet.copy(alive = alive, health = health, satiation = satiation, coins = coins)
+      pet.copy(alive = alive, health = health, satiation = satiation)
     } else {
       pet
     }
@@ -119,7 +119,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
 
   private def processCommand(command: AbstractCommand, invoker: Credential, arguments: Array[String]) =
     processAction { pet =>
-      val (newPet, response) = command(pet, invoker, arguments)
+      val (newPet, response) = command(pet, coins, invoker, arguments)
       Protocol.sendResponse(location, invoker, response)
       newPet
     }

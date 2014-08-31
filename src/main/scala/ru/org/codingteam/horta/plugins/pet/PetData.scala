@@ -8,8 +8,7 @@ case class PetData(nickname: String,
                    alive: Boolean,
                    health: Int,
                    satiation: Int,
-                   birth: DateTime,
-                   coins: Map[String, Int]) {
+                   birth: DateTime) {
   val randomGen = new Random(System.currentTimeMillis())
   def randomChoice(l: List[String]) = {
     l(randomGen.nextInt(l.length))
@@ -18,5 +17,6 @@ case class PetData(nickname: String,
 
 object PetData {
 
-  def default = PetData("Наркоман", true, 100, 100, Clock.now, Map[String, Int]())
+  def default = PetData("Наркоман", true, 100, 100, Clock.now)
+
 }

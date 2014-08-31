@@ -1,10 +1,12 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
+import akka.actor.ActorRef
 import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
 import ru.org.codingteam.horta.security.Credential
 
 class KillCommand extends AbstractCommand {
-  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
+
+  override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
     val username = credential.name
     val userCoins = PtcUtils.getPTC(username, pet.coins)
 
@@ -25,4 +27,5 @@ class KillCommand extends AbstractCommand {
 
     (newPet, response)
   }
+
 }

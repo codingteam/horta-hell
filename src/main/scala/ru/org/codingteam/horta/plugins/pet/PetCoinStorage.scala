@@ -10,6 +10,7 @@ import scala.concurrent.duration._
 
 case class GetPTC()
 case class UpdateUserPTC(transactionName: String, user: String, delta: Int)
+case class UpdateUserPTCWithOverflow(transactionName: String, user: String, delta: Int)
 case class UpdateAllPTC(transactionName: String, delta: Int)
 
 class PetCoinStorage(room: String) extends Actor with ActorLogging {
@@ -24,6 +25,7 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
   override def receive = {
     case GetPTC() => withCoins("watch", c => { sender ! c; Some(c) })
     case UpdateUserPTC(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta))
+    case UpdateUserPTCWithOverflow(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta, false))
     case UpdateAllPTC(t, delta) => sender ! withCoins(t, updatePetCoins(delta))
   }
 

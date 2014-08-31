@@ -5,7 +5,9 @@ import org.joda.time.{DateTimeZone, DateTime}
 
 import ru.org.codingteam.horta.database.DAO
 
+case class PetDataId(room: String)
 case class PetCoinsId(room: String)
+
 case class PetCoinTransaction(name: String, state1: Map[String, Int], state2: Map[String, Int])
 
 class PetDAO extends DAO {
@@ -13,34 +15,48 @@ class PetDAO extends DAO {
   override def schema = "pet"
 
   override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = {
-    id match {
-      case Some(room) =>
-        val roomName = room.asInstanceOf[String]
-        val select = connection.prepareStatement("SELECT * FROM pet WHERE room = ?")
-        try {
-          select.setString(1, roomName)
-          val resultSet = select.executeQuery()
-          try {
-            if (resultSet.next()) {
-              update(connection, roomName, obj)
-            } else {
-              insert(connection, roomName, obj)
-            }
-
-            Some(null)
-          } finally {
-            resultSet.close()
-          }
-        } finally {
-          select.close()
-        }
-
-      case None => throw new IllegalArgumentException("id should not be None")
+    (id, obj) match {
+      case (Some(PetDataId(room)), data: PetData) => storePetData(connection, room, data)
+      case (Some(PetCoinsId(room)), data: Map[String, Int]) =>
+        deleteCoins(connection, room)
+        insertCoins(connection, room, data)
+        Some(Unit)
+      case _ => sys.error(s"Invalid parameters for the PetDAO.store: $id, $obj")
     }
   }
 
   override def read(connection: Connection, id: Any): Option[Any] = {
-    val roomName = id.asInstanceOf[String]
+    id match {
+      case PetDataId(roomName) => readPetData(connection, roomName)
+      case PetCoinsId(roomName) => Some(readCoins(connection, roomName))
+    }
+  }
+
+  override def delete(connection: Connection, id: Any): Boolean = false
+
+  private def storePetData(connection: Connection, room: String, data: PetData) = {
+    val roomName = room.asInstanceOf[String]
+    val select = connection.prepareStatement("SELECT * FROM pet WHERE room = ?")
+    try {
+      select.setString(1, roomName)
+      val resultSet = select.executeQuery()
+      try {
+        if (resultSet.next()) {
+          updatePetData(connection, roomName, data)
+        } else {
+          insertPetData(connection, roomName, data)
+        }
+
+        Some(Unit)
+      } finally {
+        resultSet.close()
+      }
+    } finally {
+      select.close()
+    }
+  }
+
+  private def readPetData(connection: Connection, roomName: String) = {
     val select = connection.prepareStatement("SELECT * FROM pet WHERE room = ?")
     try {
       select.setString(1, roomName)
@@ -53,8 +69,7 @@ class PetDAO extends DAO {
               resultSet.getBoolean("alive"),
               resultSet.getInt("health"),
               resultSet.getInt("satiation"),
-              new DateTime(resultSet.getTimestamp("birth"), DateTimeZone.UTC),
-              readCoins(connection, roomName)))
+              new DateTime(resultSet.getTimestamp("birth"), DateTimeZone.UTC)))
         } else {
           None
         }
@@ -65,8 +80,6 @@ class PetDAO extends DAO {
       select.close()
     }
   }
-
-  override def delete(connection: Connection, id: Any): Boolean = false
 
   private def readCoins(connection: Connection, room: String): Map[String, Int] = {
     val statement = connection.prepareStatement(
@@ -91,8 +104,8 @@ class PetDAO extends DAO {
     }
   }
 
-  private def insert(connection: Connection, room: String, obj: Any) {
-    val PetData(nickname, alive, health, satiation, birth, coins) = obj
+  private def insertPetData(connection: Connection, room: String, obj: PetData) {
+    val PetData(nickname, alive, health, satiation, birth) = obj
     val statement = connection.prepareStatement(
       "INSERT INTO pet (room, nickname, alive, health, satiation, birth) VALUES (?, ?, ?, ?, ?, ?)")
     try {
@@ -103,15 +116,13 @@ class PetDAO extends DAO {
       statement.setInt(5, satiation)
       statement.setTimestamp(6, new Timestamp(birth.getMillis))
       statement.executeUpdate()
-
-      insertCoins(connection, room, coins)
     } finally {
       statement.close()
     }
   }
 
-  private def update(connection: Connection, room: String, obj: Any) {
-    val PetData(nickname, alive, health, satiation, birth, coins) = obj
+  private def updatePetData(connection: Connection, room: String, obj: PetData) {
+    val PetData(nickname, alive, health, satiation, birth) = obj
     val statement = connection.prepareStatement(
       "UPDATE pet SET nickname = ?, alive = ?, health = ?, satiation = ?, birth = ? WHERE room = ?")
     try {
@@ -122,9 +133,6 @@ class PetDAO extends DAO {
       statement.setTimestamp(5, new Timestamp(birth.getMillis))
       statement.setString(6, room)
       statement.executeUpdate()
-
-      deleteCoins(connection, room)
-      insertCoins(connection, room, coins)
     } finally {
       statement.close()
     }

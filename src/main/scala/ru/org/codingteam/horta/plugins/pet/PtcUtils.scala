@@ -1,14 +1,23 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import scala.math._
+import akka.actor.ActorRef
+import akka.pattern.ask
+import akka.util.Timeout
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 object PtcUtils {
-  def updatePTC(username: String, coins: Map[String, Int], value: Int) = {
-    val userCoins = coins.getOrElse(username, 0)
-    coins.updated(username, max(0, userCoins + value))
+
+  implicit val timeout = Timeout(1.minute)
+
+  def tryUpdatePTC(coins: ActorRef, username: String, delta: Int, transactionName: String): Boolean = {
+    Await.result((coins ? UpdateUserPTC(transactionName, username, delta)).mapTo[Boolean], 1.minute)
   }
 
-  def getPTC(username: String, coins: Map[String, Int]) = {
-    coins.getOrElse(username, 0)
+  def queryPTC(coins: ActorRef, user: String): Int = {
+    val map = Await.result((coins ? GetPTC()).mapTo[Map[String, Int]], 1.minute)
+    map.getOrElse(user, 0)
   }
+
 }
