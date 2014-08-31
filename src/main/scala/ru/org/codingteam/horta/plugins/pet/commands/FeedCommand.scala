@@ -63,7 +63,7 @@ class FeedCommand extends AbstractCommand {
             s"${pet.nickname}" + pet.randomChoice(successfulFeeding) + ". Вы зарабатываете 1PTC.")
         }
       } else {
-        (true, pet.coins, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
+        (false, pet.coins, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
       }
       (pet.copy(satiation = if (feed) 100 else pet.satiation, coins = coins), response)
     } else {
