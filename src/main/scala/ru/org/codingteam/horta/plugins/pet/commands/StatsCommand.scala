@@ -1,12 +1,14 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
+import akka.actor.ActorRef
 import org.joda.time.Period
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.plugins.pet.PetData
 import ru.org.codingteam.horta.security.Credential
 
 class StatsCommand extends AbstractCommand {
-  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
+
+  override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
     val age = new Period(pet.birth, Clock.now)
     val response = if (pet.alive) {
       """
@@ -20,4 +22,5 @@ class StatsCommand extends AbstractCommand {
 
     (pet, response)
   }
+
 }

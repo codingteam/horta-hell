@@ -12,6 +12,7 @@ case class GetPTC()
 case class UpdateUserPTC(transactionName: String, user: String, delta: Int)
 case class UpdateUserPTCWithOverflow(transactionName: String, user: String, delta: Int)
 case class UpdateAllPTC(transactionName: String, delta: Int)
+case class TransferPTC(transactionName: String, sourceUser: String, targetUser: String, amount: Int)
 
 class PetCoinStorage(room: String) extends Actor with ActorLogging {
 
@@ -27,6 +28,7 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
     case UpdateUserPTC(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta))
     case UpdateUserPTCWithOverflow(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta, false))
     case UpdateAllPTC(t, delta) => sender ! withCoins(t, updatePetCoins(delta))
+    case TransferPTC(t, source, target, amount) => withCoins(t, transferPetCoins(source, target, amount))
   }
 
   private def withCoins(transactionName: String, action: Map[String, Int] => Option[Map[String, Int]]): Boolean = {
@@ -72,6 +74,15 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
     coins.keys.foldLeft(Some(coins): Option[Map[String, Int]]) {
       case (Some(c), name) => updatePetCoins(name, delta, checkBalance = false)(c)
       case (None, _) => sys.error("Impossible")
+    }
+  }
+
+  private def transferPetCoins(source: String,
+                               target: String,
+                               amount: Int)(coins: Map[String, Int]): Option[Map[String, Int]] = {
+    updatePetCoins(source, -amount)(coins) match {
+      case Some(coins) => updatePetCoins(target, amount)(coins)
+      case None => None
     }
   }
 
