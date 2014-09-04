@@ -17,7 +17,7 @@ class PetDAO extends DAO {
   override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = {
     (id, obj) match {
       case (Some(PetDataId(room)), data: PetData) => storePetData(connection, room, data)
-      case (Some(PetCoinsId(room)), data: Map[String, Int]) =>
+      case (Some(PetCoinsId(room)), data: Map[String, Int]) => // TODO: Replace the data with PetTransaction
         deleteCoins(connection, room)
         insertCoins(connection, room, data)
         Some(Unit)

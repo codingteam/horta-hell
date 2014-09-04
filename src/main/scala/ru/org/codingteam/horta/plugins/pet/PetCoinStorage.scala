@@ -32,10 +32,10 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
   }
 
   private def withCoins(transactionName: String, action: Map[String, Int] => Option[Map[String, Int]]): Boolean = {
-    val oldCoins = coins match {
-      case Some(c) => c
+    val Some(oldCoins) = coins match {
+      case Some(c) => Some(c)
       case None => Await.result(
-        (store ? ReadObject(PetPlugin.name, PetCoinsId(room))).mapTo[Map[String, Int]],
+        (store ? ReadObject(PetPlugin.name, PetCoinsId(room))).mapTo[Option[Map[String, Int]]],
         waitFor)
     }
 
