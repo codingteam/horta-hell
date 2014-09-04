@@ -12,6 +12,7 @@ class KillCommand extends AbstractCommand {
       if (PtcUtils.tryUpdatePTC(coins, username, -10, "kill pet", overflow = true)) {
         (pet.copy(alive = false), "Вы жестоко убили питомца этой конфы. За это вы теряете 10PTC.")
       } else {
+        // TODO: This never executes.
         (pet, "У вас недостаточно PTC для совершения столь мерзкого поступка. Требуется не менее 10PTC. Но мы всё равно забираем у вас то, что можем.")
       }
     } else {
