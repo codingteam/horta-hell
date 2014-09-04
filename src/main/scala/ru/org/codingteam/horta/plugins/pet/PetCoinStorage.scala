@@ -28,7 +28,7 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
     case UpdateUserPTC(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta))
     case UpdateUserPTCWithOverflow(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta, false))
     case UpdateAllPTC(t, delta) => sender ! withCoins(t, updatePetCoins(delta))
-    case TransferPTC(t, source, target, amount) => withCoins(t, transferPetCoins(source, target, amount))
+    case TransferPTC(t, source, target, amount) => sender ! withCoins(t, transferPetCoins(source, target, amount))
   }
 
   private def withCoins(transactionName: String, action: Map[String, Int] => Option[Map[String, Int]]): Boolean = {

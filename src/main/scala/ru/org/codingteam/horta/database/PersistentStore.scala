@@ -114,8 +114,15 @@ class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLoggin
 
   private def withConnection[T](action: Connection => T) = {
     val connection = dataSource.getConnection()
+    connection.setAutoCommit(false)
+    connection.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED)
     try {
       action(connection)
+      connection.commit()
+    } catch {
+      case t: Throwable =>
+        log.error(t, "Error when executing the transaction")
+        throw t
     } finally {
       connection.close()
     }

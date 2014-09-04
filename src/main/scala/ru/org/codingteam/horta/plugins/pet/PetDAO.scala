@@ -1,9 +1,11 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import java.sql.{Connection, Timestamp}
-import org.joda.time.{DateTimeZone, DateTime}
+import java.sql.Connection
 
+import org.joda.time.{DateTime, DateTimeZone}
+import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.database.DAO
+import ru.org.codingteam.horta.database.DateTimeConverter._
 
 case class PetDataId(room: String)
 case class PetCoinsId(room: String)
@@ -17,9 +19,8 @@ class PetDAO extends DAO {
   override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = {
     (id, obj) match {
       case (Some(PetDataId(room)), data: PetData) => storePetData(connection, room, data)
-      case (Some(PetCoinsId(room)), data: Map[String, Int]) => // TODO: Replace the data with PetTransaction
-        deleteCoins(connection, room)
-        insertCoins(connection, room, data)
+      case (Some(PetCoinsId(room)), transaction: PetCoinTransaction) =>
+        storeTransaction(connection, room, transaction)
         Some(Unit)
       case _ => sys.error(s"Invalid parameters for the PetDAO.store: $id, $obj")
     }
@@ -104,6 +105,45 @@ class PetDAO extends DAO {
     }
   }
 
+  private def storeTransaction(connection: Connection, roomName: String, data: PetCoinTransaction): Unit = {
+    val PetCoinTransaction(transactionName, state1, state2) = data
+    storeTransactionHistory(connection, roomName, Clock.now, transactionName, state1, state2)
+    deleteCoins(connection, roomName)
+    insertCoins(connection, roomName, state2)
+  }
+
+  private def storeTransactionHistory(connection: Connection,
+                                      roomName: String,
+                                      time: DateTime,
+                                      transactionName: String,
+                                      state1: Map[String, Int],
+                                      state2: Map[String, Int]): Unit = {
+    val keys = state1.keySet.union(state2.keySet)
+    val values = for (key <- keys) yield (key, state1.getOrElse(key, 0), state2.getOrElse(key, 0))
+    val diff = values.map {
+      case (key, value1, value2) => (key, value2 - value1)
+    }.filter(_._2 != 0).toMap
+
+    val statement = connection.prepareStatement(
+      """
+        |insert into PetTransaction (room, nickname, time, change, reason)
+        |values (?, ?, ?, ?, ?)
+      """.stripMargin)
+    try {
+      diff.foreach {
+        case (nick, change) =>
+          statement.setString(1, roomName)
+          statement.setString(2, nick)
+          statement.setTimestamp(3, time)
+          statement.setInt(4, change)
+          statement.setString(5, transactionName)
+          statement.executeUpdate()
+      }
+    } finally {
+      statement.close()
+    }
+  }
+
   private def insertPetData(connection: Connection, room: String, obj: PetData) {
     val PetData(nickname, alive, health, satiation, birth) = obj
     val statement = connection.prepareStatement(
@@ -114,7 +154,7 @@ class PetDAO extends DAO {
       statement.setBoolean(3, alive)
       statement.setInt(4, health)
       statement.setInt(5, satiation)
-      statement.setTimestamp(6, new Timestamp(birth.getMillis))
+      statement.setTimestamp(6, birth)
       statement.executeUpdate()
     } finally {
       statement.close()
@@ -130,7 +170,7 @@ class PetDAO extends DAO {
       statement.setBoolean(2, alive)
       statement.setInt(3, health)
       statement.setInt(4, satiation)
-      statement.setTimestamp(5, new Timestamp(birth.getMillis))
+      statement.setTimestamp(5, birth)
       statement.setString(6, room)
       statement.executeUpdate()
     } finally {

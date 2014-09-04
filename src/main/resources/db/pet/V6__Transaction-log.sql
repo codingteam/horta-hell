@@ -1,5 +1,6 @@
 create table PetTransaction (
-  room varchar(255) primary key,
+  id integer auto_increment primary key,
+  room varchar(255),
   nickname varchar(255),
   time timestamp,
   change integer,
