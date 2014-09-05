@@ -1,5 +1,6 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
+import akka.actor.ActorRef
 import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
 import ru.org.codingteam.horta.security.Credential
 
@@ -42,32 +43,33 @@ class FeedCommand extends AbstractCommand {
     " скривился от попытки его пичкать едой"
   )
 
-  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
+  override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
     val username = credential.name
 
     if (pet.alive) {
-      val (feed, coins, response) = if (pet.satiation < 20) {
+      val (feed, response) = if (pet.satiation < 20) {
         if (pet.satiation < 10) {
           if (pet.randomGen.nextInt(2) == 0) {
+            PtcUtils.tryUpdatePTC(coins, username, -1, "pet attacked while feeding")
             (false,
-              PtcUtils.updatePTC(username, pet.coins, -1),
               s"${pet.nickname}" + pet.randomChoice(attackWhileFeeding) + username + pet.randomChoice(losePTC) + s". Вы теряете 1PTC, зато ${pet.nickname} накормлен.")
           } else {
+            PtcUtils.tryUpdatePTC(coins, username, 5, "bingo")
             (true,
-              PtcUtils.updatePTC(username, pet.coins, 5),
               s"${pet.randomChoice(bingoMessages)} Вы получаете 5PTC, а ${pet.nickname} сыт и доволен.")
           }
         } else {
+          PtcUtils.tryUpdatePTC(coins, username, 1, "feed pet")
           (true,
-            PtcUtils.updatePTC(username, pet.coins, 1),
             s"${pet.nickname}" + pet.randomChoice(successfulFeeding) + ". Вы зарабатываете 1PTC.")
         }
       } else {
-        (false, pet.coins, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
+        (false, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
       }
-      (pet.copy(satiation = if (feed) 100 else pet.satiation, coins = coins), response)
+      (pet.copy(satiation = if (feed) 100 else pet.satiation), response)
     } else {
       (pet, "Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует.")
     }
   }
+
 }

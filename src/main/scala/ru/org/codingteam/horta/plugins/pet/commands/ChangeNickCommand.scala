@@ -1,5 +1,6 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
+import akka.actor.ActorRef
 import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
 import ru.org.codingteam.horta.security.Credential
 
@@ -10,16 +11,15 @@ class ChangeNickCommand extends AbstractCommand {
     (nickName.length + charactersPerPetcoin - 1) / charactersPerPetcoin
   }
 
-  private def changeNickname(pet: PetData, credential: Credential, newNickname: String): (PetData, String) = {
+  private def changeNickname(pet: PetData, coins: ActorRef, credential: Credential, newNickname: String): (PetData, String) = {
     newNickname match {
       case "" => (pet, "Пустая строка в качестве клички неприемлема")
-      case _ => {
-        val coins = pet.coins
+      case _ =>
         val changer = credential.name
         val price = calcPriceOfNickname(newNickname)
 
-        if (PtcUtils.getPTC(changer, coins) >= price) {
-          val newPet = pet.copy(nickname = newNickname, coins = PtcUtils.updatePTC(changer, coins, -price))
+        if (PtcUtils.tryUpdatePTC(coins, changer, price, "change pet nick") != 0) {
+          val newPet = pet.copy(nickname = newNickname)
           if (pet.alive) {
             (newPet, "Теперь нашего питомца зовут %s.".format(newNickname))
           } else {
@@ -28,13 +28,12 @@ class ChangeNickCommand extends AbstractCommand {
         } else {
           (pet, s"Недостаточно PTC. Требуется ${price}PTC за данную кличку.")
         }
-      }
     }
   }
 
-  override def apply(pet: PetData, credential: Credential, args: Array[String]): (PetData, String) = {
+  override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
     args match {
-      case Array(newNickname, _*) => changeNickname(pet, credential, newNickname.trim)
+      case Array(newNickname, _*) => changeNickname(pet, coins, credential, newNickname.trim)
       case _ => (pet, "Попробуй $pet help change-nick")
     }
   }
