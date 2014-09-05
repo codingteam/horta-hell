@@ -21,7 +21,7 @@ class TransferCommand extends AbstractCommand {
         if (amount <= 0) {
           (pet, s"Некорректная сумма.")
         } else {
-          if (PtcUtils.tryTransferPTC(coins, sourceUser, targetUser, amount, s"transfer to $targetUser")) {
+          if (PtcUtils.tryTransferPTC(coins, sourceUser, targetUser, amount, s"transfer to $targetUser") != 0) {
             (pet, "Транзакция успешна.")
           } else {
             (pet, "Недостаточно PTC.")

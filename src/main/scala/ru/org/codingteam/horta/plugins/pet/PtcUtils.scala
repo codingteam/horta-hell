@@ -15,23 +15,23 @@ object PtcUtils {
                    username: String,
                    delta: Int,
                    transactionName: String,
-                   overflow: Boolean = false): Boolean = {
+                   overflow: Boolean = false): Int = {
     val message = if (overflow) {
       UpdateUserPTCWithOverflow(transactionName, username, delta)
     } else {
       UpdateUserPTC(transactionName, username, delta)
     }
 
-    Await.result((coins ? message).mapTo[Boolean], 1.minute)
+    Await.result((coins ? message).mapTo[Int], 1.minute)
   }
 
   def tryTransferPTC(coins: ActorRef,
                      sourceUserName: String,
                      targetUserName: String,
                      amount: Int,
-                     transactionName: String): Boolean = {
+                     transactionName: String): Int = {
     val message = TransferPTC(transactionName, sourceUserName, targetUserName, amount)
-    Await.result((coins ? message).mapTo[Boolean], 1.minute)
+    Await.result((coins ? message).mapTo[Int], 1.minute)
   }
 
   def queryPTC(coins: ActorRef) = {

@@ -12,7 +12,7 @@ class ResurrectCommand extends AbstractCommand {
       (pet, s"${pet.nickname} и так жив. Зачем его воскрешать?")
     } else {
       val username = credential.name
-      val true = PtcUtils.tryUpdatePTC(coins, username, 3, "pet resurrect")
+      PtcUtils.tryUpdatePTC(coins, username, 3, "pet resurrect")
 
       val newPet = pet.copy(
         health = 100,
