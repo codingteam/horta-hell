@@ -17,7 +17,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # Configure the horta log directory so it will read MUC logs from
   # there:
-  config.vm.synced_folder ENV['HORTA_LOGS'], "/horta_logs"
+  config.vm.synced_folder ENV['HORTA_LOGS'] || "", "/horta_logs"
 
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--memory", "1024"]
