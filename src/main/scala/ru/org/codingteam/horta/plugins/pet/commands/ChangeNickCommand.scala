@@ -18,7 +18,7 @@ class ChangeNickCommand extends AbstractCommand {
         val changer = credential.name
         val price = calcPriceOfNickname(newNickname)
 
-        if (PtcUtils.tryUpdatePTC(coins, changer, price, "change pet nick") != 0) {
+        if (PtcUtils.tryUpdatePTC(coins, changer, -price, "change pet nick") != 0) {
           val newPet = pet.copy(nickname = newNickname)
           if (pet.alive) {
             (newPet, "Теперь нашего питомца зовут %s.".format(newNickname))
