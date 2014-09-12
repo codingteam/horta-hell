@@ -24,7 +24,9 @@ class FeedCommand extends AbstractCommand {
   )
 
   val bingoMessages = List(
-    "Свершилось чудо! Друг спас друга!"
+    "Чудо свершилось! Друг был другом спасён!",
+    "Весьма вовремя покормлен был пет ибо голодная смерть ожидала его.",
+    "Жестом доброй воли спасена зверушка от голода снедающего."
   )
 
   val losePTC = List(
@@ -51,7 +53,7 @@ class FeedCommand extends AbstractCommand {
         if (pet.satiation < 10) {
           if (pet.randomGen.nextInt(2) == 0) {
             PtcUtils.tryUpdatePTC(coins, username, -1, "pet attacked while feeding")
-            (false,
+            (true,
               s"${pet.nickname}" + pet.randomChoice(attackWhileFeeding) + username + pet.randomChoice(losePTC) + s". Вы теряете 1PTC, зато ${pet.nickname} накормлен.")
           } else {
             PtcUtils.tryUpdatePTC(coins, username, 5, "bingo")

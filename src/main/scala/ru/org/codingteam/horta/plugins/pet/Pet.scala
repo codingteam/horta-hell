@@ -46,13 +46,18 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
       " яростно набрасывается на ",
       " накидывается на ",
       " прыгает, выпустив когти, на ",
-      " с рыком впивается в бедро "
+      " с рыком впивается в бедро ",
+      " опрокинул ",
+      " повалил наземь ",
+      " с силой врезался лбом в живот "
     )
 
     val losePTC = List(
       " от голода, крепко вцепившись зубами и выдирая кусок ткани штанов с кошельком",
       " раздирая в клочья одежду от голода и давая едва увернуться ценой потери выпавшего кошелька",
-      " от жуткого голода, сжирая одежду и кошелёк"
+      " от жуткого голода, сжирая одежду и кошелёк",
+      " и полосонул когтями, чудом зацепившись за сумку с кошельком вместо живота",
+      " с рыком раздирая одежду и пожирая ошмётки вместе с кошельком"
     )
 
     val searchingForFood = List(
@@ -95,7 +100,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         coins ! UpdateAllPTC("pet death", -1)
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
       } else if (satiation <= 12 && satiation > 5 && satiation % 3 == 0) { // 12, 9, 6
-        if (pet.randomGen.nextInt(10) == 0 && coinHolders.size > 0) {
+        if (pet.randomGen.nextInt(8) == 0 && coinHolders.size > 0) {
           val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
           val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
           val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
@@ -103,9 +108,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
           sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 3PTC.")
           satiation = 100
         } else {
-          if (pet.randomGen.nextInt(3) != 0) {
-            sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
-          }
+          sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
         }
       } else if (health <= 10 && pet.health > 9) {
         sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
