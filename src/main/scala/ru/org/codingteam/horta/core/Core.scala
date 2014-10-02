@@ -6,6 +6,7 @@ import akka.util.Timeout
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{DAO, PersistentStore}
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller
@@ -45,7 +46,8 @@ class Core extends Actor with ActorLogging {
     Props[VersionPlugin],
     Props[BashPlugin],
     Props[DiceRoller],
-    Props[HtmlReaderPlugin]
+    Props[HtmlReaderPlugin],
+    Props[HelperPlugin]
   )
 
   /**
@@ -92,6 +94,7 @@ class Core extends Actor with ActorLogging {
     case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
     case CoreParticipantLeft(time, roomJID, participantJID, reason, actor) =>
       processParticipantLeave(time, roomJID, participantJID, reason, actor)
+    case CoreGetCommands => sender ! Core.getCommandsDescription(getPluginDefinitions)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
@@ -217,6 +220,9 @@ object Core {
 
     groups
   }
+
+  private def getCommandsDescription(pluginDefinitions: List[(ActorRef, PluginDefinition)]) =
+    pluginDefinitions.map(t => t._2.name -> t._2.commands.map(cd => cd.name -> cd.level)).toMap
 
   private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, DAO] = {
     pluginDefinitions.map(_._2).filter(_.dao.isDefined).map(definition => (definition.name, definition.dao.get)).toMap
