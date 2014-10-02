@@ -167,14 +167,12 @@ class Core extends Actor with ActorLogging {
   }
 
   private def parseCommand(message: String): Option[(String, Array[String])] = {
-    for (p <- parsers) {
+    parsers.toStream.map(p =>
       p.parse(p.command, message) match {
-        case p.Success((name, arguments), _) => return Some((name.asInstanceOf[String], arguments.asInstanceOf[Array[String]]))
-        case _ =>
+        case p.Success((name, arguments), _) => Some(name.asInstanceOf[String] -> arguments.asInstanceOf[Array[String]])
+        case _ => None
       }
-    }
-
-    None
+    ).flatten.headOption
   }
 
   /**
@@ -209,13 +207,11 @@ object Core {
 
   private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]
                            ): Map[String, List[(ActorRef, CommandDefinition)]] = {
-    val commands = for (definition <- pluginDefinitions) yield {
-      val actor = definition._1
-      val pluginDefinition = definition._2
+    val commands = for ((actor, pluginDefinition) <- pluginDefinitions) yield {
       for (command <- pluginDefinition.commands) yield (command.name, actor, command)
     }
 
-    val groups = commands.flatMap(identity).groupBy(_._1).map(tuple => (tuple._1, tuple._2.map {
+    val groups = commands.flatten.groupBy(_._1).map(tuple => (tuple._1, tuple._2.map {
       case (_, actor, command) => (actor, command)
     }))
 
