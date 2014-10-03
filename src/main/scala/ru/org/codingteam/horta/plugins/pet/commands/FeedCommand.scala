@@ -36,7 +36,6 @@ class FeedCommand extends AbstractCommand {
   )
 
   private val dontWant = List(
-    " сыт",
     " не голоден",
     " не желает есть",
     " отвернулся, брезгуя",

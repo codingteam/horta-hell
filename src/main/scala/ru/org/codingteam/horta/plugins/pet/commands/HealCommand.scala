@@ -21,7 +21,7 @@ class HealCommand extends AbstractCommand {
         PtcUtils.tryUpdatePTC(coins, username, HEALING_AWARD, "heal pet")
         s"${pet.nickname} был совсем плох и, скорее всего, умер бы, если бы вы его вовремя не полечили. Вы зарабатываете 1PTC."
       } else {
-        s"${pet.nickname} здоров."
+        s"${pet.nickname} будучи в здравом уме и твёрдой памяти отказался от медицинской помощи."
       }
 
       (pet.copy(health = newHealth), response)
