@@ -58,3 +58,7 @@ case class CoreParticipantLeft(time: DateTime,
                                participantJID: String,
                                reason: LeaveReason,
                                roomActor: ActorRef)
+/**
+ * Ask Core for a list of available commands
+ */
+case object CoreGetCommands
