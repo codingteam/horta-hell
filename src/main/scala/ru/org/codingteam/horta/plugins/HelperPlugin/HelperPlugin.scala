@@ -66,7 +66,4 @@ class HelperPlugin extends CommandProcessor {
 
   def formatPlugin(plugin: String, maxNameLength: Int) =
     s"• ${plugin.take(1).toUpperCase + plugin.substring(1)}: " + "." * (maxNameLength + 4 - plugin.length) + " "
-
-  def formatCommand(command: String, index: Int, commandsTotal: Int) =
-    s"$command" + (if (index != commandsTotal - 1) ", " else "")
 }
