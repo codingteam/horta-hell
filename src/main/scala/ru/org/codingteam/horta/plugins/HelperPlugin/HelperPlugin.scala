@@ -50,13 +50,13 @@ class HelperPlugin extends CommandProcessor {
     commands.foreach { case (plugin, commandList) =>
       builder.append(formatPlugin(plugin, len))
 
-      (level match {
-        case CommonAccess => commandList.filter(_._2 == CommonAccess)
-        case RoomAdminAccess => commandList.filter(c => c._2 == CommonAccess || c._2 == RoomAdminAccess)
-        case GlobalAccess => commandList
-      }).zipWithIndex.foreach { case ((command, _), index) =>
-        builder.append(formatCommand(command, index, commandList.size))
-      }
+      builder.append(
+        (level match {
+          case CommonAccess => commandList.filter(_._2 == CommonAccess)
+          case RoomAdminAccess => commandList.filter(c => c._2 == CommonAccess || c._2 == RoomAdminAccess)
+          case GlobalAccess => commandList
+        }).map { _._1 }.mkString(", ")
+      )
 
       builder.append("\n")
     }
