@@ -10,4 +10,8 @@ object DateTimeConverter {
     new Timestamp(dateTime.getMillis)
   }
 
+  implicit def toDateTime(timestamp: Timestamp): DateTime = {
+    new DateTime(timestamp.getTime)
+  }
+
 }
