@@ -1,29 +1,30 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import akka.actor.{Props, Actor, ActorRef}
+import akka.actor.{ActorLogging, Actor, ActorRef, Props}
+import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.database.{ReadObject, StoreObject}
-import ru.org.codingteam.horta.plugins.pet.Pet.PetTick
+import ru.org.codingteam.horta.messages.GetParticipants
 import ru.org.codingteam.horta.plugins.pet.commands.AbstractCommand
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.Credential
-import ru.org.codingteam.horta.messages.GetParticipants
 
-import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
-class Pet(roomId: String, location: ActorRef) extends Actor {
+class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
 
   import context.dispatcher
+  import ru.org.codingteam.horta.plugins.pet.Pet._
 
   implicit val timeout = Timeout(5 minutes)
 
   private val store = context.actorSelection("/user/core/store")
   private var petData: Option[PetData] = None
-  private var coins: ActorRef = null
+  private var coins: ActorRef = _
 
   private val aggressiveAttack = List(
     " яростно набрасывается на ",
@@ -78,54 +79,66 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
   private val HP_DECREASE = 1
   private val HUNGER_BOUNDS = (5, 12)
   private val HEALTH_BOUNDS = (9, 10)
-  private val DENSITY_OF_EVENTS = 3 // bigger is rarer
-  private val CHANCE_OF_ATTACK = 6 // 6 is for 1/6
+  private val DENSITY_OF_EVENTS = 3
+  // bigger is rarer
+  private val CHANCE_OF_ATTACK = 6
+  // 6 is for 1/6
   private val ATTACK_PENALTY = -3
   private val FULL_SATIATION = 100
-  
+
   override def preStart() {
     context.system.scheduler.schedule(15 seconds, 360 seconds, self, Pet.PetTick)
     coins = context.actorOf(Props(new PetCoinStorage(roomId)))
-  } 
+  }
 
-  override def receive = {
+  override def receive = LoggingReceive {
     case PetTick => processTick()
     case Pet.ExecuteCommand(command, invoker, arguments) => processCommand(command, invoker, arguments)
+
+    case SetPetDataInternal(data) => log.info(s"Saving data $data"); petData = Some(data)
+    case GetPetDataInternal => log.info(s"GetPetDataInternal"); sender ! petData
   }
 
   private def processTick() = processAction { pet =>
+    log.info("Processing tick!")
     val nickname = pet.nickname
     var alive = pet.alive
     var health = pet.health
     var satiation = pet.satiation
-    val coinHolders = Await.result((coins ? GetPTC()).mapTo[Map[String, Int]], 1.minute).keys
 
-    if (pet.alive) {
-      health -= HP_DECREASE
-      satiation -= SATIATION_DECREASE
+    (coins ? GetPTC()).mapTo[Map[String, Int]].map(_.keys).flatMap { coinHolders =>
+      if (pet.alive) {
+        health -= HP_DECREASE
+        satiation -= SATIATION_DECREASE
 
-      if (satiation <= 0 || health <= 0) {
-        alive = false
-        coins ! UpdateAllPTC("pet death", -1)
-        sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
-      } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && satiation % DENSITY_OF_EVENTS == 0) { // 12, 9, 6
-        if (pet.randomGen.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
-          val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
-          val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
-          val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
-          coins ! UpdateUserPTCWithOverflow("pet aggressive attack", victim, ATTACK_PENALTY)
-          sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 3PTC.")
-          satiation = FULL_SATIATION
+        (if (satiation <= 0 || health <= 0) {
+          alive = false
+          coins ! UpdateAllPTC("pet death", -1)
+          sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
+          Future.successful(satiation)
+        } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && satiation % DENSITY_OF_EVENTS == 0) {
+          // 12, 9, 6
+          if (pet.randomGen.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
+            (location ? GetParticipants).mapTo[Map[String, Any]].map { map =>
+              val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
+              val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
+              coins ! UpdateUserPTCWithOverflow("pet aggressive attack", victim, ATTACK_PENALTY)
+              sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет 3PTC.")
+              FULL_SATIATION
+            }
+          } else {
+            sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
+            Future.successful(satiation)
+          }
+        } else if (health <= HEALTH_BOUNDS._2 && pet.health > HEALTH_BOUNDS._1) {
+          sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
+          Future.successful(satiation)
         } else {
-          sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
-        }
-      } else if (health <= HEALTH_BOUNDS._2 && pet.health > HEALTH_BOUNDS._1) {
-        sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
+          Future.successful(satiation)
+        }).map(newSatiation => pet.copy(alive = alive, health = health, satiation = newSatiation))
+      } else {
+        Future.successful(pet)
       }
-
-      pet.copy(alive = alive, health = health, satiation = satiation)
-    } else {
-      pet
     }
   }
 
@@ -133,32 +146,28 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
     processAction { pet =>
       val (newPet, response) = command(pet, coins, invoker, arguments)
       Protocol.sendResponse(location, invoker, response)
-      newPet
+      Future.successful(newPet)
     }
 
-  private def processAction(action: PetData => PetData) {
-    val pet = getPetData()
-    val newPet = action(pet)
-    setPetData(newPet)
+  private def processAction(action: PetData => Future[PetData]) {
+    getPetData.flatMap(action).map(setPetData)
   }
-  
-  private def getPetData(): PetData = {
-    petData match {
-      case Some(data) => data
-      case None =>
-        val data = readStoredData() match {
-          case Some(dbData) => dbData
-          case None => PetData.default
-        }
 
-        petData = Some(data)
-        data
-    }
+  private def getPetData: Future[PetData] = (self ? GetPetDataInternal).mapTo[Option[PetData]].map {
+    case Some(data) => data
+    case None =>
+      val data = readStoredData() match {
+        case Some(dbData) => dbData
+        case None => PetData.default
+      }
+
+      self ! SetPetDataInternal(data)
+      data
   }
 
   private def setPetData(pet: PetData) {
     val Some(_) = Await.result(store ? StoreObject("pet", Some(PetDataId(roomId)), pet), 5 minutes)
-    petData = Some(pet)
+    self ! SetPetDataInternal(pet)
   }
 
   private def readStoredData(): Option[PetData] = {
@@ -174,6 +183,8 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
 
 object Pet {
   case object PetTick
-  
+  case object GetPetDataInternal
+
+  case class SetPetDataInternal(data: PetData)
   case class ExecuteCommand(command: AbstractCommand, invoker: Credential, arguments: Array[String])
 }
