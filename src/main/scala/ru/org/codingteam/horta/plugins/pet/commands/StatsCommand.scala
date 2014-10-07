@@ -1,7 +1,7 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
 import akka.actor.ActorRef
-import org.joda.time.Period
+import org.joda.time.{DateTime, Period}
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.plugins.pet.PetData
 import ru.org.codingteam.horta.security.Credential
@@ -9,13 +9,13 @@ import ru.org.codingteam.horta.security.Credential
 class StatsCommand extends AbstractCommand {
 
   override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
-    val age = new Period(pet.birth, Clock.now)
+    val age = new Period(pet.birth, Clock.now).toDurationFrom(DateTime.now).toStandardHours.getHours
     val response = if (pet.alive) {
       """
         |Кличка: %s
         |Здоровье: %d
         |Сытость: %d
-        |Возраст: %d часов""".stripMargin.format(pet.nickname, pet.health, pet.satiation, age.toStandardHours.getHours)
+        |Возраст: %d часов""".stripMargin.format(pet.nickname, pet.health, pet.satiation, age)
     } else {
       s"%s мертв. Какие еще статы?".format(pet.nickname)
     }
