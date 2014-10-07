@@ -97,12 +97,11 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
     case PetTick => processTick()
     case Pet.ExecuteCommand(command, invoker, arguments) => processCommand(command, invoker, arguments)
 
-    case SetPetDataInternal(data) => log.info(s"Saving data $data"); petData = Some(data)
-    case GetPetDataInternal => log.info(s"GetPetDataInternal"); sender ! petData
+    case SetPetDataInternal(data) => petData = Some(data)
+    case GetPetDataInternal => sender ! petData
   }
 
   private def processTick() = processAction { pet =>
-    log.info("Processing tick!")
     val nickname = pet.nickname
     var alive = pet.alive
     var health = pet.health
