@@ -23,4 +23,4 @@ case class NicknameChanged(participant: String, newNickname: String)
 case class UserMessage(message: Message)
 case class GenerateCommand(jid: String, command: String, arguments: Array[String])
 case class ReplaceCommand(jid: String, arguments: Array[String])
-case class GetParticipants()
+case object GetParticipants
