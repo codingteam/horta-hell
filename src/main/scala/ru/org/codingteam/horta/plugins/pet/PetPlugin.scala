@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
+import ru.org.codingteam.horta.database.ReadObject
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.pet.commands._
 import ru.org.codingteam.horta.protocol.Protocol
@@ -53,18 +54,29 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
 
   override def processCommand(credential: Credential, token: Any, arguments: Array[String]) {
     val location = credential.location
+
     credential.roomId match {
       case Some(room) =>
         val pet = initializePet(room, location)
 
-        val responseF = arguments match {
+        // (isPrivate, text):
+        val responseF: Future[(Boolean, String)] = arguments match {
           case Array(PetCommandMatcher(command), args@_*) =>
-            (pet ? Pet.ExecuteCommand(command, credential, args.toArray)).mapTo[String]
-          case _ => Future.successful("Попробуйте $pet help.")
+            (pet ? Pet.ExecuteCommand(command, credential, args.toArray)).mapTo[String].map(s => (false, s))
+          case Array("transactions") =>
+            (store ? ReadObject(name, PetCoinTransactionsId(credential.roomId.get, credential.name)))
+              .mapTo[Option[Seq[PetCoinTransactionModel]]]
+              .map { case transactions =>
+                (true, transactions.get.mkString("\n"))
+              }
+          case _ => Future.successful((false, "Попробуйте $pet help."))
         }
 
         for (response <- responseF) {
-          Protocol.sendResponse(location, credential, response)
+          response match {
+            case (true, message) => Protocol.sendPrivateResponse(location, credential, message)
+            case (false, message) => Protocol.sendResponse(location, credential, message)
+          }
         }
       case None =>
     }

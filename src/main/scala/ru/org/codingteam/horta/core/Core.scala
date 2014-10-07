@@ -6,6 +6,7 @@ import akka.util.Timeout
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{DAO, PersistentStore}
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller
@@ -45,7 +46,8 @@ class Core extends Actor with ActorLogging {
     Props[VersionPlugin],
     Props[BashPlugin],
     Props[DiceRoller],
-    Props[HtmlReaderPlugin]
+    Props[HtmlReaderPlugin],
+    Props[HelperPlugin]
   )
 
   /**
@@ -92,6 +94,7 @@ class Core extends Actor with ActorLogging {
     case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
     case CoreParticipantLeft(time, roomJID, participantJID, reason, actor) =>
       processParticipantLeave(time, roomJID, participantJID, reason, actor)
+    case CoreGetCommands => sender ! Core.getCommandsDescription(getPluginDefinitions)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
@@ -167,14 +170,12 @@ class Core extends Actor with ActorLogging {
   }
 
   private def parseCommand(message: String): Option[(String, Array[String])] = {
-    for (p <- parsers) {
+    parsers.toStream.map(p =>
       p.parse(p.command, message) match {
-        case p.Success((name, arguments), _) => return Some((name.asInstanceOf[String], arguments.asInstanceOf[Array[String]]))
-        case _ =>
+        case p.Success((name, arguments), _) => Some(name.asInstanceOf[String] -> arguments.asInstanceOf[Array[String]])
+        case _ => None
       }
-    }
-
-    None
+    ).flatten.headOption
   }
 
   /**
@@ -209,18 +210,19 @@ object Core {
 
   private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]
                            ): Map[String, List[(ActorRef, CommandDefinition)]] = {
-    val commands = for (definition <- pluginDefinitions) yield {
-      val actor = definition._1
-      val pluginDefinition = definition._2
+    val commands = for ((actor, pluginDefinition) <- pluginDefinitions) yield {
       for (command <- pluginDefinition.commands) yield (command.name, actor, command)
     }
 
-    val groups = commands.flatMap(identity).groupBy(_._1).map(tuple => (tuple._1, tuple._2.map {
+    val groups = commands.flatten.groupBy(_._1).map(tuple => (tuple._1, tuple._2.map {
       case (_, actor, command) => (actor, command)
     }))
 
     groups
   }
+
+  private def getCommandsDescription(pluginDefinitions: List[(ActorRef, PluginDefinition)]) =
+    pluginDefinitions.map(t => t._2.name -> t._2.commands.map(cd => cd.name -> cd.level)).toMap
 
   private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, DAO] = {
     pluginDefinitions.map(_._2).filter(_.dao.isDefined).map(definition => (definition.name, definition.dao.get)).toMap

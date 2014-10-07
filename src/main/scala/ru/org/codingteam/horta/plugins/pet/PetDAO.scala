@@ -9,10 +9,14 @@ import ru.org.codingteam.horta.database.DateTimeConverter._
 
 case class PetDataId(room: String)
 case class PetCoinsId(room: String)
+case class PetCoinTransactionsId(room: String, nick: String)
 
 case class PetCoinTransaction(name: String, state1: Map[String, Int], state2: Map[String, Int])
+case class PetCoinTransactionModel(id: Int, room: String, nickname: String, time: DateTime, change: Int, reason: String)
 
 class PetDAO extends DAO {
+
+  val transactionViewLimit = 10
 
   override def schema = "pet"
 
@@ -30,6 +34,7 @@ class PetDAO extends DAO {
     id match {
       case PetDataId(roomName) => readPetData(connection, roomName)
       case PetCoinsId(roomName) => Some(readCoins(connection, roomName))
+      case PetCoinTransactionsId(roomName, nickname) => Some(readPetCoinTransactions(connection, roomName, nickname))
     }
   }
 
@@ -97,6 +102,36 @@ class PetDAO extends DAO {
         val nick = resultSet.getString("nick")
         val amount = resultSet.getInt("amount")
         result += nick -> amount
+      }
+
+      result
+    } finally {
+      statement.close()
+    }
+  }
+
+  private def readPetCoinTransactions(connection: Connection, room: String, nickname: String) = {
+    val statement = connection.prepareStatement(
+      """
+        |select id, time, change, reason
+        |from PetTransaction
+        |where room = ? and nickname = ?
+        |order by time desc
+        |limit ?
+      """.stripMargin)
+    try {
+      statement.setString(1, room)
+      statement.setString(2, nickname)
+      statement.setInt(3, transactionViewLimit)
+      val resultSet = statement.executeQuery()
+      var result = List[PetCoinTransactionModel]()
+      while (resultSet.next()) {
+        val id = resultSet.getInt("id")
+        val time = resultSet.getTimestamp("time")
+        val change = resultSet.getInt("change")
+        val reason = resultSet.getString("reason")
+
+        result :+= PetCoinTransactionModel(id, room, nickname, time, change, reason)
       }
 
       result
