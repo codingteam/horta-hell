@@ -115,8 +115,8 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
 
         (if (satiation <= 0 || health <= 0) {
           alive = false
-          coins ! UpdateAllPTC("pet death", -1)
-          sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + ". Все теряют по 1PTC.")
+          coins ! UpdateAllPTC("pet death", -DEATH_PENALTY)
+          sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + s". Все теряют по ${DEATH_PENALTY}PTC.")
           Future.successful(satiation)
         } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && pet.randomGen.nextInt(SPARSENESS_OF_EVENTS) == 0) {
           if (pet.randomGen.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
