@@ -81,7 +81,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
   private val VARIANCE_OF_ADDITIONAL_VALS = 4
   private val HUNGER_BOUNDS = (5, 12)
   private val HEALTH_BOUNDS = (9, 10)
-  private val SPARSENESS_OF_EVENTS = 3 // bigger is rarer
+  private val SPARSENESS_OF_EVENTS = 4 // 4 is for 1/4
   private val CHANCE_OF_ATTACK = 6 // 6 is for 1/6
   private val ATTACK_PENALTY = 3
   private val DEATH_PENALTY = 1
@@ -112,7 +112,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor {
         alive = false
         coins ! UpdateAllPTC("pet death", -DEATH_PENALTY)
         sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + s". Все теряют по ${DEATH_PENALTY}PTC.")
-      } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && satiation % SPARSENESS_OF_EVENTS == 0) { // 12, 9, 6
+      } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && pet.randomGen.nextInt(SPARSENESS_OF_EVENTS) == 0) {
         if (pet.randomGen.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
           val map = Await.result((location ? GetParticipants()).mapTo[Map[String, Any]], 5.seconds)
           val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
