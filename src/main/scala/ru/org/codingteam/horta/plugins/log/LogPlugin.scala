@@ -47,7 +47,7 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
   }
 
   override protected def processMessage(time: DateTime, credential: Credential, message: String) {
-    saveLogMessage(time, credential.roomId.get, credential.name, MessageType, message)
+    credential.roomId.map(roomId => saveLogMessage(time, roomId, credential.name, MessageType, message))
   }
 
   def processCommand(credential: Credential,
