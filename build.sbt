@@ -16,7 +16,12 @@ resolvers ++= Seq(
 libraryDependencies ++= Seq(
   "com.googlecode.flyway" % "flyway-core" % "2.3",
   "me.fornever" %% "platonus" % "0.2",
-  "com.typesafe.akka" % "akka-actor_2.10" % "2.2.3",
+  "com.typesafe.akka" %% "akka-actor" % "2.2.3",
+  "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
+  "com.typesafe" %% "scalalogging-slf4j" % "1.1.0",
+  "ch.qos.logback" % "logback-classic" % "1.1.2",
+  "org.slf4j" % "jcl-over-slf4j" % "1.7.7",
+  "org.slf4j" % "log4j-over-slf4j" % "1.7.7",
   "org.igniterealtime.smack" % "smack" % "3.2.1",
   "org.igniterealtime.smack" % "smackx" % "3.2.1",
   "javax.transaction" % "jta" % "1.1",
