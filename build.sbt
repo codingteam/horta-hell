@@ -14,10 +14,12 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "com.googlecode.flyway" % "flyway-core" % "2.3",
   "me.fornever" %% "platonus" % "0.2",
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
+  "com.typesafe.akka" %% "akka-testkit" % "2.2.3" % "test",
   "com.typesafe" %% "scalalogging-slf4j" % "1.1.0",
   "ch.qos.logback" % "logback-classic" % "1.1.2",
   "org.slf4j" % "jcl-over-slf4j" % "1.7.7",
