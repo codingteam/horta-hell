@@ -1,8 +1,7 @@
 package ru.org.codingteam.horta.plugins.log
 
-import java.sql.{Connection, Statement, Timestamp}
-import org.joda.time.{DateTimeZone, DateTime}
 import ru.org.codingteam.horta.database.DAO
+import scalikejdbc._
 
 case class GetMessages(room: String, phrase: String)
 
@@ -17,92 +16,52 @@ class LogDAO extends DAO {
 
   /**
    * Store an object in the database.
-   * @param connection connection to access the database.
+   * @param session session to access the database.
    * @param id object id (if null then it should be generated).
    * @param obj stored object.
    * @return stored object id (or None if object was not stored).
    */
-  override def store(connection: Connection, id: Option[Any], obj: Any): Option[Any] = {
+  override def store(implicit session: DBSession, id: Option[Any], obj: Any): Option[Any] = {
     val LogMessage(_, time, room, sender, eventType, text) = obj
-    val query = connection.prepareStatement(
-      """
-        |insert into log (time, room, sender, type, message)
-        |values (?, ?, ?, ?, ?)
-      """.stripMargin, Statement.RETURN_GENERATED_KEYS)
-    try {
-      query.setTimestamp(1, new Timestamp(time.getMillis))
-      query.setString(2, room)
-      query.setString(3, sender)
-      query.setString(4, eventType.name)
-      query.setString(5, text)
-
-      query.executeUpdate()
-      val resultSet = query.getGeneratedKeys
-      try {
-        resultSet.next()
-        Some(resultSet.getLong(1))
-      } finally {
-        resultSet.close()
-      }
-    } finally {
-      query.close()
-    }
+    val id = sql"""insert into Log (time, room, sender, type, message)
+                values ($time, $room, $sender, ${eventType.name}, $text)"""
+      .updateAndReturnGeneratedKey().apply()
+    Some(id)
   }
 
   /**
    * Delete an object from the database.
-   * @param connection connection to access the database.
+   * @param session session to access the database.
    * @param id object id.
    * @return true if object was successfully deleted, false otherwise.
    */
-  override def delete(connection: Connection, id: Any): Boolean = ???
+  override def delete(implicit session: DBSession, id: Any): Boolean = ???
 
   /**
    * Read an object from the database.
-   * @param connection connection to access the database.
+   * @param session session to access the database.
    * @param id object id.
    * @return stored object or None if object not found.
    */
-  override def read(connection: Connection, id: Any): Option[Any] = {
+  override def read(implicit session: DBSession, id: Any): Option[Any] = {
     id match {
       case GetMessages(room, phrase) =>
-        queryRoomMessages(connection, room, phrase)
+        queryRoomMessages(session, room, phrase)
     }
   }
 
-  private def queryRoomMessages(connection: Connection, room: String, phrase: String): Option[Seq[LogMessage]] = {
-    val query = connection.prepareStatement(
-      """
-        |select top(?) id, time, sender, type, message
-        |from log
-        |where room = ? and message like ?
-      """.stripMargin)
-    try {
-      query.setInt(1, MAX_MESSAGES_IN_RESULT)
-      query.setString(2, room)
-      query.setString(3, s"%$phrase%")
-
-      var result = List[LogMessage]()
-      val resultSet = query.executeQuery()
-      try {
-        while (resultSet.next()) {
-          val id = Some(resultSet.getInt("id"))
-          val time = new DateTime(resultSet.getTimestamp("time").getTime, DateTimeZone.UTC)
-          val sender = resultSet.getString("sender")
-          val eventType = EventType(resultSet.getString("type"))
-          val text = resultSet.getString("message")
-
-          val message = LogMessage(id, time, room, sender, eventType, text)
-          result +:= message
-        }
-
-        Some(result)
-      } finally {
-        resultSet.close()
-      }
-    } finally {
-      query.close()
-    }
+  private def queryRoomMessages(implicit session: DBSession, room: String, phrase: String): Option[Seq[LogMessage]] = {
+    val result = sql"""select top $MAX_MESSAGES_IN_RESULT id, time, sender, type, message
+          from Log
+          where room = $room and message like ${"%" + phrase + "%"}
+       """.map(rs => LogMessage(
+      Some(rs.int("id")),
+      rs.jodaDateTime("time"),
+      room,
+      rs.string("sender"),
+      EventType(rs.string("type")),
+      rs.string("message"))).list().apply()
+    Some(result)
   }
 
 }
