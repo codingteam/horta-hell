@@ -14,6 +14,7 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= Seq(
+  "org.scalikejdbc" %% "scalikejdbc" % "2.1.2",
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "com.googlecode.flyway" % "flyway-core" % "2.3",
   "me.fornever" %% "platonus" % "0.2",
