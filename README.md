@@ -45,30 +45,32 @@ Characters inside every argument and the command name itself may be escaped with
 
 Known command list:
 
-* `$access` - diagnostic command. Prints current user access level.
+* `$access` — diagnostic command. Prints current user access level.
 
-* `$bash` - shows a random quote from http://bash.im.
+* `$bash` — shows a random quote from http://bash.im.
 
-* `$fortune` - shows a fortune from @rexim database.
+* `$fortune` — shows a fortune from @rexim database.
 
-* `$pet` - Tamagochi-like plugin, contains internal subcommand system. Enter `$pet help` for details. Distinct pets are
+* `$pet` — Tamagochi-like plugin, contains internal subcommand system. Enter `$pet help` for details. Distinct pets are
 created for every room.
 
-* `$s what_to_replace replace_with` - designed to be similar to Perl `s///` command. Replaces first argument with the
+* `$s what_to_replace replace_with` — designed to be similar to Perl `s///` command. Replaces first argument with the
 second argument, taking the last sender phrase as the base.
 
-* `$say` - query the Markov network (generated for the sender) to generate random phrase.
+* `$say` — query the Markov network (generated for the sender) to generate random phrase.
 
-* `$search phrase` - will search conference log for the selected phrase.
+* `$search phrase` — will search conference log for the selected phrase.
 
-* `$send receiver message` - send the mail to the user. Please note that bot determines the receiver by nickname only.
+* `$send receiver message` — send the mail to the user. Please note that bot determines the receiver by nickname only.
 If the nickname is not registered on server, someone else may take the nick and receive your mail. Be careful!
 
-* `$wtf <word> [definition]` - stores a definition of a word in the
+* `$wtf <word> [definition]` — stores a definition of a word in the
   bot's database. If used without the definition argument, shows the
   stored definition. To delete a definition use `$wtf-delete <word>`.
 
-* `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
+* `$version` — tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
+* `$dice <number of faces> <number of throws>` — throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
+
 
 ### Log parser
 
