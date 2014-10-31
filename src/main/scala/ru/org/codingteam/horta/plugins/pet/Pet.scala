@@ -79,7 +79,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   private val MAIN_HP_DECREASE = 0
   private val ADDITIONAL_HP_DECREASE = 1
   private val ADDITIONAL_SATIATION_DECREASE = 1
-  private val VARIANCE_OF_ADDITIONAL_VALS = 4
+  private val VARIANCE_OF_ADDITIONAL_VALS = 2
   private val HUNGER_BOUNDS = (5, 12)
   private val HEALTH_BOUNDS = (9, 10)
   private val SPARSENESS_OF_EVENTS = 4 // 4 is for 1/4
@@ -89,7 +89,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   private val FULL_SATIATION = 100
 
   override def preStart() {
-    context.system.scheduler.schedule(15 seconds, 360 seconds, self, Pet.PetTick)
+    context.system.scheduler.schedule(15 seconds, 6 minutes, self, Pet.PetTick)
     coins = context.actorOf(Props(new PetCoinStorage(roomId)))
   }
 
