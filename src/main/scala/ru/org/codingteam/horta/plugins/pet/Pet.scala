@@ -105,9 +105,9 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
     var satiation = pet.satiation
 
     (coins ? GetPTC()).mapTo[Map[String, Int]].map(_.keys).flatMap { coinHolders =>
-    if (pet.alive) {
-      health -= pet.randomInclusive(HEALTH_DECREASE)
-      satiation -= pet.randomInclusive(SATIATION_DECREASE)
+      if (pet.alive) {
+        health -= pet.randomInclusive(HEALTH_DECREASE)
+        satiation -= pet.randomInclusive(SATIATION_DECREASE)
 
         (if (satiation <= 0 || health <= 0) {
           alive = false
