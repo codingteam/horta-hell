@@ -75,11 +75,8 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
     " едва дышит, издавая хриплые звуки и отхаркивая кровавую пену"
   )
 
-  private val MAIN_SATIATION_DECREASE = 1
-  private val MAIN_HP_DECREASE = 0
-  private val ADDITIONAL_HP_DECREASE = 1
-  private val ADDITIONAL_SATIATION_DECREASE = 1
-  private val VARIANCE_OF_ADDITIONAL_VALS = 2
+  private val SATIATION_DECREASE = (1, 2)
+  private val HEALTH_DECREASE = (0, 2)
   private val HUNGER_BOUNDS = (5, 12)
   private val HEALTH_BOUNDS = (9, 10)
   private val SPARSENESS_OF_EVENTS = 4 // 4 is for 1/4
@@ -109,16 +106,16 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
 
     (coins ? GetPTC()).mapTo[Map[String, Int]].map(_.keys).flatMap { coinHolders =>
     if (pet.alive) {
-      health -= (MAIN_SATIATION_DECREASE + (pet.randomGen.nextInt(VARIANCE_OF_ADDITIONAL_VALS + 1) + ADDITIONAL_SATIATION_DECREASE + 1) / (VARIANCE_OF_ADDITIONAL_VALS - 1))
-      satiation -= (MAIN_HP_DECREASE + ADDITIONAL_HP_DECREASE + (pet.randomGen.nextInt(VARIANCE_OF_ADDITIONAL_VALS + 1) + ADDITIONAL_HP_DECREASE + 1) / (VARIANCE_OF_ADDITIONAL_VALS - 1))
+      health -= pet.randomInclusive(HEALTH_DECREASE)
+      satiation -= pet.randomInclusive(SATIATION_DECREASE)
 
         (if (satiation <= 0 || health <= 0) {
           alive = false
           coins ! UpdateAllPTC("pet death", -DEATH_PENALTY)
           sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + s". Все теряют по ${DEATH_PENALTY}PTC.")
           Future.successful(satiation)
-        } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && pet.randomGen.nextInt(SPARSENESS_OF_EVENTS) == 0) {
-          if (pet.randomGen.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
+        } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0) {
+          if (pet.random.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
             (location ? GetParticipants).mapTo[Map[String, Any]].map { map =>
               val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
               val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)

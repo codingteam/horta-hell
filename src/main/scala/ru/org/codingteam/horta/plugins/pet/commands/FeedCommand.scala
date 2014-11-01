@@ -58,7 +58,7 @@ class FeedCommand extends AbstractCommand {
     if (pet.alive) {
       val (feed, response) = if (pet.satiation < SATIATION_THRESHOLD) {
         if (pet.satiation < LOW_SATIATION_THRESHOLD) {
-          if (pet.randomGen.nextInt(ATTACK_PROBAB) == 0) {
+          if (pet.random.nextInt(ATTACK_PROBAB) == 0) {
             PtcUtils.tryUpdatePTC(coins, username, ATTACK_PENALTY, "pet attacked while feeding")
             (true,
               s"${pet.nickname}" + pet.randomChoice(attackWhileFeeding) + username + pet.randomChoice(losePTC) + s". Вы теряете ${FEEDING_AWARD}PTC, зато ${pet.nickname} накормлен.")
