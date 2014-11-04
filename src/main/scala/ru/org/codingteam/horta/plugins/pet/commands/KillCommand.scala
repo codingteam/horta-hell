@@ -8,9 +8,10 @@ class KillCommand extends AbstractCommand {
 
   override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
     val username = credential.name
-    val change = PtcUtils.tryUpdatePTC(coins, username, -10, "kill pet", overflow = true)
+    val ptcChange = -10
+    val change = PtcUtils.tryUpdatePTC(coins, username, ptcChange, "kill pet", overflow = true)
     if (pet.alive) {
-      if (change == 10) {
+      if (change == ptcChange) {
         (pet.copy(alive = false), "Вы жестоко убили питомца этой конфы. За это вы теряете 10PTC.")
       } else {
         (pet, "У вас недостаточно PTC для совершения столь мерзкого поступка. Требуется не менее 10PTC. Но мы всё равно забираем у вас то, что можем.")
