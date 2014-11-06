@@ -8,6 +8,8 @@ import ru.org.codingteam.horta.database.{StoreObject, ReadObject}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
+import scala.math._
+
 case class GetPTC()
 case class UpdateUserPTC(transactionName: String, user: String, delta: Int)
 case class UpdateUserPTCWithOverflow(transactionName: String, user: String, delta: Int)
@@ -26,8 +28,8 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
   override def receive = {
     case GetPTC() => withCoins("watch", c => { sender ! c; (Some(c), 0) })
     case UpdateUserPTC(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta))
-    case UpdateUserPTCWithOverflow(t, user, delta) => sender ! withCoins(t, updatePetCoins(user, delta, false))
-    case UpdateAllPTC(t, delta) => sender ! withCoins(t, updatePetCoins(delta))
+    case UpdateUserPTCWithOverflow(t, user, delta) => sender ! withCoins(t, updatePetCoinsWithOverflow(user, delta))
+    case UpdateAllPTC(t, delta) => sender ! withCoins(t, updateAllPetCoins(delta))
     case TransferPTC(t, source, target, amount) => sender ! withCoins(t, transferPetCoins(source, target, amount))
   }
 
@@ -40,7 +42,8 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
     }
 
     action(oldCoins) match {
-      case (Some(newCoins), result) =>
+      case (Some(rawNewCoins), result) => {
+        val newCoins = rawNewCoins.filter(_._2 > 0)
         Await.result(
           store ? StoreObject(
             PetPlugin.name,
@@ -51,29 +54,39 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
           case None => sys.error("Cannot process PTC transaction")
         }
         result
+      }
       case (None, 0) => 0
       case other => sys.error(s"Logic error: $other")
     }
   }
 
-  private def updatePetCoins(user: String, delta: Int, checkBalance: Boolean = true)
-                            (coins: Map[String, Int]): (Option[Map[String, Int]], Int) = {
-    val balance = coins.get(user) match {
-      case Some(currentBalance) => currentBalance
-      case None => 0
-    }
+  private def updatePetCoinsWithOverflow(user: String, delta: Int)
+                                        (coins: Map[String, Int]): (Option[Map[String, Int]], Int) = {
+    val balance = coins.get(user).getOrElse(0)
+    val newBalance = balance + delta
 
-    balance + delta match {
-      case newBalance if newBalance > 0 => (Some(coins + (user -> newBalance)), newBalance - balance)
-      case 0 => (Some(coins - user), balance)
-      case newBalance if newBalance < 0 && !checkBalance => (Some(coins - user), balance)
-      case _ => (None, 0)
+    if (delta == 0) {
+      (None, 0)
+    } else {
+      (Some(coins + (user -> newBalance)), if (newBalance < 0) -balance else delta)
     }
   }
 
-  private def updatePetCoins(delta: Int)(coins: Map[String, Int]): (Option[Map[String, Int]], Int) = {
+  private def updatePetCoins(user: String, delta: Int)
+                            (coins: Map[String, Int]): (Option[Map[String, Int]], Int) = {
+    val balance = coins.get(user).getOrElse(0)
+    val newBalance = balance + delta
+
+    if (delta == 0 || newBalance < 0) {
+      (None, 0)
+    } else {
+      (Some(coins + (user -> newBalance)), delta)
+    }
+  }
+
+  private def updateAllPetCoins(delta: Int)(coins: Map[String, Int]): (Option[Map[String, Int]], Int) = {
     coins.keys.foldLeft((Some(coins), 0): (Option[Map[String, Int]], Int)) {
-      case ((Some(c), diff), name) => updatePetCoins(name, delta, checkBalance = false)(c)
+      case ((Some(c), diff), name) => updatePetCoins(name, delta)(c)
       case ((None, _), _) => sys.error("Impossible")
     }
   }
