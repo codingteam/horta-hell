@@ -4,7 +4,7 @@ version := "0.11"
 
 mainClass in (Compile, run) := Some("ru.org.codingteam.horta.Application")
 
-scalaVersion := "2.10.4"
+scalaVersion := "2.11.4"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
