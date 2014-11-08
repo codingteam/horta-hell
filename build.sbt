@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "2.1.2",
   "org.scalatest" %% "scalatest" % "2.1.5" % "test",
   "com.googlecode.flyway" % "flyway-core" % "2.3",
-  "me.fornever" %% "platonus" % "0.2",
+  "me.fornever" %% "platonus" % "0.2.1",
   "com.typesafe.akka" %% "akka-actor" % "2.2.3",
   "com.typesafe.akka" %% "akka-slf4j" % "2.2.3",
   "com.typesafe.akka" %% "akka-testkit" % "2.2.3" % "test",
