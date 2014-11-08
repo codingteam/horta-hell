@@ -2,24 +2,22 @@ package ru.org.codingteam.horta.plugins.markov
 
 import java.io.File
 import java.util.Scanner
-import scalax.file.Path
-import ru.org.codingteam.horta.configuration.Configuration
-import me.fornever.platonus.Network
+
 import akka.event.LoggingAdapter
+import me.fornever.platonus.Network
+import ru.org.codingteam.horta.configuration.Configuration
 
 object LogParser {
+
   val regex = "^\\[.*?\\] \\* (.*?)(?: \\*|:) (.*?)$".r
 
   def parse(log: LoggingAdapter, roomName: String, userName: String) = {
-    val directory = Path.fromString(Configuration.logDirectory) / roomName
+    val directory = new File(new File(Configuration.logDirectory), roomName)
     val network = Network(2)
 
     log.info(s"Reading directory $directory")
     try {
-      for (path <- directory.descendants(depth = 1)) {
-        val filename = path.path
-
-        val file = new File(filename)
+      for (file <- directory.listFiles()) {
         val scanner = new Scanner(file, Configuration.logEncoding).useDelimiter("\\r\\n")
         try {
           while (scanner.hasNext) {
@@ -46,4 +44,5 @@ object LogParser {
   def tokenize(message: String) = {
     message.split("\\s+").toVector
   }
+
 }

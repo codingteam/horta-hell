@@ -2,11 +2,11 @@ package ru.org.codingteam.horta
 
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
-import com.typesafe.scalalogging.slf4j.Logging
+import com.typesafe.scalalogging.StrictLogging
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Core
 
-object Application extends App with Logging {
+object Application extends App with StrictLogging {
 
   override def main(args: Array[String]) {
     initializeConfiguration(args)
