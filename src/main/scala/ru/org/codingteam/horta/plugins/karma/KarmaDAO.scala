@@ -26,9 +26,9 @@ class KarmaDAO extends DAO {
    */
   override def store(implicit session: DBSession, id: Option[Any], obj: Any): Option[Any] = {
     id match {
-      case SetKarma(room, member, karma) =>
+      case Some(SetKarma(room, member, karma)) =>
         querySetKarma(session, room, member, karma)
-      case _ => Option[Any]()
+      case _ => sys.error("Unknown argument for KarmaDAO.store")
     }
   }
 
@@ -52,7 +52,7 @@ class KarmaDAO extends DAO {
         queryKarma(session, room, member)
       case GetTopKarma(room, order) =>
         queryTopKarma(session, room, order)
-      case _ => Option[Any]()
+      case _ => sys.error("Unknown argument for KarmaDAO.read")
     }
   }
 
@@ -73,7 +73,7 @@ class KarmaDAO extends DAO {
     Option(result)
   }
 
-  private def queryIsPresentInDB(room: String, member: String):Boolean = {
+  private def queryIsPresentInDB(implicit session: DBSession, room: String, member: String):Boolean = {
     val res = sql"""select exists (select *
     from $schema
     where room = $room and member = $member)
@@ -81,8 +81,8 @@ class KarmaDAO extends DAO {
     res.getOrElse(false)
   }
 
-  private def querySetKarma(session: DBSession, room: String, member: String, karma: Int): Option[Any] = {
-    if (queryIsPresentInDB(room, member)) {
+  private def querySetKarma(implicit session: DBSession, room: String, member: String, karma: Int): Option[Any] = {
+    if (queryIsPresentInDB(session, room, member)) {
       val resp = sql"""update $schema
       set karma=$karma
       where where room = $room and member = $member

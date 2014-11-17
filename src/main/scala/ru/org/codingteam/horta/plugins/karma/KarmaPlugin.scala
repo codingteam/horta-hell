@@ -56,7 +56,7 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
           showKarma(credential, credential.roomId.getOrElse("unknown"), args(1))
         case args if args.length == 2 =>
           changeKarma(credential, args(0), args(1))
-        case _ => sendResponse(credential, "Invalid arguments")
+        case _ => sendResponse(credential, HELP_MESSAGE)
       }
   }
 
@@ -70,17 +70,17 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
-  private def showKarma(credential: Credential, room:String, name: String): Unit = {
-    ((store ? ReadObject(name, GetKarma(room, name))) map {
+  private def showKarma(credential: Credential, room:String, user: String): Unit = {
+    ((store ? ReadObject(name, GetKarma(room, user))) map {
       case Some(karma:Int) =>
-        s"$name's karma: $karma"
+        s"$user's karma: $karma"
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
-  private def changeKarma(credential: Credential, name: String, value: String): Unit = {
+  private def changeKarma(credential: Credential, user: String, value: String): Unit = {
     val msg = if (credential.name != name) {
-      store ? StoreObject(name, None, SetKarma(credential.roomId.getOrElse("unknown"), name, value.toInt))
-      s"$name's karma changed"
+      store ? StoreObject(name, None, SetKarma(credential.roomId.getOrElse("unknown"), user, value.toInt))
+      s"$user's karma changed"
     } else
       "You cannot change your karma"
     sendResponse(credential,msg)
