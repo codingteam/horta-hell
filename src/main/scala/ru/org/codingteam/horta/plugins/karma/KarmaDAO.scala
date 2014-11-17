@@ -5,11 +5,11 @@ import scalikejdbc._
 
 case class SetKarma(room: String, member: String, karma: Int)
 case class GetKarma(room: String, member: String)
-case class GetTopKarma(room: String, order: Order)
+case class GetTopKarma(room: String)
 
 class KarmaDAO extends DAO {
 
-  val MAX_MESSAGES_IN_RESULT = 5
+  val PERIOD_BETWEEN_CHANGES = 60*60
 
   /**
    * Schema name for current DAO.
@@ -50,8 +50,8 @@ class KarmaDAO extends DAO {
     id match {
       case GetKarma(room, member) =>
         queryKarma(session, room, member)
-      case GetTopKarma(room, order) =>
-        queryTopKarma(session, room, order)
+      case GetTopKarma(room) =>
+        queryTopKarma(session, room)
       case _ => sys.error("Unknown argument for KarmaDAO.read")
     }
   }
@@ -64,11 +64,11 @@ class KarmaDAO extends DAO {
     result
   }
 
-  private def queryTopKarma(implicit session: DBSession, room: String, order: Order): Option[List[String]] = { // DON'T CHANGE SIGNATURE, CAST SOMEWHERE!
+  private def queryTopKarma(implicit session: DBSession, room: String): Option[List[String]] = { // DON'T CHANGE SIGNATURE, CAST SOMEWHERE!
     val result = sql"""select top 5 member, karma
           from Karma
           where room = $room
-          order by karma asc
+          order by karma desc
        """.map(rs => rs.string("member") + " " + rs.string("karma")).list().apply()
     Option(result)
   }
@@ -83,14 +83,18 @@ class KarmaDAO extends DAO {
 
   private def querySetKarma(implicit session: DBSession, room: String, member: String, karma: Int): Option[Any] = {
     if (queryIsPresentInDB(session, room, member)) {
-      print("UPDATE KARMA")
+      val prev_karma = queryKarma(session, room, member) match {
+        case Some(prev:Int) =>
+          prev
+        case _ =>
+          0
+      }
       val resp = sql"""update Karma
-      set karma=$karma
+      set karma=${karma + prev_karma}
       where room = $room and member = $member
       """.update().apply()
       Some(resp)
     } else {
-      print("INSERT KARMA")
       val resp = sql"""insert into Karma (room,member,karma)
       values ($room, $member, $karma)
       """.update().apply()

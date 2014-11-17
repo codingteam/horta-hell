@@ -13,11 +13,12 @@ private object KarmaCommand
 private object KarmaChange {def name = "change"}
 private object KarmaShow {def name = "show"}
 private object KarmaTop {def name = "top"}
-private object KarmaBottom {def name = "bottom"}
+private object KarmaUp {def name = "+"}
+private object KarmaDown {def name = "-"}
 
 class KarmaPlugin extends BasePlugin with CommandProcessor {
 
-  val HELP_MESSAGE = "$karma show [username]\n$karma top\n$karma username change"
+  val HELP_MESSAGE = s"karma ${KarmaShow.name} [username]\nkarma ${KarmaTop.name}\nkarma username ${KarmaUp.name}/${KarmaDown.name}"
 
   override def name = "KarmaPlugin"
 
@@ -49,13 +50,13 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
         case args if args.length == 1 && args(0) == KarmaShow.name =>
           showKarma(credential, credential.roomId.getOrElse("unknown"), credential.name)
         case args if args.length == 1 && args(0) == KarmaTop.name =>
-          showTopKarma(credential, credential.roomId.getOrElse("unknown"), AscendingOrder())
-        case args if args.length == 1 && args(0) == KarmaBottom.name =>
-          showTopKarma(credential, credential.roomId.getOrElse("unknown"), DescendingOrder())
+          showTopKarma(credential, credential.roomId.getOrElse("unknown"))
         case args if args.length == 2 && args(0) == KarmaShow.name =>
           showKarma(credential, credential.roomId.getOrElse("unknown"), args(1))
-        case args if args.length == 2 =>
-          changeKarma(credential, args(0), args(1))
+        case args if args.length == 2 && args(1) == KarmaUp.name =>
+          changeKarma(credential, args(0), 1)
+        case args if args.length == 2 && args(1) == KarmaDown.name =>
+          changeKarma(credential, args(0), -1)
         case _ => sendResponse(credential, HELP_MESSAGE)
       }
   }
@@ -63,8 +64,8 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
   private def sendResponse(credential: Credential, message: String): Unit =
     Protocol.sendResponse(credential.location, credential, message)
 
-  private def showTopKarma(credential: Credential, room:String, order: Order): Unit = {
-    ((store ? ReadObject(name, GetTopKarma(room, order))) map {
+  private def showTopKarma(credential: Credential, room:String): Unit = {
+    ((store ? ReadObject(name, GetTopKarma(room))) map {
       case Some(karma:Any) =>
         "\n" + karma.asInstanceOf[List[Any]].map(msg => msg).mkString("\n")
     }).onSuccess({case msg => sendResponse(credential,msg)})
@@ -79,9 +80,9 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
-  private def changeKarma(credential: Credential, user: String, value: String): Unit = {
-    val msg = if (credential.name != name) {
-      store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), user, value.toInt)), None)
+  private def changeKarma(credential: Credential, user: String, value: Int): Unit = {
+    val msg = if (credential.name != user) {
+      store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), user, value)), None)
       s"$user's karma changed"
     } else
       "You cannot change your karma"
