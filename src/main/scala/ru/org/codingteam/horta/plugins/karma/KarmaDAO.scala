@@ -58,39 +58,41 @@ class KarmaDAO extends DAO {
 
   private def queryKarma(implicit session: DBSession, room: String, member: String): Option[Int] = {
     val result = sql"""select karma
-          from $schema
+          from Karma
           where room = $room and member = $member
        """.map(rs => rs.int("karma")).single().apply()
     result
   }
 
-  private def queryTopKarma(implicit session: DBSession, room: String, order: Order): Option[List[String]] = {
-    val result = sql"""select top $MAX_MESSAGES_IN_RESULT member, karma
-          from $schema
+  private def queryTopKarma(implicit session: DBSession, room: String, order: Order): Option[List[String]] = { // DON'T CHANGE SIGNATURE, CAST SOMEWHERE!
+    val result = sql"""select top 5 member, karma
+          from Karma
           where room = $room
-          ordered by karma ${order.order}
-       """.map(rs => rs.string("member") + rs.string("karma")).list().apply()
+          order by karma asc
+       """.map(rs => rs.string("member") + " " + rs.string("karma")).list().apply()
     Option(result)
   }
 
   private def queryIsPresentInDB(implicit session: DBSession, room: String, member: String):Boolean = {
     val res = sql"""select exists (select *
-    from $schema
+    from Karma
     where room = $room and member = $member)
-    """.map(rs => (rs.boolean(0))).single().apply()
+    """.map(rs => (rs.boolean(1))).single().apply()
     res.getOrElse(false)
   }
 
   private def querySetKarma(implicit session: DBSession, room: String, member: String, karma: Int): Option[Any] = {
     if (queryIsPresentInDB(session, room, member)) {
-      val resp = sql"""update $schema
+      print("UPDATE KARMA")
+      val resp = sql"""update Karma
       set karma=$karma
-      where where room = $room and member = $member
+      where room = $room and member = $member
       """.update().apply()
       Some(resp)
     } else {
-      val resp = sql"""insert into $schema
-      values $room, $member, $karma
+      print("INSERT KARMA")
+      val resp = sql"""insert into Karma (room,member,karma)
+      values ($room, $member, $karma)
       """.update().apply()
       Some(resp)
     }

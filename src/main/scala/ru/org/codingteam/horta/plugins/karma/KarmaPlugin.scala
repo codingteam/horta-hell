@@ -65,21 +65,23 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
 
   private def showTopKarma(credential: Credential, room:String, order: Order): Unit = {
     ((store ? ReadObject(name, GetTopKarma(room, order))) map {
-      case Some(karma:List[Int]) =>
-        karma.map(msg => msg).mkString("\n")
+      case Some(karma:Any) =>
+        "\n" + karma.asInstanceOf[List[Any]].map(msg => msg).mkString("\n")
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
   private def showKarma(credential: Credential, room:String, user: String): Unit = {
     ((store ? ReadObject(name, GetKarma(room, user))) map {
-      case Some(karma:Int) =>
+      case Some(karma:Any) =>
         s"$user's karma: $karma"
+      case _ =>
+        s"$user's karma: 0"
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
   private def changeKarma(credential: Credential, user: String, value: String): Unit = {
     val msg = if (credential.name != name) {
-      store ? StoreObject(name, None, SetKarma(credential.roomId.getOrElse("unknown"), user, value.toInt))
+      store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), user, value.toInt)), None)
       s"$user's karma changed"
     } else
       "You cannot change your karma"
