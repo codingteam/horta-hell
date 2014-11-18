@@ -81,11 +81,15 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
   }
 
   private def changeKarma(credential: Credential, user: String, value: Int): Unit = {
-    val msg = if (credential.name != user) {
-      store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), user, value)), None)
-      s"$user's karma changed"
-    } else
-      "You cannot change your karma"
-    sendResponse(credential,msg)
+    if (credential.name == user)
+      sendResponse(credential, "You cannot change your karma")
+    else {
+      ((store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), credential.name, user, value)), None)) map {
+        case Some(a: Any) =>
+          s"$user's karma changed"
+        case _ =>
+          s"You cannot change karma too fast"
+      }).onSuccess({ case msg => sendResponse(credential, msg)})
+    }
   }
 }
