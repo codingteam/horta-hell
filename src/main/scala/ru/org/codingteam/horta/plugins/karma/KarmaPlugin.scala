@@ -70,8 +70,8 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
 
   private def showTopKarma(credential: Credential, room:String): Unit = {
     ((store ? ReadObject(name, GetTopKarma(room))) map {
-      case Some(karma:Any) =>
-        "\n" + karma.asInstanceOf[List[Any]].map(msg => msg).mkString("\n")
+      case Some(karma:List[String]) =>
+        "\n" + karma.map(msg => msg).mkString("\n")
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
