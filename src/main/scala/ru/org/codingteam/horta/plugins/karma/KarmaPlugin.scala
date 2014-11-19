@@ -11,13 +11,8 @@ import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, Bas
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
-private object KarmaCommand
-//private object KarmaChange {def name = "change"}
-//private object KarmaShow {def name = "show"}
-//private object KarmaTop {def name = "top"}
-//private object KarmaUp {def name = "+"}
-//private object KarmaDown {def name = "-"}
 
+private object KarmaCommand
 object KarmaAction extends Enumeration {
   type KarmaAction = String
   val KarmaChange = "change"
