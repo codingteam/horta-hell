@@ -12,15 +12,25 @@ import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
 private object KarmaCommand
-private object KarmaChange {def name = "change"}
-private object KarmaShow {def name = "show"}
-private object KarmaTop {def name = "top"}
-private object KarmaUp {def name = "+"}
-private object KarmaDown {def name = "-"}
+//private object KarmaChange {def name = "change"}
+//private object KarmaShow {def name = "show"}
+//private object KarmaTop {def name = "top"}
+//private object KarmaUp {def name = "+"}
+//private object KarmaDown {def name = "-"}
+
+object KarmaAction extends Enumeration {
+  type KarmaAction = String
+  val KarmaChange = "change"
+  val KarmaShow = "show"
+  val KarmaTop = "top"
+  val KarmaUp = "+"
+  val KarmaDown = "-"
+}
+import KarmaAction._
 
 class KarmaPlugin extends BasePlugin with CommandProcessor {
 
-  val HELP_MESSAGE = s"karma ${KarmaShow.name} [username]\nkarma ${KarmaTop.name}\nkarma username ${KarmaUp.name}/${KarmaDown.name}"
+  val HELP_MESSAGE = s"karma ${KarmaShow} [username]\nkarma ${KarmaTop}\nkarma username ${KarmaUp}/${KarmaDown}"
 
   val PERIOD_BETWEEN_CHANGES = 3 // hours
 
@@ -35,31 +45,24 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
     CommandDefinition(CommonAccess, "karma", KarmaCommand)
   )
 
-  /**
-   * Process a command.
-   * @param credential a credential of a user executing the command.
-   * @param token token registered for command.
-   * @param arguments command argument array.
-   * @return string for replying the sender.
-   */
   override protected def processCommand(credential: Credential,
-                               token: Any,
-                               arguments: Array[String]): Unit = token match {
+                                          token: Any,
+                                          arguments: Array[String]): Unit = token match {
     case KarmaCommand => performKarmaCommand(credential, arguments)
-    case _ => sendResponse(credential, "")
+    case _ => sendResponse(credential, "there is no such command")
   }
 
   def performKarmaCommand(credential: Credential, args: Array[String]): Unit = {
-    args match {
-        case args if args.length == 1 && args(0) == KarmaShow.name =>
+    args.toList match {
+        case List(KarmaShow) =>
           showKarma(credential, credential.roomId.getOrElse("unknown"), credential.name)
-        case args if args.length == 1 && args(0) == KarmaTop.name =>
+        case List(KarmaTop) =>
           showTopKarma(credential, credential.roomId.getOrElse("unknown"))
-        case args if args.length == 2 && args(0) == KarmaShow.name =>
+        case List(KarmaShow, _) =>
           showKarma(credential, credential.roomId.getOrElse("unknown"), args(1))
-        case args if args.length == 2 && args(1) == KarmaUp.name =>
+        case List(_, KarmaUp) =>
           changeKarma(credential, credential.roomId.getOrElse("unknown"), args(0), 1)
-        case args if args.length == 2 && args(1) == KarmaDown.name =>
+        case List(_, KarmaDown) =>
           changeKarma(credential, credential.roomId.getOrElse("unknown"), args(0), -1)
         case _ => sendResponse(credential, HELP_MESSAGE)
       }
