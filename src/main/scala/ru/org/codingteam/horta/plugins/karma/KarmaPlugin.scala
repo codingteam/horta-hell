@@ -3,6 +3,8 @@ package ru.org.codingteam.horta.plugins.karma
 
 import akka.util.Timeout
 import akka.pattern._
+import org.joda.time.{Period, DateTime}
+import ru.org.codingteam.horta.core.Clock
 import scala.concurrent.duration._
 import ru.org.codingteam.horta.database.{ReadObject, StoreObject, DAO}
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, BasePlugin}
@@ -19,6 +21,8 @@ private object KarmaDown {def name = "-"}
 class KarmaPlugin extends BasePlugin with CommandProcessor {
 
   val HELP_MESSAGE = s"karma ${KarmaShow.name} [username]\nkarma ${KarmaTop.name}\nkarma username ${KarmaUp.name}/${KarmaDown.name}"
+
+  val PERIOD_BETWEEN_CHANGES = 3 // hours
 
   override def name = "KarmaPlugin"
 
@@ -54,9 +58,9 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
         case args if args.length == 2 && args(0) == KarmaShow.name =>
           showKarma(credential, credential.roomId.getOrElse("unknown"), args(1))
         case args if args.length == 2 && args(1) == KarmaUp.name =>
-          changeKarma(credential, args(0), 1)
+          changeKarma(credential, credential.roomId.getOrElse("unknown"), args(0), 1)
         case args if args.length == 2 && args(1) == KarmaDown.name =>
-          changeKarma(credential, args(0), -1)
+          changeKarma(credential, credential.roomId.getOrElse("unknown"), args(0), -1)
         case _ => sendResponse(credential, HELP_MESSAGE)
       }
   }
@@ -73,23 +77,30 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
 
   private def showKarma(credential: Credential, room:String, user: String): Unit = {
     ((store ? ReadObject(name, GetKarma(room, user))) map {
-      case Some(karma:Any) =>
+      case Some(karma:Int) =>
         s"$user's karma: $karma"
       case _ =>
         s"$user's karma: 0"
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
-  private def changeKarma(credential: Credential, user: String, value: Int): Unit = {
+  private def changeKarma(credential: Credential, room:String, user: String, value: Int): Unit = {
     if (credential.name == user)
       sendResponse(credential, "You cannot change your karma")
     else {
-      ((store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), credential.name, user, value)), None)) map {
-        case Some(a: Any) =>
-          s"$user's karma changed"
+      ((store ? ReadObject(name, GetLastChangeTime(room, credential.name))) map {
+        case Some(time:DateTime) =>
+          new Period(time, Clock.now).toDurationFrom(DateTime.now).getStandardHours > PERIOD_BETWEEN_CHANGES
+        case None =>
+          true
+      }).onSuccess({
+        case canChangeCarma if canChangeCarma => {
+          store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), credential.name, user, value)), None)
+          sendResponse(credential, s"$user's karma changed")
+        }
         case _ =>
-          s"You cannot change karma too fast"
-      }).onSuccess({ case msg => sendResponse(credential, msg)})
+          sendResponse(credential, "You cannot change karma too fast")
+      })
     }
   }
 }
