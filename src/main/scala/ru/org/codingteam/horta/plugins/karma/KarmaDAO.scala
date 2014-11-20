@@ -53,7 +53,7 @@ class KarmaDAO extends DAO {
   }
 
   private def querySetLastChange(implicit session: DBSession, room: String, member: String): Unit = {
-    Option(if (queryChangeIsPresentInDB(session, room, member)) {
+    if (queryChangeIsPresentInDB(session, room, member)) {
       sql"""update KarmaChanges
       set changetime=${Clock.now}
       where room = $room and member = $member
@@ -61,8 +61,8 @@ class KarmaDAO extends DAO {
     } else {
       sql"""insert into KarmaChanges (room,member,changetime)
       values ($room, $member, ${Clock.now})
-      """.updateAndReturnGeneratedKey().apply()
-    })
+      """.update().apply()
+    }
   }
 
   private def queryKarma(implicit session: DBSession, room: String, member: String): Option[Int] = {
