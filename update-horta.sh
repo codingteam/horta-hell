@@ -15,7 +15,7 @@ fi
 git pull
 
 sbt assembly
-mv target/scala-2.10/horta-hell-assembly.jar ./horta-hell.jar
+mv target/scala-2.11/horta-hell-assembly.jar ./horta-hell.jar
 sbt clean
 
 if [ ! -d "$HORTA_WEB_HOME" ]; then
