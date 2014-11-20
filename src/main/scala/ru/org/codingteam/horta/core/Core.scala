@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.core
 
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
@@ -10,6 +10,7 @@ import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller
+import ru.org.codingteam.horta.plugins.karma.KarmaPlugin
 import ru.org.codingteam.horta.plugins.log.LogPlugin
 import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
@@ -47,7 +48,8 @@ class Core extends Actor with ActorLogging {
     Props[BashPlugin],
     Props[DiceRoller],
     Props[HtmlReaderPlugin],
-    Props[HelperPlugin]
+    Props[HelperPlugin],
+    Props[KarmaPlugin]
   )
 
   /**
