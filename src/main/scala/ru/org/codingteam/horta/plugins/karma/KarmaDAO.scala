@@ -52,7 +52,7 @@ class KarmaDAO extends DAO {
     """.map(rs => (rs.boolean(1))).single().apply().getOrElse(false)
   }
 
-  private def querySetLastChange(implicit session: DBSession, room: String, member: String): Option[Long] = {
+  private def querySetLastChange(implicit session: DBSession, room: String, member: String): Unit = {
     Option(if (queryChangeIsPresentInDB(session, room, member)) {
       sql"""update KarmaChanges
       set changetime=${Clock.now}
