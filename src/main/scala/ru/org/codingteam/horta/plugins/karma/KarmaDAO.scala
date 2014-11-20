@@ -61,7 +61,7 @@ class KarmaDAO extends DAO {
     } else {
       sql"""insert into KarmaChanges (room,member,changetime)
       values ($room, $member, ${Clock.now})
-      """.update().apply()
+      """.updateAndReturnGeneratedKey().apply()
     })
   }
 
@@ -80,30 +80,27 @@ class KarmaDAO extends DAO {
        """.map(rs => rs.string("member") + " " + rs.string("karma")).list().apply())
   }
 
-  private def queryKarmaIsPresentInDB(implicit session: DBSession, room: String, member: String): Boolean = {
-    sql"""select exists (select *
+  private def queryKarmaIsPresentInDB(implicit session: DBSession, room: String, member: String): Option[Long] = {
+    sql"""select id
     from Karma
-    where room = $room and member = $member)
-    """.map(rs => (rs.boolean(1))).single().apply().getOrElse(false)
+    where room = $room and member = $member
+    """.map(rs => rs.long(1)).single().apply()
   }
 
   private def querySetKarma(implicit session: DBSession, room: String, user: String, member: String, karma: Int): Option[Long] = {
     querySetLastChange(session, room, user)
-    if (queryKarmaIsPresentInDB(session, room, member)) {
-      val prev_karma = queryKarma(session, room, member) match {
-        case Some(prev: Int) =>
-          prev
-        case _ =>
-          sys.error("queryKarmaIsPresentInDB in KarmaDAO.querySetKarma must return actual info")
-      }
-      Option(sql"""update Karma
-        set karma=${karma + prev_karma}
+
+    queryKarmaIsPresentInDB(session, room, member) match {
+      case Some(key: Long) =>
+        sql"""update Karma
+        set karma=karma + $karma
         where room = $room and member = $member
-        """.update().apply())
-    } else {
-      Option(sql"""insert into Karma (room,member,karma)
+        """.update().apply()
+        Some(key)
+      case None =>
+        Option(sql"""insert into Karma (room,member,karma)
         values ($room, $member, $karma)
-        """.update().apply())
+        """.updateAndReturnGeneratedKey().apply())
     }
   }
 }
