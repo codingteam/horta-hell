@@ -173,8 +173,9 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   }
 
   def sayToEveryone(location: ActorRef, text: String) {
-    val credential = Credential.empty(location)
-    Protocol.sendResponse(location, credential, text)
+    Credential.empty(location).onSuccess { case credential =>
+      Protocol.sendResponse(location, credential, text)
+    }
   }
 }
 

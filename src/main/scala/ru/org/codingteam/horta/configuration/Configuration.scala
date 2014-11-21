@@ -3,6 +3,8 @@ package ru.org.codingteam.horta.configuration
 import java.io.{FileInputStream, InputStreamReader}
 import java.util.Properties
 
+import ru.org.codingteam.horta.localization.LocaleDefinition
+
 object Configuration {
 
   def initialize(configPath: String) {
@@ -44,7 +46,8 @@ object Configuration {
   lazy val logDirectory = properties.getProperty("log_directory")
   lazy val logEncoding = properties.getProperty("log_encoding")
 
-  lazy val localizationPath = properties.getProperty("localization_path", "./src/main/resources/localization")
+  lazy val defaultLocalization = LocaleDefinition(properties.getProperty("localization.default", "en"))
+  lazy val localizationPath = properties.getProperty("localization.path", "./src/main/resources/localization")
 
   lazy val storageUrl = properties.getProperty("storage.url")
   lazy val storageUser = properties.getProperty("storage.user")

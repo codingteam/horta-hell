@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.localization
 import java.nio.file.{Files, Paths}
 
 import ru.org.codingteam.horta.configuration.Configuration
+import ru.org.codingteam.horta.security.Credential
 
 import scala.collection.JavaConversions._
 
@@ -12,13 +13,17 @@ object Localization {
 
   private val locales: Map[LocaleDefinition, LocalizationMap] = loadLocales()
 
-  def get(key: String)(implicit locale: LocaleDefinition) = {
+  def localize(key: String)(implicit credential: Credential): String = localize(key, credential.locale)
+  def randomLocalizedString(key: String)(implicit credential: Credential): String =
+    randomLocalizedString(key, credential.locale)
+
+  def localize(key: String, locale: LocaleDefinition): String = {
     withLocale(locale) { case map =>
       map.get(key)
     } getOrElse key
   }
 
-  def random(key: String)(implicit locale: LocaleDefinition) = {
+  def randomLocalizedString(key: String, locale: LocaleDefinition): String = {
     withLocale(locale) { case map =>
       map.random(key)
     } getOrElse key

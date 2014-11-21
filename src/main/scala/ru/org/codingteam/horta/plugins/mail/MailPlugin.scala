@@ -47,13 +47,13 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
   override def processParticipantJoin(time: DateTime, roomJID: String, participantJID: String, actor: ActorRef) {
     val participantNick = StringUtils.parseResource(participantJID)
-    val receiver = Credential.forNick(actor, participantNick)
-
-    for (messages <- readMessages(roomJID, participantNick);
-         message <- messages) {
-      Protocol.sendPrivateResponse(actor, receiver, prepareText(message)) map {
-        case true => deleteMessage(message.id.get)
-        case false =>
+    Credential.forNick(actor, participantNick) onSuccess { case receiver =>
+      for (messages <- readMessages(roomJID, participantNick);
+           message <- messages) {
+        Protocol.sendPrivateResponse(actor, receiver, prepareText(message)) map {
+          case true => deleteMessage(message.id.get)
+          case false =>
+        }
       }
     }
   }
@@ -68,26 +68,26 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     // First try to send the message right now:
     val location = sender.location
     val senderNick = sender.name
-    val receiver = Credential.forNick(location, receiverNick)
+    Credential.forNick(location, receiverNick) onSuccess { case receiver =>
+      Protocol.sendPrivateResponse(location, receiver, prepareText(senderNick, message)) map {
+        case true =>
+          Protocol.sendResponse(location, sender, "Сообщение доставлено")
 
-    Protocol.sendPrivateResponse(location, receiver, prepareText(senderNick, message)) map {
-      case true =>
-        Protocol.sendResponse(location, sender, "Сообщение доставлено")
+        case false =>
+          val room = sender.roomId.get
 
-      case false =>
-        val room = sender.roomId.get
-
-        readMessages(room, receiverNick) map { messages =>
-          val count = messages.length
-          if (count > maxMessageCount) {
-            Protocol.sendResponse(location, sender, "Очередь сообщений указанного пользователя переполнена")
-          } else {
-            saveMessage(room, senderNick, receiverNick, message) map {
-              case true => Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
-              case false => Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
+          readMessages(room, receiverNick) map { messages =>
+            val count = messages.length
+            if (count > maxMessageCount) {
+              Protocol.sendResponse(location, sender, "Очередь сообщений указанного пользователя переполнена")
+            } else {
+              saveMessage(room, senderNick, receiverNick, message) map {
+                case true => Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
+                case false => Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
+              }
             }
           }
-        }
+      }
     }
   }
 
