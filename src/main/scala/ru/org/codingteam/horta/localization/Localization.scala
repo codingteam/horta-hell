@@ -14,8 +14,7 @@ object Localization {
   private val locales: Map[LocaleDefinition, LocalizationMap] = loadLocales()
 
   def localize(key: String)(implicit credential: Credential): String = localize(key, credential.locale)
-  def randomLocalizedString(key: String)(implicit credential: Credential): String =
-    randomLocalizedString(key, credential.locale)
+  def random(key: String)(implicit credential: Credential): String = random(key, credential.locale)
 
   def localize(key: String, locale: LocaleDefinition): String = {
     withLocale(locale) { case map =>
@@ -23,7 +22,7 @@ object Localization {
     } getOrElse key
   }
 
-  def randomLocalizedString(key: String, locale: LocaleDefinition): String = {
+  def random(key: String, locale: LocaleDefinition): String = {
     withLocale(locale) { case map =>
       map.random(key)
     } getOrElse key
