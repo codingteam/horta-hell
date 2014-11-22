@@ -37,6 +37,7 @@ object Configuration {
     case rid => new RoomDescriptor(
       rid,
       properties.getProperty(rid + ".room"),
+      LocaleDefinition(properties.getProperty(rid + ".locale", defaultLocalization.name)),
       properties.getProperty(rid + ".nickname", dftName),
       properties.getProperty(rid + ".message", dftMessage))
   }
