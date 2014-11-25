@@ -5,6 +5,7 @@ import akka.util.Timeout
 import akka.pattern._
 import org.joda.time.{Period, DateTime}
 import ru.org.codingteam.horta.core.Clock
+import ru.org.codingteam.horta.localization.Localization
 import scala.concurrent.duration._
 import ru.org.codingteam.horta.database.{ReadObject, StoreObject, DAO}
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, BasePlugin}
@@ -25,7 +26,7 @@ import KarmaAction._
 
 class KarmaPlugin extends BasePlugin with CommandProcessor {
 
-  val HELP_MESSAGE = s"karma ${KarmaShow} [username]\nkarma ${KarmaTop}\nkarma username ${KarmaUp}/${KarmaDown}"
+  val HELP_MESSAGE = s"karma $KarmaShow [username]\nkarma $KarmaTop\nkarma username $KarmaUp/$KarmaDown"
 
   val PERIOD_BETWEEN_CHANGES = 3 // hours
 
@@ -44,21 +45,22 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
                                           token: Any,
                                           arguments: Array[String]): Unit = token match {
     case KarmaCommand => performKarmaCommand(credential, arguments)
-    case _ => sendResponse(credential, "there is no such command")
+    case _ => sendResponse(credential, Localization.localize("there is no such command")(credential))
   }
 
   def performKarmaCommand(credential: Credential, args: Array[String]): Unit = {
+    val unknown = Localization.localize("unknown")(credential)
     args.toList match {
         case List(KarmaShow) =>
-          showKarma(credential, credential.roomId.getOrElse("unknown"), credential.name)
+          showKarma(credential, credential.roomId.getOrElse(unknown), credential.name)
         case List(KarmaTop) =>
-          showTopKarma(credential, credential.roomId.getOrElse("unknown"))
+          showTopKarma(credential, credential.roomId.getOrElse(unknown))
         case List(KarmaShow, _) =>
-          showKarma(credential, credential.roomId.getOrElse("unknown"), args(1))
+          showKarma(credential, credential.roomId.getOrElse(unknown), args(1))
         case List(_, KarmaUp) =>
-          changeKarma(credential, credential.roomId.getOrElse("unknown"), args(0), 1)
+          changeKarma(credential, credential.roomId.getOrElse(unknown), args(0), 1)
         case List(_, KarmaDown) =>
-          changeKarma(credential, credential.roomId.getOrElse("unknown"), args(0), -1)
+          changeKarma(credential, credential.roomId.getOrElse(unknown), args(0), -1)
         case _ => sendResponse(credential, HELP_MESSAGE)
       }
   }
@@ -73,18 +75,21 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
     }).onSuccess({case msg => sendResponse(credential,msg)})
   }
 
-  private def showKarma(credential: Credential, room:String, user: String): Unit = {
+  private def showKarma(credential: Credential, room: String, user: String): Unit = {
+    val template = Localization.localize("%s's karma")(credential)
+    val text = template.format(user)
     ((store ? ReadObject(name, GetKarma(room, user))) map {
       case Some(karma:Int) =>
-        s"$user's karma: $karma"
+        s"$text: $karma"
       case _ =>
-        s"$user's karma: 0"
-    }).onSuccess({case msg => sendResponse(credential,msg)})
+        s"$text: 0"
+    }).onSuccess({case msg => sendResponse(credential, msg)})
   }
 
   private def changeKarma(credential: Credential, room:String, user: String, value: Int): Unit = {
+    implicit val c = credential
     if (credential.name == user)
-      sendResponse(credential, "You cannot change your karma")
+      sendResponse(credential, Localization.localize("You cannot change your karma."))
     else {
       ((store ? ReadObject(name, GetLastChangeTime(room, credential.name))) map {
         case Some(time:DateTime) =>
@@ -94,10 +99,11 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
       }).onSuccess({
         case canChangeCarma if canChangeCarma => {
           store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), credential.name, user, value)), None)
-          sendResponse(credential, s"$user's karma changed")
+          val template = Localization.localize("%s's karma changed")
+          sendResponse(credential, template.format(user))
         }
         case _ =>
-          sendResponse(credential, "You cannot change karma too fast")
+          sendResponse(credential, Localization.localize("You cannot change karma too fast."))
       })
     }
   }

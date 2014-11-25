@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.plugins.htmlreader
 import java.net.{HttpURLConnection, URL}
 
 import org.jsoup.Jsoup
+import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
@@ -17,17 +18,18 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
 
   private val commandName = "link"
   private val usageText = "Usage: $link [URL]"
-  private val malformedUrl = "The url is malformed."
-  private val httpResponseNotOK = "Cannot fetch the page"
+  private val malformedUrl = "The URL is malformed."
+  private val httpResponseNotOK = "Cannot fetch the page."
   private val unknownHost = "The host is unknown."
 
-  private val headerSize = 2000 // just random number, I hope most headers are less than 2000 characters
+  private val headerSize = 2000
 
   override def commands = List(CommandDefinition(CommonAccess, commandName, HtmlReaderCommand))
 
   override def processCommand(credential: Credential,
                               token: Any,
                               arguments: Array[String]) {
+    implicit val c = credential
     token match {
       case HtmlReaderCommand =>
         val responseText = new StringBuilder()
@@ -51,25 +53,25 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
                 case _ => throw new java.net.MalformedURLException()
               }
             case _ =>
-              Protocol.sendResponse(credential.location, credential, usageText)
+              Protocol.sendResponse(credential.location, credential, Localization.localize(usageText))
           }
         } catch {
           case e@(_: java.net.MalformedURLException | _: java.lang.IllegalArgumentException) =>
-            responseText.append(malformedUrl)
+            responseText.append(Localization.localize(malformedUrl))
           case e: java.net.UnknownHostException =>
-            responseText.append(unknownHost)
+            responseText.append(Localization.localize(unknownHost))
           case e@(_: org.jsoup.HttpStatusException | _: java.io.IOException) =>
             log.error(e, "HTTP exception")
-            responseText.append(httpResponseNotOK)
+            responseText.append(Localization.localize(httpResponseNotOK))
           case e: Exception =>
             log.error(e, e.toString)
-            Protocol.sendResponse(credential.location, credential, "[ERROR] Something's wrong!")
+            Protocol.sendResponse(credential.location, credential, Localization.localize("[ERROR] Something's wrong!"))
         }
         if (responseText.nonEmpty) {
           Protocol.sendResponse(credential.location, credential, responseText.toString())
         }
 
-      case _ => None
+      case _ =>
     }
   }
 }

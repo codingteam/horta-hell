@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.plugins.markov
 import akka.actor.{ActorRef, Props}
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.configuration.Configuration
+import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.protocol.Protocol
@@ -59,14 +60,16 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
         })
 
         if (!isMyself(credential)) {
+          implicit val c = credential
+          import Localization._
           val user = getUser(credential)
           val location = credential.location
           if (Math.random() > 0.99) {
-            Protocol.sendResponse(location, credential, "пффффш")
-            Protocol.sendResponse(location, credential, "шпфффф")
-            Protocol.sendResponse(location, credential, "я твой Хортец!")
+            Protocol.sendResponse(location, credential, localize("pfshhh"))
+            Protocol.sendResponse(location, credential, localize("shpfff"))
+            Protocol.sendResponse(location, credential, localize("Luke, I am your Horta!"))
           } else if (Math.random() < 0.01) {
-            Protocol.sendResponse(location, credential, "BLOOD GORE DESTROY")
+            Protocol.sendResponse(location, credential, localize("BLOOD GORE DESTROY"))
             for (i <- 1 to 10) {
               user ! GeneratePhrase(credential, 1, true)
             }
@@ -90,7 +93,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
         }
 
         case _ =>
-          Protocol.sendResponse(location, credential, "Wrong arguments.")
+          Protocol.sendResponse(location, credential, Localization.localize("Invalid arguments.")(credential))
       }
     }
   }

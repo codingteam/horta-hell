@@ -2,6 +2,7 @@ package ru.org.codingteam.horta.plugins.HelperPlugin
 
 import akka.pattern.ask
 import akka.util.Timeout
+import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages.CoreGetCommands
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
@@ -30,20 +31,27 @@ class HelperPlugin extends CommandProcessor {
       case ManCommand =>
         (core ? CoreGetCommands).mapTo[Map[String, List[(String, AccessLevel)]]].onComplete {
           case Success(commands) =>
-            Protocol.sendResponse(credential.location, credential, formatMan(commands, credential.access))
+            Protocol.sendResponse(credential.location, credential, formatMan(commands, credential))
 
           case Failure(exception) =>
             log.error("Unable to get command list from core", exception)
-            Protocol.sendResponse(credential.location, credential, s"Unable to get command list from core: ${exception.getMessage }")
+            val message = Localization.localize("Unable to get command list from core")(credential)
+            Protocol.sendResponse(credential.location, credential, s"$message: ${exception.getMessage }")
 
         }
       case t => log.warning(s"Unknown command token passed to plugin $name: $t")
     }
   }
 
-  def formatMan(commands: Map[String, List[(String, AccessLevel)]], level: AccessLevel): String = {
+  def formatMan(commands: Map[String, List[(String, AccessLevel)]], credential: Credential): String = {
+    implicit val c = credential
+    val level = credential.access
+
     val builder = StringBuilder.newBuilder
-    builder.append(s"Available commands for your access level (${level.toString.replace("Access", "")}):\n")
+
+    val text = Localization.localize("Available commands for your access level")
+    val levelString = Localization.localize(level.toString)
+    builder.append(s"$text ($levelString):\n")
 
     val len = commands.maxBy(_._1.length)._1.length
 

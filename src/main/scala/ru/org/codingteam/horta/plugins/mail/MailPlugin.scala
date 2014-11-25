@@ -6,6 +6,7 @@ import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{DeleteObject, StoreObject, ReadObject}
+import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages.LeaveReason
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, ParticipantProcessor, BasePlugin}
 import ru.org.codingteam.horta.protocol.Protocol
@@ -39,7 +40,10 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
       case SendMailCommand =>
         arguments match {
           case Array(receiver, message) if receiver.nonEmpty => sendMail(credential, receiver, message)
-          case _ => Protocol.sendResponse(credential.location, credential, "Invalid arguments.")
+          case _ => Protocol.sendResponse(
+            credential.location,
+            credential,
+            Localization.localize("Invalid arguments.")(credential))
         }
       case _ =>
     }
@@ -50,7 +54,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     Credential.forNick(actor, participantNick) onSuccess { case receiver =>
       for (messages <- readMessages(roomJID, participantNick);
            message <- messages) {
-        Protocol.sendPrivateResponse(actor, receiver, prepareText(message)) map {
+        Protocol.sendPrivateResponse(actor, receiver, prepareText(message)(receiver)) map {
           case true => deleteMessage(message.id.get)
           case false =>
         }
@@ -65,13 +69,16 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
                                        actor: ActorRef) {}
 
   private def sendMail(sender: Credential, receiverNick: String, message: String) {
+    implicit val c = sender
+    import Localization._
+
     // First try to send the message right now:
     val location = sender.location
     val senderNick = sender.name
     Credential.forNick(location, receiverNick) onSuccess { case receiver =>
       Protocol.sendPrivateResponse(location, receiver, prepareText(senderNick, message)) map {
         case true =>
-          Protocol.sendResponse(location, sender, "Сообщение доставлено")
+          Protocol.sendResponse(location, sender, localize("Message delivered."))
 
         case false =>
           val room = sender.roomId.get
@@ -79,11 +86,11 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
           readMessages(room, receiverNick) map { messages =>
             val count = messages.length
             if (count > maxMessageCount) {
-              Protocol.sendResponse(location, sender, "Очередь сообщений указанного пользователя переполнена")
+              Protocol.sendResponse(location, sender, localize("Message queue overflow."))
             } else {
               saveMessage(room, senderNick, receiverNick, message) map {
-                case true => Protocol.sendResponse(location, sender, "Сообщение помещено в очередь")
-                case false => Protocol.sendResponse(location, sender, "Ошибка при обработке сообщения")
+                case true => Protocol.sendResponse(location, sender, localize("Message enqueued."))
+                case false => Protocol.sendResponse(location, sender, localize("Error while processing the message."))
               }
             }
           }
@@ -91,10 +98,12 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     }
   }
 
-  private def prepareText(message: MailMessage): String = prepareText(message.senderNick, message.text)
+  private def prepareText(message: MailMessage)(implicit credential: Credential): String =
+    prepareText(message.senderNick, message.text)
 
-  private def prepareText(senderNick: String, text: String): String = {
-    s"Сообщение от $senderNick: $text"
+  private def prepareText(senderNick: String, text: String)(implicit credential: Credential): String = {
+    val text = Localization.localize("Message from %s")
+    s"${text.format(senderNick)}: $text"
   }
 
   private def saveMessage(room: String, senderNick: String, receiverNick: String, message: String): Future[Boolean] = {

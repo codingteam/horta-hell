@@ -2,12 +2,14 @@ package ru.org.codingteam.horta.plugins.wtf
 
 import akka.pattern.ask
 import akka.util.Timeout
-import ru.org.codingteam.horta.database.{DeleteObject, StoreObject, ReadObject}
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, BasePlugin}
+import ru.org.codingteam.horta.database.{DeleteObject, ReadObject, StoreObject}
+import ru.org.codingteam.horta.localization.Localization._
+import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
-import ru.org.codingteam.horta.security.{Credential, CommonAccess}
-import scala.concurrent.duration._
+import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 private object WtfCommand
 private object WtfDeleteCommand
@@ -38,13 +40,13 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
     (credential.roomId, arguments) match {
       case (Some(room), Array(word)) => showDefinition(credential, room, word)
       case (Some(room), Array(word, definition)) => updateDefinition(credential, room, word, definition)
-      case _ => sendResponse(credential, "Invalid arguments")
+      case _ => sendResponse(credential, localize("Invalid arguments.")(credential))
     }
 
   private def performWtfDeleteCommand(credential: Credential, arguments: Array[String]): Unit = {
     (credential.roomId, arguments) match {
       case (Some(room), Array(word)) => deleteDefinition(credential, room, word)
-      case _ => sendResponse(credential, "Invalid arguments")
+      case _ => sendResponse(credential, localize("Invalid arguments.")(credential))
     }
   }
 
@@ -53,36 +55,41 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
       case Some(wtfDefinition: WtfDefinition) =>
         sendResponse(credential, s"> ${wtfDefinition.definition} © ${wtfDefinition.author}")
       case None =>
-        sendResponse(credential, "Определение не найдено.")
+        sendResponse(credential, localize("Definition not found.")(credential))
     }
   }
 
-  private def updateDefinition(credential: Credential, room: String, word: String, definition: String): Unit =
+  private def updateDefinition(credential: Credential, room: String, word: String, definition: String): Unit = {
+    implicit val c = credential
+
     (word.trim, definition.trim) match {
-      case ("", _) => sendResponse(credential, "Нельзя определить пустую строку")
+      case ("", _) => sendResponse(credential, localize("You cannot define an empty string."))
       case (word, "") => deleteDefinition(credential, room, word)
       case (word, definition) => store ? ReadObject(name, (room, word)) map {
         case Some(wtfDefinition: WtfDefinition) => store ? DeleteObject(name, wtfDefinition.id.get) map {
           case true => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
-            case Some(_) => sendResponse(credential, "Определение обновлено.")
-            case None => sendResponse(credential, "Не удалось обновить определение.")
+            case Some(_) => sendResponse(credential, localize("Definition updated."))
+            case None => sendResponse(credential, localize("Cannot update a definition."))
           }
-          case false => sendResponse(credential, "Не удалось обновить определение.")
+          case false => sendResponse(credential, localize("Cannot update a definition."))
         }
         case None => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
-          case Some(_) => sendResponse(credential, "Определение добавлено.")
-          case None => sendResponse(credential, "Не удалось добавить определение.")
+          case Some(_) => sendResponse(credential, localize("Definition added."))
+          case None => sendResponse(credential, localize("Cannot add a definition."))
         }
+      }
     }
   }
 
   private def deleteDefinition(credential: Credential, room: String, word: String): Unit = {
+    implicit val c = credential
+
     store ? ReadObject(name, (room, word)) map {
       case Some(wtfDefinition: WtfDefinition) => store ? DeleteObject(name, wtfDefinition.id.get) map {
-        case true => sendResponse(credential, "Определение удалено.")
-        case false => sendResponse(credential, "Не удалось удалить определение.")
+        case true => sendResponse(credential, localize("Definition deleted."))
+        case false => sendResponse(credential, localize("Cannot delete a definition."))
       }
-      case None => sendResponse(credential, "Определение не найдено.")
+      case None => sendResponse(credential, localize("Definition not found."))
     }
   }
 
