@@ -1,8 +1,9 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
 import akka.actor.ActorRef
-import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
+import ru.org.codingteam.horta.plugins.pet.{PetData, PtcUtils}
 import ru.org.codingteam.horta.security.Credential
+import ru.org.codingteam.horta.localization.Localization._
 
 class ChangeNickCommand extends AbstractCommand {
   private val charactersPerPetcoin = 10
@@ -12,8 +13,9 @@ class ChangeNickCommand extends AbstractCommand {
   }
 
   private def changeNickname(pet: PetData, coins: ActorRef, credential: Credential, newNickname: String): (PetData, String) = {
+    implicit val c = credential
     newNickname match {
-      case "" => (pet, "Пустая строка в качестве клички неприемлема")
+      case "" => (pet, localize("Empty string is not a valid pet nick."))
       case _ =>
         val changer = credential.name
         val price = calcPriceOfNickname(newNickname)
@@ -21,12 +23,12 @@ class ChangeNickCommand extends AbstractCommand {
         if (PtcUtils.tryUpdatePTC(coins, changer, -price, "change pet nick") != 0) {
           val newPet = pet.copy(nickname = newNickname)
           if (pet.alive) {
-            (newPet, "Теперь нашего питомца зовут %s.".format(newNickname))
+            (newPet, localize("Now our pet's name is %s.").format(newNickname))
           } else {
-            (newPet, "Выяснилось, что нашего питомца при жизни звали %s.".format(newNickname))
+            (newPet, localize("That's a surprise that our pet's name was %s when it was alive.").format(newNickname))
           }
         } else {
-          (pet, s"Недостаточно PTC. Требуется ${price}PTC за данную кличку.")
+          (pet, localize("Insufficient PTC. You need %dPTC to set this nick.").format(price))
         }
     }
   }
@@ -34,7 +36,7 @@ class ChangeNickCommand extends AbstractCommand {
   override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
     args match {
       case Array(newNickname, _*) => changeNickname(pet, coins, credential, newNickname.trim)
-      case _ => (pet, "Попробуй $pet help change-nick")
+      case _ => (pet, localize("Try $pet help change-nick.")(credential))
     }
   }
 }
