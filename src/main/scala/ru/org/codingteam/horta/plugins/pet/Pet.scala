@@ -6,6 +6,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.database.{ReadObject, StoreObject}
+import ru.org.codingteam.horta.localization.Localization._
 import ru.org.codingteam.horta.messages.GetParticipants
 import ru.org.codingteam.horta.plugins.pet.commands.AbstractCommand
 import ru.org.codingteam.horta.protocol.Protocol
@@ -25,55 +26,6 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   private val store = context.actorSelection("/user/core/store")
   private var petData: Option[PetData] = None
   private var coins: ActorRef = _
-
-  private val aggressiveAttack = List(
-    " яростно набрасывается на ",
-    " накидывается на ",
-    " прыгает, выпустив когти, на ",
-    " с рыком впивается в бедро ",
-    " опрокинул ",
-    " повалил наземь ",
-    " с силой врезался лбом в живот "
-  )
-
-  private val losePTC = List(
-    " от голода, крепко вцепившись зубами и выдирая кусок ткани штанов с кошельком",
-    " раздирая в клочья одежду от голода и давая едва увернуться ценой потери выпавшего кошелька",
-    " от жуткого голода, сжирая одежду и кошелёк",
-    " и полосонул когтями, чудом зацепившись за сумку с кошельком вместо живота",
-    " с рыком раздирая одежду и пожирая ошмётки вместе с кошельком"
-  )
-
-  private val searchingForFood = List(
-    " пытается сожрать все, что найдет",
-    " рыщет в поисках пищи",
-    " жалобно скулит и просит еды",
-    " рычит от голода",
-    " тихонько поскуливает от боли в пустом желудке",
-    " скребёт пол в попытке найти пропитание",
-    " переворачивает всё вверх дном в поисках еды",
-    " ловит зубами блох, пытаясь ими наесться",
-    " грызёт ножку стола, изображая вселенский голод",
-    " демонстративно гремит миской, требовательно ворча",
-    " плотоядно смотрит на окружающих, обнажив зубы",
-    " старательно принюхивается, пытаясь уловить хоть какой-нибудь запах съестного",
-    " плачет от голода, утирая слёзы хвостом"
-  )
-
-  private val becomeDead = List(
-    " умер в забвении с гримасой страдания на морде",
-    " корчится в муках и умирает",
-    " агонизирует, сжимая зубы в предсмертных судорогах",
-    " издал тихий рык и испустил дух"
-  )
-
-  private val lowHealth = List(
-    " забился в самый темный угол конфы и смотрит больными глазами в одну точку",
-    " лежит и еле дышит, хвостиком едва колышет",
-    " жалобно поскуливает, волоча заднюю лапу",
-    " завалился на бок и окинул замутнённым болью взором конфу",
-    " едва дышит, издавая хриплые звуки и отхаркивая кровавую пену"
-  )
 
   private val SATIATION_DECREASE = (1, 2)
   private val HEALTH_DECREASE = (0, 2)
@@ -109,27 +61,41 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
         health -= pet.randomInclusive(HEALTH_DECREASE)
         satiation -= pet.randomInclusive(SATIATION_DECREASE)
 
+        def credential = Credential.empty(location)
         (if (satiation <= 0 || health <= 0) {
-          alive = false
-          coins ! UpdateAllPTC("pet death", -DEATH_PENALTY)
-          sayToEveryone(location, s"$nickname" + pet.randomChoice(becomeDead) + s". Все теряют по ${DEATH_PENALTY}PTC.")
-          Future.successful(satiation)
-        } else if (satiation <= HUNGER_BOUNDS._2 && satiation > HUNGER_BOUNDS._1 && pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0) {
+          credential.map { implicit c =>
+            alive = false
+            coins ! UpdateAllPTC("pet death", -DEATH_PENALTY)
+            sayToEveryone(random("%s is dead.").format(nickname) + " " +
+              localize("All members have lost %dPTC.").format(DEATH_PENALTY))
+            satiation
+          }
+        } else if (satiation <= HUNGER_BOUNDS._2
+          && satiation > HUNGER_BOUNDS._1
+          && pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0) {
           if (pet.random.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
             (location ? GetParticipants).mapTo[Map[String, Any]].map { map =>
               val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
               val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
               coins ! UpdateUserPTCWithOverflow("pet aggressive attack", victim, -ATTACK_PENALTY)
-              sayToEveryone(location, s"$nickname" + pet.randomChoice(aggressiveAttack) + victim + pet.randomChoice(losePTC) + s". $victim теряет ${ATTACK_PENALTY}PTC.")
-              FULL_SATIATION
-            }
+              credential.map { implicit c =>
+                sayToEveryone(random("%s aggressively attacked %s").format(nickname, victim)
+                  + random(" due to hunger, taking some of his PTC.") + " "
+                  + localize("%s loses %dPTC.").format(ATTACK_PENALTY))
+                FULL_SATIATION
+              }
+            }.flatMap(identity)
           } else {
-            sayToEveryone(location, s"$nickname" + pet.randomChoice(searchingForFood) + ".")
-            Future.successful(satiation)
+            credential.map { implicit c =>
+              sayToEveryone(random("%s is searching for food.").format("nickname"))
+              satiation
+            }
           }
         } else if (health <= HEALTH_BOUNDS._2 && pet.health > HEALTH_BOUNDS._1) {
-          sayToEveryone(location, s"$nickname" + pet.randomChoice(lowHealth) + ".")
-          Future.successful(satiation)
+          credential.map { implicit c =>
+            sayToEveryone(random("%s's health is low.").format(nickname))
+            satiation
+          }
         } else {
           Future.successful(satiation)
         }).map(newSatiation => pet.copy(alive = alive, health = health, satiation = newSatiation))
@@ -150,16 +116,18 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
     getPetData.flatMap(action).map(setPetData)
   }
 
-  private def getPetData: Future[PetData] = (self ? GetPetDataInternal).mapTo[Option[PetData]].map {
-    case Some(data) => data
+  private def getPetData: Future[PetData] = (self ? GetPetDataInternal).mapTo[Option[PetData]].flatMap {
+    case Some(data) => Future.successful(data)
     case None =>
-      val data = readStoredData() match {
-        case Some(dbData) => dbData
-        case None => PetData.default
-      }
-
-      self ! SetPetDataInternal(data)
-      data
+      readStoredData().flatMap {
+        case Some(dbData) => Future.successful(dbData)
+        case None => Credential.empty(location).map {
+            implicit c => PetData.default
+        }
+      }.map(data => {
+        self ! SetPetDataInternal(data)
+        data
+      })
   }
 
   private def setPetData(pet: PetData) {
@@ -167,22 +135,23 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
     self ! SetPetDataInternal(pet)
   }
 
-  private def readStoredData(): Option[PetData] = {
+  private def readStoredData(): Future[Option[PetData]] = {
     val request = store ? ReadObject("pet", PetDataId(roomId))
-    Await.result(request, 5 minutes).asInstanceOf[Option[PetData]]
+    request.mapTo[Option[PetData]]
   }
 
-  def sayToEveryone(location: ActorRef, text: String) {
-    Credential.empty(location).onSuccess { case credential =>
-      Protocol.sendResponse(location, credential, text)
-    }
+  def sayToEveryone(text: String)(implicit credential: Credential) {
+    Protocol.sendResponse(location, credential, text)
   }
+
 }
 
 object Pet {
+
   case object PetTick
   case object GetPetDataInternal
 
   case class SetPetDataInternal(data: PetData)
   case class ExecuteCommand(command: AbstractCommand, invoker: Credential, arguments: Array[String])
+
 }
