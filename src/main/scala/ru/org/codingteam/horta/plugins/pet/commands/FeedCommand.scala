@@ -42,7 +42,7 @@ class FeedCommand extends AbstractCommand {
               + " " + localize("You got %dPTC.").format(FEEDING_AWARD))
         }
       } else {
-        (false, random("%s do not want to eat.").format(pet.nickname))
+        (false, random("%s does not want to eat.").format(pet.nickname))
       }
       (pet.copy(satiation = if (feed) FULL_SATIATION else pet.satiation), response)
     } else {
