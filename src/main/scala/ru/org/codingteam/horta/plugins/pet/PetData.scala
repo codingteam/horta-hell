@@ -2,6 +2,8 @@ package ru.org.codingteam.horta.plugins.pet
 
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.core.Clock
+import ru.org.codingteam.horta.localization.Localization
+import ru.org.codingteam.horta.security.Credential
 import scala.util.Random
 
 case class PetData(nickname: String,
@@ -20,6 +22,6 @@ case class PetData(nickname: String,
 
 object PetData {
 
-  def default = PetData("Наркоман", true, 100, 100, Clock.now)
+  def default(implicit credential: Credential) = PetData(Localization.localize("Junkie"), true, 100, 100, Clock.now)
 
 }

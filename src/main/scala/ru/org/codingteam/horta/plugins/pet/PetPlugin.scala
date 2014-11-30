@@ -5,6 +5,7 @@ import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.ReadObject
+import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.pet.commands._
 import ru.org.codingteam.horta.protocol.Protocol
@@ -69,7 +70,7 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
               .map { case transactions =>
                 (true, transactions.get.mkString("\n"))
               }
-          case _ => Future.successful((false, "Попробуйте $pet help."))
+          case _ => Future.successful((false, Localization.localize("Try $pet help.")(credential)))
         }
 
         for (response <- responseF) {
