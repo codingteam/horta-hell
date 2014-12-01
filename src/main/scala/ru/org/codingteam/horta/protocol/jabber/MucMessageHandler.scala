@@ -2,13 +2,14 @@ package ru.org.codingteam.horta.protocol.jabber
 
 import java.util.regex.Pattern
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.core.Clock
+import ru.org.codingteam.horta.localization.LocaleDefinition
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.protocol.{SendMucMessage, SendPrivateMessage, SendPrivateResponse, SendResponse}
+import ru.org.codingteam.horta.protocol._
 import ru.org.codingteam.horta.security._
 
 import scala.concurrent.duration._
@@ -16,7 +17,10 @@ import scala.concurrent.duration._
 /**
  * Multi user chat message handler.
  */
-class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nickname: String) extends Actor with ActorLogging {
+class MucMessageHandler(locale: LocaleDefinition,
+                        protocol: ActorRef,
+                        roomJID: String,
+                        nickname: String) extends LocationActor(locale) {
 
   val core = context.actorSelection("/user/core")
 
@@ -32,7 +36,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
     super.postStop()
   }
 
-  def receive = {
+  override def receive = {
     case UserJoined(participant, affilationName) =>
       val affiliation = affilationName match {
         case "owner" => Owner
@@ -91,6 +95,9 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
 
     case GetParticipants =>
       sender ! participants
+
+    case other =>
+      super.receive(other)
   }
 
   def getCredential(jid: String) = {
@@ -104,7 +111,7 @@ class MucMessageHandler(val protocol: ActorRef, val roomJID: String, val nicknam
       case Some(User) => CommonAccess
     }
 
-    Credential(self, accessLevel, Some(roomJID), nickByJid(jid), Some(jid))
+    Credential(self, locale, accessLevel, Some(roomJID), nickByJid(jid), Some(jid))
   }
 
   def jidByNick(nick: String) = s"$roomJID/$nick"

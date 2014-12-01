@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
 import akka.actor.ActorRef
+import ru.org.codingteam.horta.localization.Localization._
 import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
 import ru.org.codingteam.horta.security.Credential
 
@@ -15,22 +16,24 @@ object TransferAmountMatcher {
 class TransferCommand extends AbstractCommand {
 
   override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
+    implicit val c = credential
+
     val sourceUser = credential.name
     args match {
       case Array(targetUser, TransferAmountMatcher(amount), _*) => {
         if (amount <= 0) {
-          (pet, s"Некорректная сумма.")
+          (pet, localize("Amount is incorrect."))
         } else {
           if (PtcUtils.tryTransferPTC(coins, sourceUser, targetUser, amount, s"$sourceUser -> $targetUser") != 0) {
-            (pet, "Транзакция успешна.")
+            (pet, localize("Transaction ok."))
           } else {
-            (pet, "Недостаточно PTC.")
+            (pet, localize("Insufficient PTC."))
           }
         }
       }
 
       case _ =>
-        (pet, "Попробуй $pet help transfer")
+        (pet, localize("Try $pet help transfer."))
     }
   }
 

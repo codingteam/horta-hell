@@ -34,7 +34,8 @@ class JabberProtocol() extends Actor with ActorLogging {
   var rooms = Map[String, RoomDefinition]()
 
   override def preStart() {
-    privateHandler = context.actorOf(Props(new PrivateMessageHandler(self)), "privateHandler")
+    privateHandler = context.actorOf(
+      Props(new PrivateMessageHandler(Configuration.defaultLocalization, self)), "privateHandler")
     initializeConnection()
   }
 
@@ -51,9 +52,10 @@ class JabberProtocol() extends Actor with ActorLogging {
     case Reconnect(otherConnection) =>
       log.info(s"Ignored reconnect request from connection $otherConnection")
 
-    case JoinRoom(jid, nickname, greeting) =>
+    case JoinRoom(jid, locale, nickname, greeting) =>
       log.info(s"Joining room $jid")
-      val actor = context.actorOf(Props(new MucMessageHandler(self, jid, nickname)), jid)
+      val actor = context.actorOf(
+        Props(new MucMessageHandler(locale, self, jid, nickname)), jid)
 
       val muc = new MultiUserChat(connection, jid)
       rooms = rooms.updated(jid, RoomDefinition(muc, actor))
@@ -141,7 +143,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 
     Configuration.roomDescriptors foreach {
       case rd =>
-        if (rd.room != null) self ! JoinRoom(rd.room, rd.nickname, Option(rd.message))
+        if (rd.room != null) self ! JoinRoom(rd.room, rd.locale, rd.nickname, Option(rd.message))
         else log.warning(s"No JID given for room ${rd.id}")
     }
 

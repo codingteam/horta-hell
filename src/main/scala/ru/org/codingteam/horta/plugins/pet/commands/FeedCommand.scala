@@ -1,48 +1,11 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
 import akka.actor.ActorRef
+import ru.org.codingteam.horta.localization.Localization._
 import ru.org.codingteam.horta.plugins.pet.{PtcUtils, PetData}
 import ru.org.codingteam.horta.security.Credential
 
 class FeedCommand extends AbstractCommand {
-
-  private val successfulFeeding = List(
-    " был близок к голодной смерти, но вы его вовремя покормили",
-    " с отвращением давится, набивая желудок",
-    " аккуратно придерживает передними лапками добычу, кушая",
-    " с чавканьем грызёт еду",
-    " вгрызается в пищу, разрывая зубами на части",
-    ", покосившись, брезгливо жуёт подачку",
-    " с жадным сопением рыком уминает всю пищу в один присест",
-    " клацнул зубами прямо возле руки, рывком забирая еду"
-  )
-
-  private val attackWhileFeeding = List(
-    " накинулся в голодной ярости на ",
-    " клацая зубами, рывком наскочил на ",
-    " с рыком набросился на "
-  )
-
-  private val bingoMessages = List(
-    "Чудо свершилось! Друг был другом спасён!",
-    "Весьма вовремя покормлен был пет ибо голодная смерть ожидала его.",
-    "Жестом доброй воли спасена зверушка от голода снедающего."
-  )
-
-  private val losePTC = List(
-    ", вцепившись зубами в ногу и выдирая кусок ткани штанов с кошельком",
-    ", едва давая увернуться ценой потери выпавшего кошелька",
-    ", сжирая одежду и кошелёк"
-  )
-
-  private val dontWant = List(
-    " не голоден",
-    " не желает есть",
-    " отвернулся, брезгуя",
-    " презрительно фыркнул, отстранившись от пищи",
-    " опрокинул миску с едой лапой",
-    " скривился от попытки его пичкать едой"
-  )
 
   private val SATIATION_THRESHOLD = 20
   private val LOW_SATIATION_THRESHOLD = 10
@@ -53,6 +16,8 @@ class FeedCommand extends AbstractCommand {
   private val FULL_SATIATION = 100
 
   override def apply(pet: PetData, coins: ActorRef, credential: Credential, args: Array[String]): (PetData, String) = {
+    implicit val c = credential
+
     val username = credential.name
 
     if (pet.alive) {
@@ -61,23 +26,27 @@ class FeedCommand extends AbstractCommand {
           if (pet.random.nextInt(ATTACK_PROBAB) == 0) {
             PtcUtils.tryUpdatePTC(coins, username, ATTACK_PENALTY, "pet attacked while feeding")
             (true,
-              s"${pet.nickname}" + pet.randomChoice(attackWhileFeeding) + username + pet.randomChoice(losePTC) + s". Вы теряете ${FEEDING_AWARD}PTC, зато ${pet.nickname} накормлен.")
+              random("%s attacked %s while feeding").format(pet.nickname, username)
+                + random(" taking some PTC.") + " "
+                + localize("You've lost %dPTC, but %s is satiated.").format(FEEDING_AWARD, pet.nickname))
           } else {
             PtcUtils.tryUpdatePTC(coins, username, BINGO_AWARD, "bingo")
             (true,
-              s"${pet.randomChoice(bingoMessages)} Вы получаете ${BINGO_AWARD}PTC, а ${pet.nickname} сыт и доволен.")
+              random("You're lucky!") + " "
+                + localize("You gain %dPTC and %s is satiated.").format(BINGO_AWARD, pet.nickname))
           }
         } else {
           PtcUtils.tryUpdatePTC(coins, username, FEEDING_AWARD, "feed pet")
           (true,
-            s"${pet.nickname}" + pet.randomChoice(successfulFeeding) + s". Вы зарабатываете ${FEEDING_AWARD}PTC.")
+            random("%s is fully satiated.").format(pet.nickname)
+              + " " + localize("You got %dPTC.").format(FEEDING_AWARD))
         }
       } else {
-        (false, s"${pet.nickname}" + pet.randomChoice(dontWant) + ".")
+        (false, random("%s does not want to eat.").format(pet.nickname))
       }
       (pet.copy(satiation = if (feed) FULL_SATIATION else pet.satiation), response)
     } else {
-      (pet, "Вы пихаете еду в рот мертвого питомца. Удивительно, но он никак не реагирует.")
+      (pet, localize("You're putting the food to the death pet's month but it does not react."))
     }
   }
 

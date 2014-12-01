@@ -2,6 +2,7 @@ package ru.org.codingteam.horta.plugins.bash
 
 import org.joda.time.{DateTime, Period}
 import ru.org.codingteam.horta.core.Clock
+import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.plugins.{CommandProcessor, CommandDefinition, BasePlugin}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{Credential, CommonAccess}
@@ -40,7 +41,7 @@ class BashPlugin extends BasePlugin with CommandProcessor {
               lastRequestDateTime = now
             }
             else {
-              response = "Не так часто, пожалуйста."
+              response = Localization.localize("Not so fast, please.")(credential)
             }
 
             Protocol.sendResponse(credential.location, credential, response)

@@ -6,6 +6,7 @@ import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{ReadObject, DAO, StoreObject}
+import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.protocol.Protocol
@@ -59,7 +60,7 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
         for (response <- getSearchResponse(credential.roomId.get, phrase)) {
           Protocol.sendResponse(location, credential, response)
         }
-      case _ => Protocol.sendResponse(location, credential, "Invalid command.")
+      case _ => Protocol.sendResponse(location, credential, Localization.localize("Invalid command.")(credential))
     }
   }
 

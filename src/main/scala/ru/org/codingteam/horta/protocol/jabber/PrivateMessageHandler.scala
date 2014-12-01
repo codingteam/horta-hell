@@ -1,18 +1,19 @@
 package ru.org.codingteam.horta.protocol.jabber
 
-import akka.actor.{Actor, ActorLogging, ActorRef}
+import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
-import ru.org.codingteam.horta.core.Clock
-import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.protocol.{SendChatMessage, SendResponse}
-import ru.org.codingteam.horta.security.{CommonAccess, Credential, GlobalAccess}
 import ru.org.codingteam.horta.configuration.Configuration
-import scala.concurrent.duration._
-import scala.Some
+import ru.org.codingteam.horta.core.Clock
+import ru.org.codingteam.horta.localization.LocaleDefinition
+import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.protocol.{LocationActor, SendChatMessage, SendResponse}
+import ru.org.codingteam.horta.security.{CommonAccess, Credential, GlobalAccess}
 
-class PrivateMessageHandler(val protocol: ActorRef) extends Actor with ActorLogging {
+import scala.concurrent.duration._
+
+class PrivateMessageHandler(locale: LocaleDefinition, protocol: ActorRef) extends LocationActor(locale) {
 
   val core = context.actorSelection("/user/core")
 
@@ -34,13 +35,16 @@ class PrivateMessageHandler(val protocol: ActorRef) extends Actor with ActorLogg
       import context.dispatcher
 
       (protocol ? SendChatMessage(jid, text)) pipeTo sender
+
+    case other =>
+      super.receive(other)
   }
 
   def getCredential(jid: String) = {
     val baseJid = StringUtils.parseBareAddress(jid)
     val accessLevel = if (baseJid == Configuration.owner) GlobalAccess else CommonAccess
     val name = StringUtils.parseName(jid)
-    Credential(self, accessLevel, None, name, Some(jid))
+    Credential(self, locale, accessLevel, None, name, Some(jid))
   }
 
 }
