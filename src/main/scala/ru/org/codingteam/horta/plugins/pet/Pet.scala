@@ -87,7 +87,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
             }.flatMap(identity)
           } else {
             credential.map { implicit c =>
-              sayToEveryone(random("%s is searching for food.").format("nickname"))
+              sayToEveryone(random("%s is searching for food.").format(nickname))
               satiation
             }
           }
