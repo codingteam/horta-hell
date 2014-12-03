@@ -23,7 +23,7 @@ class HealCommand extends AbstractCommand {
         localize("%s's health was in poor condition but you healed it.").format(pet.nickname) + " " +
           localize("You got %dPTC.").format(HEALING_AWARD)
       } else {
-        localize("%s have declined your medical help.").format(pet.nickname)
+        localize("%s has declined your medical help.").format(pet.nickname)
       }
 
       (pet.copy(health = newHealth), response)
