@@ -102,8 +102,8 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
     prepareText(message.senderNick, message.text)
 
   private def prepareText(senderNick: String, text: String)(implicit credential: Credential): String = {
-    val text = Localization.localize("Message from %s")
-    s"${text.format(senderNick)}: $text"
+    val template = Localization.localize("Message from %s")
+    s"${template.format(senderNick)}: $text"
   }
 
   private def saveMessage(room: String, senderNick: String, receiverNick: String, message: String): Future[Boolean] = {
