@@ -1,6 +1,6 @@
 horta hell
 ==========
-![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/pr?style=flat-square) ![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/issue?style=flat-square)
+[![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/pr?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell) [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/issue?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell)
 
 horta hell is XMPP bot. It is based on the Akka framework.
 
