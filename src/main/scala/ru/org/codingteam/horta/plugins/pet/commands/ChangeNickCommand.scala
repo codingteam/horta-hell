@@ -1,7 +1,6 @@
 package ru.org.codingteam.horta.plugins.pet.commands
 
 import ru.org.codingteam.horta.localization.Localization._
-import ru.org.codingteam.horta.plugins.pet.PetData
 import ru.org.codingteam.horta.security.Credential
 
 class ChangeNickCommand extends PetCommand[String] {
@@ -19,7 +18,9 @@ class ChangeNickCommand extends PetCommand[String] {
 
   override protected def transactionName = "change pet nick"
 
-  override protected def onTransactionSuccess(pet: PetData, newNickname: String)(implicit credential: Credential) = {
+  override protected def onTransactionSuccess(context: PetCommandContext, newNickname: String)
+                                             (implicit credential: Credential) = {
+    val pet = context.pet
     val newPet = pet.copy(nickname = newNickname)
     if (pet.alive) {
       (newPet, localize("Now our pet's name is %s.").format(newNickname))
@@ -28,9 +29,10 @@ class ChangeNickCommand extends PetCommand[String] {
     }
   }
 
-  override protected def onTransactionFailure(pet: PetData, newNickname: String)(implicit credential: Credential) = {
+  override protected def onTransactionFailure(context: PetCommandContext, newNickname: String)
+                                             (implicit credential: Credential) = {
     val amount = price(newNickname)
-    (pet, localize("Insufficient PTC. You need %dPTC to set this nick.").format(amount))
+    (context.pet, localize("Insufficient PTC. You need %dPTC to set this nick.").format(amount))
   }
 
   private val charactersPerPetcoin = 10
