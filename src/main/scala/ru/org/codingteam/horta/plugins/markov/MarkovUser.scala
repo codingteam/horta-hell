@@ -9,8 +9,10 @@ import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.Protocol
+import ru.org.codingteam.horta.security.Credential
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import ru.org.codingteam.horta.localization.Localization._
 
 class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging {
 
@@ -47,7 +49,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       val network = getNetwork()
 
       def generator() = {
-        val phrase = generatePhrase(network, length)
+        val phrase = generatePhrase(network, length)(credential)
         if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase
       }
 
@@ -94,7 +96,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
           lastMessage = Some(newMessage)
           Protocol.sendResponse(location, credential, newMessage)
         case None =>
-          Protocol.sendResponse(location, credential, "No messages for you, sorry.")
+          Protocol.sendResponse(location, credential, localize("No messages for you, sorry.")(credential))
       }
 
     case Tick =>
@@ -143,7 +145,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
     }
   }
 
-  def generatePhrase(network: Network, length: Integer): String = {
+  def generatePhrase(network: Network, length: Integer)(implicit credential: Credential): String = {
     for (i <- 1 to 25) {
       val phrase = network.generate()
       if (phrase.length >= length) {
@@ -151,6 +153,6 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       }
     }
 
-    "Requested phrase was not found, sorry."
+    localize("Requested phrase was not found, sorry.")
   }
 }
