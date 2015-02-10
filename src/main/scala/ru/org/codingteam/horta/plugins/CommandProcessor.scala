@@ -17,7 +17,6 @@ trait CommandProcessor extends BasePlugin {
    * @param credential a credential of a user executing the command.
    * @param token token registered for command.
    * @param arguments command argument array.
-   * @return string for replying the sender.
    */
   protected def processCommand(credential: Credential,
                                token: Any,
