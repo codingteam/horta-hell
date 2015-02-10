@@ -7,9 +7,22 @@ import ru.org.codingteam.horta.messages._
 class MucParticipantStatusListener(muc: MultiUserChat, room: ActorRef) extends DefaultParticipantStatusListener {
   override def joined(participant: String) {
     val occupant = muc.getOccupant(participant)
-    val affiliation = occupant.getAffiliation
+    val affiliationName = occupant.getAffiliation
+    val roleName = occupant.getRole
 
-    room ! UserJoined(participant, affiliation)
+    val affiliation = affiliationName match {
+      case "owner" => Owner
+      case "admin" => Admin
+      case _ => User
+    }
+
+    val role = roleName match {
+      case "moderator" => Moderator
+      case "participant" => Participant
+      case _ => Visitor // TODO: Check the real value for visitor. Currently I have no time to experiment. ~ F
+    }
+
+    room ! UserJoined(participant, affiliation, role)
   }
 
   override def left(participant: String) {
