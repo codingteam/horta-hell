@@ -15,6 +15,7 @@ import ru.org.codingteam.horta.plugins.log.LogPlugin
 import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
+import ru.org.codingteam.horta.plugins.visitor.VisitorPlugin
 import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.plugins.htmlreader.HtmlReaderPlugin
@@ -40,6 +41,7 @@ class Core extends Actor with ActorLogging {
     Props[FortunePlugin],
     Props[AccessPlugin],
     Props[LogPlugin],
+    Props[VisitorPlugin],
     Props[WtfPlugin],
     Props[MailPlugin],
     Props[PetPlugin],

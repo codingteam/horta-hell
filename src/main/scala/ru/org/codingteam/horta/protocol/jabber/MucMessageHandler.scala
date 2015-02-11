@@ -24,7 +24,8 @@ class MucMessageHandler(locale: LocaleDefinition,
 
   val core = context.actorSelection("/user/core")
 
-  var participants = Map[String, Affinity](s"$roomJID/$nickname" -> User)
+  val participant = Protocol.Participant(s"$roomJID/$nickname", User, Participant) // TODO: Get own role and affiliation
+  var participants: Protocol.ParticipantCollection = Map(participant.jid -> participant)
 
   override def preStart() {
     super.preStart()
@@ -37,41 +38,35 @@ class MucMessageHandler(locale: LocaleDefinition,
   }
 
   override def receive = {
-    case UserJoined(participant, affilationName) =>
-      val affiliation = affilationName match {
-        case "owner" => Owner
-        case "admin" => Admin
-        case _ => User
-      }
-
-      addParticipant(participant, affiliation)
-      log.info(s"$participant joined as $affiliation")
+    case UserJoined(participant, affiliation, role) =>
+      addParticipant(Protocol.Participant(participant, affiliation, role))
+      log.info(s"$participant joined as $affiliation with role $role")
 
     case UserLeft(participant, reason) =>
       removeParticipant(participant, reason)
       log.info(s"$participant left, reason: $reason")
 
     case OwnershipGranted(participant) =>
-      participants = participants.updated(participant, Owner)
+      participants = participants.updated(participant, Protocol.Participant(participant, Owner, Moderator))
       log.info(s"$participant became an owner")
 
     case OwnershipRevoked(participant) =>
-      participants = participants.updated(participant, User)
+      participants = participants.updated(participant, Protocol.Participant(participant, User, Participant))
       log.info(s"$participant ceased to be an owner")
 
     case AdminGranted(participant) =>
-      participants = participants.updated(participant, Admin)
+      participants = participants.updated(participant, Protocol.Participant(participant, Admin, Participant))
       log.info(s"$participant became an admin")
 
     case AdminRevoked(participant) =>
-      participants = participants.updated(participant, User)
+      participants = participants.updated(participant, Protocol.Participant(participant, User, Participant))
       log.info(s"$participant ceased to be an admin")
 
     case NicknameChanged(participant, newNick) =>
       val newParticipant = jidByNick(newNick)
-      val access = participants(participant)
+      val oldParticipant = participants(participant)
       removeParticipant(participant, UserRenamed(newNick))
-      addParticipant(newParticipant, access)
+      addParticipant(oldParticipant.copy(jid = newParticipant))
       log.info(s"$participant changed nick to $newNick")
 
     case UserMessage(message) =>
@@ -107,8 +102,10 @@ class MucMessageHandler(locale: LocaleDefinition,
       case None =>
         log.warning(s"Cannot find participant $jid in the participant list")
         CommonAccess
-      case Some(Owner) | Some(Admin) => RoomAdminAccess
-      case Some(User) => CommonAccess
+      case Some(participant) => participant.affiliation match {
+        case Owner | Admin => RoomAdminAccess
+        case User => CommonAccess
+      }
     }
 
     Credential(self, locale, accessLevel, Some(roomJID), nickByJid(jid), Some(jid))
@@ -153,13 +150,13 @@ class MucMessageHandler(locale: LocaleDefinition,
     }
   }
 
-  private def addParticipant(participantJID: String, affinity: Affinity) {
+  private def addParticipant(participant: Protocol.Participant) {
     val oldSize = participants.size
-    participants += participantJID -> affinity
+    participants += participant.jid -> participant
     val changed = oldSize != participants.size
 
     if (changed) {
-      core ! CoreParticipantJoined(Clock.now, roomJID, participantJID, self)
+      core ! CoreParticipantJoined(Clock.now, roomJID, participant.jid, self)
     }
   }
 

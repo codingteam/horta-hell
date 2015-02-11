@@ -74,7 +74,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
           && satiation > HUNGER_BOUNDS._1
           && pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0) {
           if (pet.random.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
-            (location ? GetParticipants).mapTo[Map[String, Any]].map { map =>
+            (location ? GetParticipants).mapTo[Protocol.ParticipantCollection].map { map =>
               val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
               val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
               coins ! UpdateUserPTCWithOverflow("pet aggressive attack", victim, -ATTACK_PENALTY)
