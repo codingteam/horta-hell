@@ -18,7 +18,7 @@ class KillCommand extends AbstractCommand {
     if (pet.alive) {
       if (change == ptcChange) {
         (pet.copy(alive = false),
-          localize("You brutally killed this conference's pet. You've lost %dPTC.").format(KILL_PRICE))
+          localize("You brutally killed this conference's pet. You've lost %dPTC for it.").format(KILL_PRICE))
       } else {
         (pet,
           localize("You haven't enough PTC for such a wacky action. You need no less than %dPTC. But we anyway will take anything from you.").format(KILL_PRICE))
