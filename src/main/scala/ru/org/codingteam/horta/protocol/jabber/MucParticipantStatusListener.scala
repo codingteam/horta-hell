@@ -15,13 +15,13 @@ class MucParticipantStatusListener(muc: MultiUserChat, room: ActorRef) extends D
     val affiliation = affiliationName match {
       case "owner" => Owner
       case "admin" => Admin
-      case _ => User
+      case "none" => NoneAffiliation
+      case _ => User // TODO: Check the real value for user if it exist. Currently I have no time to experiment. ~ F
     }
 
     val role = roleName match {
       case "moderator" => Moderator
       case "participant" => Participant
-      case _ => Visitor // TODO: Check the real value for visitor. Currently I have no time to experiment. ~ F
     }
 
     room ! UserJoined(participant, affiliation, role)

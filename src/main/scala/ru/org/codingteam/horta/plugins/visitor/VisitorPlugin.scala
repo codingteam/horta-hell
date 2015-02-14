@@ -7,7 +7,7 @@ import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.messages.GetParticipants
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
-import ru.org.codingteam.horta.protocol.jabber.Visitor
+import ru.org.codingteam.horta.protocol.jabber.NoneAffiliation
 import ru.org.codingteam.horta.security.{RoomAdminAccess, Credential}
 
 import scala.concurrent.duration._
@@ -41,7 +41,7 @@ class VisitorPlugin extends CommandProcessor {
    */
   override protected def processCommand(credential: Credential, token: Any, arguments: Array[String]): Unit = {
     (credential.location ? GetParticipants).mapTo[Protocol.ParticipantCollection] map { case participants =>
-      val visitors = participants.values.filter(_.role == Visitor).map {
+      val visitors = participants.values.filter(_.affiliation == NoneAffiliation).map {
         participant => StringUtils.parseResource(participant.jid)
       }
 
