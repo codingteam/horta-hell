@@ -30,7 +30,7 @@ class KarmaPlugin extends BasePlugin with CommandProcessor with DataAccessingPlu
   override def name = "KarmaPlugin"
 
   override val schema = "Karma"
-  override def createRepository = KarmaRepository.apply _
+  override val createRepository = KarmaRepository.apply _
 
   implicit val timeout = Timeout(60.seconds)
   import context.dispatcher
