@@ -5,7 +5,7 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
-import ru.org.codingteam.horta.database.{ReadObject, StoreObject}
+import ru.org.codingteam.horta.database.PersistentStore
 import ru.org.codingteam.horta.localization.Localization._
 import ru.org.codingteam.horta.messages.GetParticipants
 import ru.org.codingteam.horta.plugins.pet.commands.AbstractCommand
@@ -131,13 +131,13 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   }
 
   private def setPetData(pet: PetData) {
-    val Some(_) = Await.result(store ? StoreObject("pet", Some(PetDataId(roomId)), pet), 5 minutes)
+    Await.result(
+      PersistentStore.execute[PetRepository, Unit](PetPlugin.name, store)(_.storePetData(roomId, pet)), 5 minutes)
     self ! SetPetDataInternal(pet)
   }
 
   private def readStoredData(): Future[Option[PetData]] = {
-    val request = store ? ReadObject("pet", PetDataId(roomId))
-    request.mapTo[Option[PetData]]
+    PersistentStore.execute[PetRepository, Option[PetData]](PetPlugin.name, store)(_.readPetData(roomId))
   }
 
   def sayToEveryone(text: String)(implicit credential: Credential) {

@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
-import ru.org.codingteam.horta.database.ReadObject
 import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.pet.commands._
@@ -18,7 +17,7 @@ import scala.language.postfixOps
 /**
  * Plugin for managing the so-called pet. Distinct pet belongs to every room.
  */
-class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
+class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor with DataAccessingPlugin[PetRepository] {
 
   import context.dispatcher
 
@@ -51,7 +50,8 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
 
   override def commands = List(CommandDefinition(CommonAccess, "pet", null))
 
-  override def dao = Some(new PetDAO())
+  override protected val schema = "pet"
+  override protected val createRepository = PetRepository.apply _
 
   override def processCommand(credential: Credential, token: Any, arguments: Array[String]) {
     val location = credential.location
@@ -65,10 +65,8 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor {
           case Array(PetCommandMatcher(command), args@_*) =>
             (pet ? Pet.ExecuteCommand(command, credential, args.toArray)).mapTo[String].map(s => (false, s))
           case Array("transactions") =>
-            (store ? ReadObject(name, PetCoinTransactionsId(credential.roomId.get, credential.name)))
-              .mapTo[Option[Seq[PetCoinTransactionModel]]]
-              .map { case transactions =>
-                (true, transactions.get.mkString("\n"))
+            withDatabase(_.readTransactions(credential.roomId.get, credential.name)) map { case transactions =>
+                (true, transactions.mkString("\n"))
               }
           case _ => Future.successful((false, Localization.localize("Try $pet help.")(credential)))
         }
