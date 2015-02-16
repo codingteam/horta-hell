@@ -1,7 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
 import akka.actor.{Actor, ActorLogging}
-import ru.org.codingteam.horta.database.DAO
 
 /**
  * Common plugin functionality. Every plugin should be inherited from this class.

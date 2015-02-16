@@ -15,7 +15,7 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.reflect.ClassTag
 
-class PersistentStore(repositories: Map[String, Repository]) extends Actor with ActorLogging {
+class PersistentStore(repositories: Map[String, RepositoryFactory]) extends Actor with ActorLogging {
 
   val Url = Configuration.storageUrl
   val User = Configuration.storageUser
@@ -34,10 +34,11 @@ class PersistentStore(repositories: Map[String, Repository]) extends Actor with 
   override def receive = {
     case PersistentStore.Execute(plugin, action) =>
       repositories.get(plugin) match {
-        case Some(repository) =>
-          initializeDatabase(repository)
+        case Some(factory) =>
+          initializeDatabase(factory)
           withTransaction { session =>
-            sender ! action(repository, session)
+            val repository = factory.create(session)
+            sender ! action(repository)
           }
 
         case None =>
@@ -45,8 +46,8 @@ class PersistentStore(repositories: Map[String, Repository]) extends Actor with 
       }
   }
 
-  private def initializeDatabase(repository: Repository) {
-    val schema = repository.schema
+  private def initializeDatabase(factory: RepositoryFactory) {
+    val schema = factory.schema
     if (!initializedSchemas.contains(schema)) {
       initializeScript(schema)
       initializedSchemas += schema
@@ -76,12 +77,12 @@ class PersistentStore(repositories: Map[String, Repository]) extends Actor with 
 
 object PersistentStore {
 
-  private case class Execute(plugin: String, action: (Repository, DBSession) => Any)
+  private case class Execute(plugin: String, action: (Any) => Any)
 
   def execute[Repository, T: ClassTag](plugin: String, store: ActorSelection)
-                            (action: (Repository, DBSession) => T)
+                            (action: (Repository) => T)
                             (implicit timeout: Timeout): Future[T] = {
-    val message = Execute(plugin, (r, s) => action(r.asInstanceOf[Repository], s))
+    val message = Execute(plugin, (r) => action(r.asInstanceOf[Repository]))
     (store ? message).mapTo[T]
   }
 

@@ -4,7 +4,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
-import ru.org.codingteam.horta.database.{DAO, PersistentStore}
+import ru.org.codingteam.horta.database.{RepositoryFactory, PersistentStore}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins._
@@ -228,8 +228,9 @@ object Core {
   private def getCommandsDescription(pluginDefinitions: List[(ActorRef, PluginDefinition)]) =
     pluginDefinitions.map(t => t._2.name -> t._2.commands.map(cd => cd.name -> cd.level)).toMap
 
-  private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, DAO] = {
-    pluginDefinitions.map(_._2).filter(_.repository.isDefined).map(definition => (definition.name, definition.repository.get)).toMap
+  private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, RepositoryFactory] = {
+    pluginDefinitions.map(_._2).filter(_.repositoryFactory.isDefined).map(
+      definition => (definition.name, definition.repositoryFactory.get)).toMap
   }
 
 }

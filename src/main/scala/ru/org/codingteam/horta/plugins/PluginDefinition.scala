@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.database.{Repository}
+import ru.org.codingteam.horta.database.RepositoryFactory
 
 /**
  * Description of events.
@@ -17,9 +17,10 @@ case class Notifications(messages: Boolean,
  * @param name plugin name.
  * @param notifications description of events plugin want to be notified of.
  * @param commands a list of commands supported by the plugin.
- * @param repository a repository for data access. Data access is disabled if repository isn't defined.
+ * @param repositoryFactory a factory of repositories used for data access. Data access is disabled if factory isn't
+ *                          defined.
  */
 case class PluginDefinition(name: String,
                             notifications: Notifications,
                             commands: List[CommandDefinition],
-                            repository: Option[Repository])
+                            repositoryFactory: Option[RepositoryFactory])
