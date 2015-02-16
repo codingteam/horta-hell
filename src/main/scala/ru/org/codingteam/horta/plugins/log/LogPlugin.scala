@@ -1,11 +1,9 @@
 package ru.org.codingteam.horta.plugins.log
 
 import akka.actor.ActorRef
-import akka.pattern._
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import org.joda.time.DateTime
-import ru.org.codingteam.horta.database.{ReadObject, DAO, StoreObject}
 import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
@@ -17,7 +15,11 @@ import scala.concurrent.duration._
 
 object SearchLogCommand
 
-class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcessor with CommandProcessor {
+class LogPlugin extends BasePlugin
+  with ParticipantProcessor
+  with MessageProcessor
+  with CommandProcessor
+  with DataAccessingPlugin[LogRepository] {
 
   implicit val timeout = Timeout(60.seconds)
 
@@ -27,7 +29,8 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
 
   override protected def name: String = "log"
 
-  override protected def dao: Option[DAO] = Some(new LogDAO())
+  override protected val schema: String = "log"
+  override protected val createRepository = LogRepository.apply _
 
   override protected def commands: List[CommandDefinition] = List(
     CommandDefinition(CommonAccess, "search", SearchLogCommand))
@@ -78,7 +81,7 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
                              eventType: EventType,
                              text: String) {
     val message = LogMessage(None, time, roomJID, sender, eventType, text)
-    store ? StoreObject(name, None, message)
+    withDatabase(_.store(message))
   }
 
   private def getReasonText(reason: LeaveReason) = {
@@ -91,9 +94,8 @@ class LogPlugin extends BasePlugin with ParticipantProcessor with MessageProcess
   }
 
   private def getSearchResponse(room:String, phrase: String): Future[String] = {
-    (store ? ReadObject(name, GetMessages(room, phrase))) map {
-      case Some(messages: Seq[LogMessage]) =>
-        messages.map(message => s"${message.time} ${message.sender} ${prepareMessageText(message.text)}").mkString("\n")
+    withDatabase(_.getMessages(room, phrase)) map { messages =>
+      messages.map(message => s"${message.time} ${message.sender} ${prepareMessageText(message.text)}").mkString("\n")
     }
   }
 
