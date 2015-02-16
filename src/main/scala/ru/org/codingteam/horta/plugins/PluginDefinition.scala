@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins
 
-import ru.org.codingteam.horta.database.DAO
+import ru.org.codingteam.horta.database.{Repository}
 
 /**
  * Description of events.
@@ -17,9 +17,9 @@ case class Notifications(messages: Boolean,
  * @param name plugin name.
  * @param notifications description of events plugin want to be notified of.
  * @param commands a list of commands supported by the plugin.
- * @param dao plugin data access object if present.
+ * @param repository a repository for data access. Data access is disabled if repository isn't defined.
  */
 case class PluginDefinition(name: String,
                             notifications: Notifications,
                             commands: List[CommandDefinition],
-                            dao: Option[DAO])
+                            repository: Option[Repository])

@@ -229,7 +229,7 @@ object Core {
     pluginDefinitions.map(t => t._2.name -> t._2.commands.map(cd => cd.name -> cd.level)).toMap
 
   private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, DAO] = {
-    pluginDefinitions.map(_._2).filter(_.dao.isDefined).map(definition => (definition.name, definition.dao.get)).toMap
+    pluginDefinitions.map(_._2).filter(_.repository.isDefined).map(definition => (definition.name, definition.repository.get)).toMap
   }
 
 }

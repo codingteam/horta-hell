@@ -2,7 +2,7 @@ package ru.org.codingteam.horta.database
 
 import javax.sql.DataSource
 
-import akka.actor.{ActorRef, Actor, ActorLogging}
+import akka.actor.{Actor, ActorLogging, ActorSelection}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.googlecode.flyway.core.Flyway
@@ -78,7 +78,7 @@ object PersistentStore {
 
   private case class Execute(plugin: String, action: (Repository, DBSession) => Any)
 
-  def execute[Repository, T: ClassTag](plugin: String, store: ActorRef)
+  def execute[Repository, T: ClassTag](plugin: String, store: ActorSelection)
                             (action: (Repository, DBSession) => T)
                             (implicit timeout: Timeout): Future[T] = {
     val message = Execute(plugin, (r, s) => action(r.asInstanceOf[Repository], s))
