@@ -68,7 +68,7 @@ class KarmaPlugin extends BasePlugin with CommandProcessor with DataAccessingPlu
 
   private def showTopKarma(credential: Credential, room:String): Unit = {
     withDatabase(_.getTopKarma(room)) map { karma =>
-      val msg = "\n" + karma.map(msg => msg).mkString("\n")
+      val msg = "\n" + karma.mkString("\n")
       sendResponse(credential, msg)
     }
   }
