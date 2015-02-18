@@ -1,17 +1,14 @@
 package ru.org.codingteam.horta.plugins.karma
 
-
 import akka.util.Timeout
-import akka.pattern._
-import org.joda.time.{Period, DateTime}
+import org.joda.time.{DateTime, Period}
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.localization.Localization
-import scala.concurrent.duration._
-import ru.org.codingteam.horta.database.{ReadObject, StoreObject, DAO}
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, BasePlugin}
+import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor, DataAccessingPlugin}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
+import scala.concurrent.duration._
 
 private object KarmaCommand
 object KarmaAction extends Enumeration {
@@ -22,9 +19,9 @@ object KarmaAction extends Enumeration {
   val KarmaUp = "+"
   val KarmaDown = "-"
 }
-import KarmaAction._
+import ru.org.codingteam.horta.plugins.karma.KarmaAction._
 
-class KarmaPlugin extends BasePlugin with CommandProcessor {
+class KarmaPlugin extends BasePlugin with CommandProcessor with DataAccessingPlugin[KarmaRepository] {
 
   val HELP_MESSAGE = s"karma $KarmaShow [username]\nkarma $KarmaTop\nkarma username $KarmaUp/$KarmaDown"
 
@@ -32,7 +29,8 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
 
   override def name = "KarmaPlugin"
 
-  override protected def dao: Option[DAO] = Some(new KarmaDAO())
+  override val schema = "Karma"
+  override val createRepository = KarmaRepository.apply _
 
   implicit val timeout = Timeout(60.seconds)
   import context.dispatcher
@@ -69,21 +67,18 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
     Protocol.sendResponse(credential.location, credential, message)
 
   private def showTopKarma(credential: Credential, room:String): Unit = {
-    ((store ? ReadObject(name, GetTopKarma(room))) map {
-      case Some(karma:List[String]) =>
-        "\n" + karma.map(msg => msg).mkString("\n")
-    }).onSuccess({case msg => sendResponse(credential,msg)})
+    withDatabase(_.getTopKarma(room)) map { karma =>
+      val msg = "\n" + karma.mkString("\n")
+      sendResponse(credential, msg)
+    }
   }
 
   private def showKarma(credential: Credential, room: String, user: String): Unit = {
     val template = Localization.localize("%s's karma")(credential)
     val text = template.format(user)
-    ((store ? ReadObject(name, GetKarma(room, user))) map {
-      case Some(karma:Int) =>
-        s"$text: $karma"
-      case _ =>
-        s"$text: 0"
-    }).onSuccess({case msg => sendResponse(credential, msg)})
+    withDatabase(_.getKarma(room, user)) map { karma =>
+      sendResponse(credential, s"$text: $karma")
+    }
   }
 
   private def changeKarma(credential: Credential, room:String, user: String, value: Int): Unit = {
@@ -91,20 +86,23 @@ class KarmaPlugin extends BasePlugin with CommandProcessor {
     if (credential.name == user)
       sendResponse(credential, Localization.localize("You cannot change your karma."))
     else {
-      ((store ? ReadObject(name, GetLastChangeTime(room, credential.name))) map {
-        case Some(time:DateTime) =>
-          new Period(time, Clock.now).toDurationFrom(DateTime.now).getStandardHours > PERIOD_BETWEEN_CHANGES
-        case None =>
-          true
-      }).onSuccess({
-        case canChangeCarma if canChangeCarma => {
-          store ? StoreObject(name, Some(SetKarma(credential.roomId.getOrElse("unknown"), credential.name, user, value)), None)
-          val template = Localization.localize("%s's karma changed")
-          sendResponse(credential, template.format(user))
+      withDatabase(_.getLastChangeTime(room, credential.name)) map { timeOption =>
+        val canChangeCarma = timeOption match {
+          case Some(time) =>
+            new Period(time, Clock.now).toDurationFrom(DateTime.now).getStandardHours > PERIOD_BETWEEN_CHANGES
+          case None =>
+            true
         }
-        case _ =>
+        if (canChangeCarma) {
+          withDatabase(_.setKarma(credential.roomId.getOrElse("unknown"), credential.name, user, value)) map { _ =>
+            val template = Localization.localize("%s's karma changed")
+            sendResponse(credential, template.format(user))
+          }
+        } else {
           sendResponse(credential, Localization.localize("You cannot change karma too fast."))
-      })
+        }
+      }
     }
   }
+
 }

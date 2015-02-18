@@ -2,58 +2,20 @@ package ru.org.codingteam.horta.database
 
 import javax.sql.DataSource
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{Actor, ActorLogging, ActorSelection}
+import akka.pattern.ask
 import akka.util.Timeout
 import com.googlecode.flyway.core.Flyway
 import org.h2.jdbcx.JdbcConnectionPool
 import ru.org.codingteam.horta.configuration.Configuration
 import scalikejdbc.{ConnectionPool, DB, DBSession, DataSourceConnectionPool}
 
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.reflect.ClassTag
 
-case class StoreObject(plugin: String, id: Option[Any], obj: Any)
-
-case class ReadObject(plugin: String, id: Any)
-
-case class DeleteObject(plugin: String, id: Any)
-
-trait DAO {
-
-  /**
-   * Schema name for current DAO.
-   * @return schema name.
-   */
-  def schema: String
-
-  /**
-   * Store an object in the database.
-   * @param session session to access the database.
-   * @param id object id (if null then it should be generated).
-   * @param obj stored object.
-   * @return stored object id (or None if object was not stored).
-   */
-  def store(implicit session: DBSession, id: Option[Any], obj: Any): Option[Any]
-
-  /**
-   * Read an object from the database.
-   * @param session session to access the database.
-   * @param id object id.
-   * @return stored object or None if object not found.
-   */
-  def read(implicit session: DBSession, id: Any): Option[Any]
-
-  /**
-   * Delete an object from the database.
-   * @param session session to access the database.
-   * @param id object id.
-   * @return true if object was successfully deleted, false otherwise.
-   */
-  def delete(implicit session: DBSession, id: Any): Boolean
-
-}
-
-class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLogging {
+class PersistentStore(repositories: Map[String, RepositoryFactory]) extends Actor with ActorLogging {
 
   val Url = Configuration.storageUrl
   val User = Configuration.storageUser
@@ -70,45 +32,22 @@ class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLoggin
   }
 
   override def receive = {
-    case StoreObject(plugin, id, obj) =>
-      storages.get(plugin) match {
-        case Some(dao) =>
-          initializeDatabase(dao)
+    case PersistentStore.Execute(plugin, action) =>
+      repositories.get(plugin) match {
+        case Some(factory) =>
+          initializeDatabase(factory)
           withTransaction { session =>
-            sender ! dao.store(session, id, obj)
+            val repository = factory.create(session)
+            sender ! action(repository)
           }
 
         case None =>
-          log.info(s"Cannot store object $obj for plugin $plugin")
-      }
-
-    case ReadObject(plugin, id) =>
-      storages.get(plugin) match {
-        case Some(dao) =>
-          initializeDatabase(dao)
-          withTransaction { session =>
-            sender ! dao.read(session, id)
-          }
-
-        case None =>
-          log.info(s"Cannot read object $id for plugin $plugin")
-      }
-
-    case DeleteObject(plugin, id) =>
-      storages.get(plugin) match {
-        case Some(dao) =>
-          initializeDatabase(dao)
-          withTransaction { session =>
-            sender ! dao.delete(session, id)
-          }
-
-        case None =>
-          log.info(s"Cannot delete object $id for plugin $plugin")
+          log.info(s"Cannot execute action $action for plugin $plugin: repository not found")
       }
   }
 
-  private def initializeDatabase(dao: DAO) {
-    val schema = dao.schema
+  private def initializeDatabase(factory: RepositoryFactory) {
+    val schema = factory.schema
     if (!initializedSchemas.contains(schema)) {
       initializeScript(schema)
       initializedSchemas += schema
@@ -133,4 +72,18 @@ class PersistentStore(storages: Map[String, DAO]) extends Actor with ActorLoggin
     flyway.repair()
     flyway.migrate()
   }
+
+}
+
+object PersistentStore {
+
+  private case class Execute(plugin: String, action: (Any) => Any)
+
+  def execute[Repository, T: ClassTag](plugin: String, store: ActorSelection)
+                            (action: (Repository) => T)
+                            (implicit timeout: Timeout): Future[T] = {
+    val message = Execute(plugin, (r) => action(r.asInstanceOf[Repository]))
+    (store ? message).mapTo[T]
+  }
+
 }

@@ -1,14 +1,11 @@
 package ru.org.codingteam.horta.plugins.pet
 
 import akka.actor.{Actor, ActorLogging}
-import akka.pattern.ask
 import akka.util.Timeout
-import ru.org.codingteam.horta.database.{StoreObject, ReadObject}
+import ru.org.codingteam.horta.database.PersistentStore
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-
-import scala.math._
 
 case class GetPTC()
 case class UpdateUserPTC(transactionName: String, user: String, delta: Int)
@@ -34,27 +31,22 @@ class PetCoinStorage(room: String) extends Actor with ActorLogging {
   }
 
   private def withCoins(transactionName: String, action: Map[String, Int] => (Option[Map[String, Int]], Int)): Int = {
-    val Some(oldCoins) = coins match {
-      case Some(c) => Some(c)
+    val oldCoins = coins match {
+      case Some(c) => c
       case None => Await.result(
-        (store ? ReadObject(PetPlugin.name, PetCoinsId(room))).mapTo[Option[Map[String, Int]]],
+        PersistentStore.execute[PetRepository, Map[String, Int]](PetPlugin.name, store)(_.readCoins(room)),
         waitFor)
     }
 
     action(oldCoins) match {
-      case (Some(rawNewCoins), result) => {
+      case (Some(rawNewCoins), result) =>
         val newCoins = rawNewCoins.filter(_._2 > 0)
         Await.result(
-          store ? StoreObject(
-            PetPlugin.name,
-            Some(PetCoinsId(room)),
-            PetCoinTransaction(transactionName, oldCoins, newCoins)),
-          waitFor) match {
-          case Some(_) => coins = Some(newCoins)
-          case None => sys.error("Cannot process PTC transaction")
-        }
+          PersistentStore.execute[PetRepository, Unit](PetPlugin.name, store)
+            (_.storeTransaction(room, PetCoinTransaction(transactionName, oldCoins, newCoins))),
+          waitFor)
+        coins = Some(newCoins)
         result
-      }
       case (None, 0) => 0
       case other => sys.error(s"Logic error: $other")
     }
