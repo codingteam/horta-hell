@@ -212,8 +212,7 @@ class Core extends Actor with ActorLogging {
 
 object Core {
 
-  private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]
-                           ): Map[String, List[(ActorRef, CommandDefinition)]] = {
+  private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, List[(ActorRef, CommandDefinition)]] = {
     val commands = for ((actor, pluginDefinition) <- pluginDefinitions) yield {
       for (command <- pluginDefinition.commands) yield (command.name, actor, command)
     }
@@ -228,9 +227,10 @@ object Core {
   private def getCommandsDescription(pluginDefinitions: List[(ActorRef, PluginDefinition)]) =
     pluginDefinitions.map(t => t._2.name -> t._2.commands.map(cd => cd.name -> cd.level)).toMap
 
-  private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, RepositoryFactory] = {
-    pluginDefinitions.map(_._2).filter(_.repositoryFactory.isDefined).map(
-      definition => (definition.name, definition.repositoryFactory.get)).toMap
+  private def getStorages(pluginDefinitions: Seq[(ActorRef, PluginDefinition)]): Map[String, RepositoryFactory] = {
+    pluginDefinitions.toStream.flatMap { case (_, definition) =>
+      definition.repositoryFactory.map(factory => (definition.name, factory))
+    }.toMap
   }
 
 }
