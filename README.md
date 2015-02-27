@@ -49,6 +49,8 @@ want to change this port, feel free to modify `Vagrantfile`.
 
 Updating the packages
 ---------------------
+
+### Using the update script
 This package designed to run the last stable horta-hell and horta-web versions
 (usually the ones from the `master` branches of the corresponding repositories).
 
@@ -68,3 +70,10 @@ After that invoke the update script:
 This script will take care of cloning or updating the source code of all
 embedded packages, (re-)compiling, (re-)installing and (re-)starting the
 services.
+
+### Manual update using the precompiled package
+Another variant is compiling the packages on another machine and manual copying them to the vagrant box. To do it, first
+compile the package (e.g using the `sbt clean assembly` command) and then copy it to
+`/opt/codingteam/horta-hell/horta-hell.jar`). After that, restart the service:
+
+    sudo restart horta-hell
