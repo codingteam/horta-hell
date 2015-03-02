@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.plugins.pet
 
-import akka.actor.{ActorLogging, Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
@@ -13,7 +13,7 @@ import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.Credential
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ExecutionContext, Await, Future}
 import scala.language.postfixOps
 
 class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
@@ -26,16 +26,6 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   private val store = context.actorSelection("/user/core/store")
   private var petData: Option[PetData] = None
   private var coins: ActorRef = _
-
-  private val SATIATION_DECREASE = (1, 2)
-  private val HEALTH_DECREASE = (0, 2)
-  private val HUNGER_BOUNDS = (5, 12)
-  private val HEALTH_BOUNDS = (9, 10)
-  private val SPARSENESS_OF_EVENTS = 4 // 4 is for 1/4
-  private val CHANCE_OF_ATTACK = 6 // 6 is for 1/6
-  private val ATTACK_PENALTY = 3
-  private val DEATH_PENALTY = 1
-  private val FULL_SATIATION = 100
 
   override def preStart() {
     context.system.scheduler.schedule(15 seconds, 6 minutes, self, Pet.PetTick)
@@ -50,49 +40,57 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
     case GetPetDataInternal => sender ! petData
   }
 
+  private def nextState(pet: PetData, coinHolders: Iterable[String]) = {
+    val nickname = pet.nickname
+    pet match {
+      case DyingPet() =>
+        PetTickResponse(pet.killed, takeDeathPenalty, { implicit c =>
+          sayToEveryone(random("%s is dead.").format(nickname) + " " +
+          localize("All members have lost %dPTC.").format(DEATH_PENALTY))
+        })
+
+      case HungerPet() if pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0 =>
+        if (pet.random.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
+          val victim = getPetVictimAsync(pet, coinHolders)
+          PetTickResponse(pet.satiated, attackVictim(context.dispatcher, victim), { implicit c =>
+            victim.map { v =>
+              sayToEveryone(random("%s aggressively attacked %s").format(nickname, v)
+                + random(" due to hunger, taking some of his PTC.") + " "
+                + localize("%s loses %dPTC.").format(ATTACK_PENALTY))
+            }
+          })
+        } else {
+          PetTickResponse(pet, noAction, { implicit c =>
+            sayToEveryone(random("%s is searching for food.").format(nickname))
+          })
+        }
+
+      case IllPet() =>
+        PetTickResponse(pet, noAction, { implicit c =>
+          sayToEveryone(random("%s's health is low.").format(nickname))
+        })
+
+      case _ => PetTickResponse(pet, noAction, { c => })
+    }
+  }
+
+  private def getPetVictimAsync(pet: PetData, coinHolders: Iterable[String]) = {
+    (location ? GetParticipants).mapTo[Protocol.ParticipantCollection].map { map =>
+      val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
+      pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
+    }
+  }
+
   private def processTick() = processAction { pet =>
     PtcUtils.queryPTCAsync(coins).map(_.keys).flatMap { coinHolders =>
       if (pet.alive) {
-        val nickname = pet.nickname
         val health = pet.health - pet.randomInclusive(HEALTH_DECREASE)
         val satiation = pet.satiation - pet.randomInclusive(SATIATION_DECREASE)
 
-        def credential = Credential.empty(location)
-        if (satiation <= 0 || health <= 0) {
-          credential.map { implicit c =>
-            coins ! UpdateAllPTC("pet death", -DEATH_PENALTY)
-            sayToEveryone(random("%s is dead.").format(nickname) + " " +
-              localize("All members have lost %dPTC.").format(DEATH_PENALTY))
-            pet.copy(alive = false, health = 0, satiation = 0)
-          }
-        } else if (satiation <= HUNGER_BOUNDS._2
-          && satiation > HUNGER_BOUNDS._1
-          && pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0) {
-          if (pet.random.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
-            (location ? GetParticipants).mapTo[Protocol.ParticipantCollection].map { map =>
-              val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
-              val victim = pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
-              coins ! UpdateUserPTCWithOverflow("pet aggressive attack", victim, -ATTACK_PENALTY)
-              credential.map { implicit c =>
-                sayToEveryone(random("%s aggressively attacked %s").format(nickname, victim)
-                  + random(" due to hunger, taking some of his PTC.") + " "
-                  + localize("%s loses %dPTC.").format(ATTACK_PENALTY))
-                pet.copy(health = health, satiation = FULL_SATIATION)
-              }
-            }.flatMap(identity)
-          } else {
-            credential.map { implicit c =>
-              sayToEveryone(random("%s is searching for food.").format(nickname))
-              pet.copy(health = health, satiation = satiation)
-            }
-          }
-        } else if (health <= HEALTH_BOUNDS._2 && pet.health > HEALTH_BOUNDS._1) {
-          credential.map { implicit c =>
-            sayToEveryone(random("%s's health is low.").format(nickname))
-            pet.copy(health = health, satiation = satiation)
-          }
-        } else {
-          Future.successful(pet)
+        val state = nextState(pet.copy(health = health, satiation = satiation), coinHolders)
+        state.coinAction(coins).map { _ =>
+          Credential.empty(location).map(state.credentialAction)
+          state.pet
         }
       } else {
         Future.successful(pet)
@@ -111,18 +109,20 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
     getPetData.flatMap(action).map(setPetData)
   }
 
-  private def getPetData: Future[PetData] = (self ? GetPetDataInternal).mapTo[Option[PetData]].flatMap {
-    case Some(data) => Future.successful(data)
-    case None =>
-      readStoredData().flatMap {
-        case Some(dbData) => Future.successful(dbData)
-        case None => Credential.empty(location).map {
+  private def getPetData(): Future[PetData] = {
+    (self ? GetPetDataInternal).mapTo[Option[PetData]].flatMap {
+      case Some(data) => Future.successful(data)
+      case None =>
+        readStoredData().flatMap {
+          case Some(dbData) => Future.successful(dbData)
+          case None => Credential.empty(location).map {
             implicit c => PetData.default
-        }
-      }.map(data => {
-        self ! SetPetDataInternal(data)
-        data
-      })
+          }
+        }.map(data => {
+          self ! SetPetDataInternal(data)
+          data
+        })
+    }
   }
 
   private def setPetData(pet: PetData) {
@@ -141,12 +141,41 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
 
 }
 
+case class PetTickResponse(pet: PetData,
+                           coinAction: ActorRef => Future[Any],
+                           credentialAction: Credential => Unit)
+
 object Pet {
+
+  val SATIATION_DECREASE = (1, 2)
+  val HEALTH_DECREASE = (0, 2)
+  val HUNGER_BOUNDS = (5, 12)
+  val HEALTH_BOUNDS = (9, 10)
+  val SPARSENESS_OF_EVENTS = 4 // 4 is for 1/4
+  val CHANCE_OF_ATTACK = 6 // 6 is for 1/6
+  val ATTACK_PENALTY = 3
+  val DEATH_PENALTY = 1
+  val FULL_SATIATION = 100
 
   case object PetTick
   case object GetPetDataInternal
 
   case class SetPetDataInternal(data: PetData)
   case class ExecuteCommand(command: AbstractCommand, invoker: Credential, arguments: Array[String])
+
+  private def noAction(coins: ActorRef) = Future.successful(())
+
+  private def takeDeathPenalty(coins: ActorRef): Future[Any] = {
+    implicit val timeout = Timeout(5 minutes)
+    coins ? UpdateAllPTC("pet death", -DEATH_PENALTY)
+  }
+
+  private def attackVictim(ec: ExecutionContext, victim: Future[String])(coins: ActorRef): Future[Any] = {
+    implicit val timeout = Timeout(5 minutes)
+    implicit val e = ec
+    (victim map { v =>
+      coins ? UpdateUserPTCWithOverflow("pet aggressive attack", v, -ATTACK_PENALTY)
+    }).flatMap(identity _)
+  }
 
 }
