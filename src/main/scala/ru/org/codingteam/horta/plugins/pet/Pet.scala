@@ -51,24 +51,19 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   }
 
   private def processTick() = processAction { pet =>
-    val nickname = pet.nickname
-    var alive = pet.alive
-    var health = pet.health
-    var satiation = pet.satiation
-
-    (coins ? GetPTC()).mapTo[Map[String, Int]].map(_.keys).flatMap { coinHolders =>
+    PtcUtils.queryPTCAsync(coins).map(_.keys).flatMap { coinHolders =>
       if (pet.alive) {
-        health -= pet.randomInclusive(HEALTH_DECREASE)
-        satiation -= pet.randomInclusive(SATIATION_DECREASE)
+        val nickname = pet.nickname
+        val health = pet.health - pet.randomInclusive(HEALTH_DECREASE)
+        val satiation = pet.satiation - pet.randomInclusive(SATIATION_DECREASE)
 
         def credential = Credential.empty(location)
-        (if (satiation <= 0 || health <= 0) {
+        if (satiation <= 0 || health <= 0) {
           credential.map { implicit c =>
-            alive = false
             coins ! UpdateAllPTC("pet death", -DEATH_PENALTY)
             sayToEveryone(random("%s is dead.").format(nickname) + " " +
               localize("All members have lost %dPTC.").format(DEATH_PENALTY))
-            satiation
+            pet.copy(alive = false, health = 0, satiation = 0)
           }
         } else if (satiation <= HUNGER_BOUNDS._2
           && satiation > HUNGER_BOUNDS._1
@@ -82,23 +77,23 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
                 sayToEveryone(random("%s aggressively attacked %s").format(nickname, victim)
                   + random(" due to hunger, taking some of his PTC.") + " "
                   + localize("%s loses %dPTC.").format(ATTACK_PENALTY))
-                FULL_SATIATION
+                pet.copy(health = health, satiation = FULL_SATIATION)
               }
             }.flatMap(identity)
           } else {
             credential.map { implicit c =>
               sayToEveryone(random("%s is searching for food.").format(nickname))
-              satiation
+              pet.copy(health = health, satiation = satiation)
             }
           }
         } else if (health <= HEALTH_BOUNDS._2 && pet.health > HEALTH_BOUNDS._1) {
           credential.map { implicit c =>
             sayToEveryone(random("%s's health is low.").format(nickname))
-            satiation
+            pet.copy(health = health, satiation = satiation)
           }
         } else {
-          Future.successful(satiation)
-        }).map(newSatiation => pet.copy(alive = alive, health = health, satiation = newSatiation))
+          Future.successful(pet)
+        }
       } else {
         Future.successful(pet)
       }
