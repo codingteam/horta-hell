@@ -18,6 +18,9 @@ case class PetData(nickname: String,
 
   def randomInclusive(bounds: (Int, Int)) = bounds._1 + random.nextInt(bounds._2 - bounds._1 + 1)
 
+  def killed = copy(alive = false, health = 0, satiation = 0)
+  def satiated = copy(satiation = Pet.FULL_SATIATION)
+
 }
 
 object PetData {
