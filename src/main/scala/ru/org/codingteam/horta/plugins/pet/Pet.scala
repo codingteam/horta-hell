@@ -76,7 +76,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
 
   private def getPetVictimAsync(pet: PetData, coinHolders: Iterable[String]) = {
     (location ? GetParticipants).mapTo[Protocol.ParticipantCollection].map { map =>
-      val possibleVictims = map.keys map ((x: String) => StringUtils.parseResource(x))
+      val possibleVictims = map.keys map (StringUtils.parseResource)
       pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
     }
   }
