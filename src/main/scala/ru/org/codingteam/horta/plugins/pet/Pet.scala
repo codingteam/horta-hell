@@ -49,7 +49,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
           localize("All members have lost %dPTC.").format(DEATH_PENALTY))
         })
 
-      case HungerPet() if pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0 =>
+      case HungryPet() if pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0 =>
         if (pet.random.nextInt(CHANCE_OF_ATTACK) == 0 && coinHolders.size > 0) {
           val victim = getPetVictimAsync(pet, coinHolders)
           PetTickResponse(pet.satiated, attackVictim(context.dispatcher, victim), { implicit c =>
@@ -76,7 +76,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
 
   private def getPetVictimAsync(pet: PetData, coinHolders: Iterable[String]) = {
     (location ? GetParticipants).mapTo[Protocol.ParticipantCollection].map { map =>
-      val possibleVictims = map.keys map (StringUtils.parseResource)
+      val possibleVictims = map.keys.map(StringUtils.parseResource)
       pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
     }
   }

@@ -6,7 +6,7 @@ object DyingPet {
 
 }
 
-object HungerPet {
+object HungryPet {
 
   def unapply(pet: PetData) = pet.satiation <= Pet.HUNGER_BOUNDS._2 && pet.satiation > Pet.HUNGER_BOUNDS._1
 
