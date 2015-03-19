@@ -1,4 +1,4 @@
-horta hell
+horta hell [![BuildStatus](https://travis-ci.org/codingteam/horta-hell.png?branch=develop)](https://travis-ci.org/codingteam/horta-hell)
 ==========
 [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/pr?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell) [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/issue?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell)
 
