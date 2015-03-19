@@ -34,8 +34,12 @@ object PtcUtils {
     Await.result((coins ? message).mapTo[Int], 1.minute)
   }
 
+  def queryPTCAsync(coins: ActorRef) = {
+    (coins ? GetPTC()).mapTo[Map[String, Int]]
+  }
+
   def queryPTC(coins: ActorRef) = {
-    Await.result((coins ? GetPTC()).mapTo[Map[String, Int]], 1.minute)
+    Await.result(queryPTCAsync(coins), 1.minute)
   }
 
   def queryPTC(coins: ActorRef, user: String): Int = {

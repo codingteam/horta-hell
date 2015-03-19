@@ -1,10 +1,8 @@
 package ru.org.codingteam.horta.plugins.wtf
 
-import akka.pattern.ask
 import akka.util.Timeout
-import ru.org.codingteam.horta.database.{DeleteObject, ReadObject, StoreObject}
 import ru.org.codingteam.horta.localization.Localization._
-import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
+import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor, DataAccessingPlugin}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
@@ -14,7 +12,7 @@ import scala.concurrent.duration._
 private object WtfCommand
 private object WtfDeleteCommand
 
-class WtfPlugin extends BasePlugin with CommandProcessor {
+class WtfPlugin extends BasePlugin with CommandProcessor with DataAccessingPlugin[WtfRepository] {
   import context.dispatcher
 
   implicit val timeout = Timeout(60.seconds)
@@ -26,7 +24,8 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
     CommandDefinition(CommonAccess, "wtf-delete", WtfDeleteCommand)
   )
 
-  override def dao = Some(new WtfDAO)
+  override protected val schema = "wtf"
+  override protected val createRepository = WtfRepository.apply _
 
   protected def processCommand(credential: Credential,
                                token: Any,
@@ -51,7 +50,7 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
   }
 
   private def showDefinition(credential: Credential, room: String, word: String): Unit = {
-    store ? ReadObject(name, (room, word)) map {
+    withDatabase(_.read(room, word)) map {
       case Some(wtfDefinition: WtfDefinition) =>
         sendResponse(credential, s"> ${wtfDefinition.definition} © ${wtfDefinition.author}")
       case None =>
@@ -65,17 +64,15 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
     (word.trim, definition.trim) match {
       case ("", _) => sendResponse(credential, localize("You cannot define an empty string."))
       case (word, "") => deleteDefinition(credential, room, word)
-      case (word, definition) => store ? ReadObject(name, (room, word)) map {
-        case Some(wtfDefinition: WtfDefinition) => store ? DeleteObject(name, wtfDefinition.id.get) map {
-          case true => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
-            case Some(_) => sendResponse(credential, localize("Definition updated."))
-            case None => sendResponse(credential, localize("Cannot update a definition."))
+      case (word, definition) => withDatabase(_.read(room, word)) map {
+        case Some(wtfDefinition: WtfDefinition) => withDatabase(_.delete(wtfDefinition.id.get)) map {
+          case true => withDatabase(_.store(WtfDefinition(None, room, word, definition, credential.name))) map { _ =>
+            sendResponse(credential, localize("Definition updated."))
           }
           case false => sendResponse(credential, localize("Cannot update a definition."))
         }
-        case None => store ? StoreObject(name, None, WtfDefinition(None, room, word, definition, credential.name)) map {
-          case Some(_) => sendResponse(credential, localize("Definition added."))
-          case None => sendResponse(credential, localize("Cannot add a definition."))
+        case None => withDatabase(_.store(WtfDefinition(None, room, word, definition, credential.name))) map { _ =>
+          sendResponse(credential, localize("Definition added."))
         }
       }
     }
@@ -84,8 +81,8 @@ class WtfPlugin extends BasePlugin with CommandProcessor {
   private def deleteDefinition(credential: Credential, room: String, word: String): Unit = {
     implicit val c = credential
 
-    store ? ReadObject(name, (room, word)) map {
-      case Some(wtfDefinition: WtfDefinition) => store ? DeleteObject(name, wtfDefinition.id.get) map {
+    withDatabase(_.read(room, word)) map {
+      case Some(wtfDefinition: WtfDefinition) => withDatabase(_.delete(wtfDefinition.id.get)) map {
         case true => sendResponse(credential, localize("Definition deleted."))
         case false => sendResponse(credential, localize("Cannot delete a definition."))
       }

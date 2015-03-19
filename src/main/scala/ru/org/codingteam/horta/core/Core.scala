@@ -4,7 +4,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
-import ru.org.codingteam.horta.database.{DAO, PersistentStore}
+import ru.org.codingteam.horta.database.{RepositoryFactory, PersistentStore}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins._
@@ -15,6 +15,7 @@ import ru.org.codingteam.horta.plugins.log.LogPlugin
 import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
+import ru.org.codingteam.horta.plugins.visitor.VisitorPlugin
 import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import ru.org.codingteam.horta.plugins.htmlreader.HtmlReaderPlugin
@@ -40,6 +41,7 @@ class Core extends Actor with ActorLogging {
     Props[FortunePlugin],
     Props[AccessPlugin],
     Props[LogPlugin],
+    Props[VisitorPlugin],
     Props[WtfPlugin],
     Props[MailPlugin],
     Props[PetPlugin],
@@ -210,8 +212,7 @@ class Core extends Actor with ActorLogging {
 
 object Core {
 
-  private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]
-                           ): Map[String, List[(ActorRef, CommandDefinition)]] = {
+  private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, List[(ActorRef, CommandDefinition)]] = {
     val commands = for ((actor, pluginDefinition) <- pluginDefinitions) yield {
       for (command <- pluginDefinition.commands) yield (command.name, actor, command)
     }
@@ -226,8 +227,10 @@ object Core {
   private def getCommandsDescription(pluginDefinitions: List[(ActorRef, PluginDefinition)]) =
     pluginDefinitions.map(t => t._2.name -> t._2.commands.map(cd => cd.name -> cd.level)).toMap
 
-  private def getStorages(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, DAO] = {
-    pluginDefinitions.map(_._2).filter(_.dao.isDefined).map(definition => (definition.name, definition.dao.get)).toMap
+  private def getStorages(pluginDefinitions: Seq[(ActorRef, PluginDefinition)]): Map[String, RepositoryFactory] = {
+    pluginDefinitions.toStream.flatMap { case (_, definition) =>
+      definition.repositoryFactory.map(factory => (definition.name, factory))
+    }.toMap
   }
 
 }

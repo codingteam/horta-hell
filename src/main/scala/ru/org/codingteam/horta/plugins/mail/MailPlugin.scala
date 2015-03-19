@@ -1,25 +1,27 @@
 package ru.org.codingteam.horta.plugins.mail
 
 import akka.actor.ActorRef
-import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import org.joda.time.DateTime
-import ru.org.codingteam.horta.database.{DeleteObject, StoreObject, ReadObject}
 import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages.LeaveReason
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, ParticipantProcessor, BasePlugin}
+import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.protocol.Protocol
-import ru.org.codingteam.horta.security.{Credential, CommonAccess}
+import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+
 import scala.concurrent.duration._
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 
 private object SendMailCommand
 
 /**
  * Plugin for delivering the mail.
  */
-class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProcessor {
+class MailPlugin extends BasePlugin
+  with CommandProcessor
+  with ParticipantProcessor
+  with DataAccessingPlugin[MailRepository] {
 
   import context.dispatcher
 
@@ -31,7 +33,8 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
   override def commands = List(CommandDefinition(CommonAccess, "send", SendMailCommand))
 
-  override def dao = Some(new MailDAO())
+  override protected val schema = "mail"
+  override protected val createRepository = MailRepository.apply _
 
   override def processCommand(credential: Credential,
                               token: Any,
@@ -70,7 +73,7 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
 
   private def sendMail(sender: Credential, receiverNick: String, message: String) {
     implicit val c = sender
-    import Localization._
+    import ru.org.codingteam.horta.localization.Localization._
 
     // First try to send the message right now:
     val location = sender.location
@@ -107,20 +110,20 @@ class MailPlugin extends BasePlugin with CommandProcessor with ParticipantProces
   }
 
   private def saveMessage(room: String, senderNick: String, receiverNick: String, message: String): Future[Boolean] = {
-    (store ? StoreObject(name, None, MailMessage(None, room, senderNick, receiverNick, message))).map {
-      case Some(_) => true
-      case None => false
+    val promise = Promise[Boolean]()
+    withDatabase(_.store(MailMessage(None, room, senderNick, receiverNick, message))) onComplete { result =>
+      promise.success(result.isSuccess)
     }
+
+    promise.future
   }
 
   private def readMessages(room: String, receiverNick: String): Future[Seq[MailMessage]] = {
-    (store ? ReadObject(name, (room, receiverNick))) map {
-      case Some(messages: Seq[MailMessage]) => messages
-    }
+    withDatabase(_.getMessages(room, receiverNick))
   }
 
-  private def deleteMessage(id: Int) {
-    store ? DeleteObject(name, id)
+  private def deleteMessage(id: Int): Unit = {
+    withDatabase(_.deleteMessage(id))
   }
 
 }
