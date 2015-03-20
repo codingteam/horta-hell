@@ -6,6 +6,7 @@ import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
+import ru.org.codingteam.horta.plugins.log.LogRepository
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 import scala.language.postfixOps
@@ -14,7 +15,7 @@ case object SayCommand
 
 case object ReplaceCommand
 
-class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProcessor {
+class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProcessor with DataAccessingPlugin[LogRepository] { // TODO: There's a problem because two plugins should share the same schema?
 
   // TODO: Drop inactive users?
   var users = Map[UserIdentity, ActorRef]()
