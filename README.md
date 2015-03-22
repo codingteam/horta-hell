@@ -73,7 +73,9 @@ If the nickname is not registered on server, someone else may take the nick and 
 
 * `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
 
-* `$dice <number of faces> <number of throws>` — throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
+* `$dice <number of faces> <number of throws>` - throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
+
+* `$karma` - karma plugin for expression of public approval. Type `$karma` for details.
 
 ### Log parser
 
