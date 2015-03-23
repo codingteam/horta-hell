@@ -16,11 +16,11 @@ case class KarmaRepository(session: DBSession) {
        """.map(rs => rs.string("member") + " " + rs.string("karma")).list().apply()
   }
 
-  def getKarma(room: String, member: String): Option[Int] = {
+  def getKarma(room: String, member: String): Int = {
     sql"""select karma
         from Karma
         where room = $room and member = $member
-     """.map(rs => rs.int("karma")).single().apply()
+     """.map(rs => rs.int("karma")).single().apply().getOrElse(0)
   }
 
   def getLastChangeTime(room: String, member: String): Option[DateTime] = {
