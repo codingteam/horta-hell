@@ -1,19 +1,8 @@
 # -*- mode: ruby -*-
 
-VAGRANTFILE_API_VERSION = "2"
-
-$script = <<SCRIPT
-apt-get update
-apt-get install -y openjdk-7-jdk scala curl git unzip
-wget -O /tmp/sbt.deb http://repo.scala-sbt.org/scalasbt/sbt-native-packages/org/scala-sbt/sbt/0.13.0/sbt.deb --no-verbose
-dpkg -i /tmp/sbt.deb
-update-alternatives --set java /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java
-SCRIPT
-
-Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = "precise64"
-  config.vm.box_url = "http://files.vagrantup.com/precise64.box"
-  config.vm.network :forwarded_port, guest: 9000, host: 80 # Change 80 to the port you need
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/trusty64"
+  config.vm.network :forwarded_port, guest: 9000, host: 8059 # Change 8059 to the port you need
 
   # Configure the horta log directory so it will read MUC logs from
   # there:
@@ -23,5 +12,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.customize ["modifyvm", :id, "--memory", "1024"]
   end
 
-  config.vm.provision :shell, :inline => $script
+  # Disable the default ssh forwarding and enable another one
+  config.vm.network :forwarded_port, guest: 22, id: "ssh", disabled: true
+  config.vm.network :forwarded_port, guest: 22, host: 2202
+
+  config.vm.provision "shell", inline: "command -v chef-solo >/dev/null 2>&1 || { curl -L https://www.chef.io/chef/install.sh | bash ; }"
+  config.vm.provision "chef_solo" do |chef|
+    chef.add_recipe "horta-hell"
+  end
 end
