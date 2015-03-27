@@ -21,6 +21,10 @@ Install the `trusty64` image if yo have not already done it:
 
     $ vagrant box add ubuntu/trusty64
 
+Install the [Berkshelf Vagrant plugin](https://github.com/berkshelf/vagrant-berkshelf):
+
+    $ vagrant plugin install vagrant-berkshelf
+
 After that, you can start the virtual machine at any moment with
 
     $ vagrant up
@@ -71,3 +75,9 @@ After you have deployed the packages, simply restart the corresponding services:
     $ sudo restart horta-hell
     $ sudo restart horta-web
 
+### Example script for horta-hell redeployment
+First, copy the `horta-hell-assembly.jar` file to the `/tmp` directory. Then,
+
+    $ sudo mkdir -p /opt/codingteam/horta-hell
+    $ sudo mv -f /tmp/horta-hell-assembly.jar /opt/codingteam/horta-hell/horta-hell.jar
+    $ sudo restart horta-hell

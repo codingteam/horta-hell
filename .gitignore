@@ -1,5 +1,8 @@
 /.vagrant/
+/Berksfile.lock
+
 /horta.properties
 /hell.*
+/horta-web.app.conf
 
 /vagrant-up.ps1

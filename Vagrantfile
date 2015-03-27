@@ -16,8 +16,12 @@ Vagrant.configure("2") do |config|
   config.vm.network :forwarded_port, guest: 22, id: "ssh", disabled: true
   config.vm.network :forwarded_port, guest: 22, host: 2202
 
+  config.berkshelf.enabled = true
+
   config.vm.provision "shell", inline: "command -v chef-solo >/dev/null 2>&1 || { curl -L https://www.chef.io/chef/install.sh | bash ; }"
   config.vm.provision "chef_solo" do |chef|
+    chef.add_recipe "apt"
     chef.add_recipe "horta-hell"
+    chef.add_recipe "horta-web"
   end
 end
