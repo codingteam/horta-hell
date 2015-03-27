@@ -80,4 +80,4 @@ First, copy the `horta-hell-assembly.jar` file to the `/tmp` directory. Then,
 
     $ sudo mkdir -p /opt/codingteam/horta-hell
     $ sudo mv -f /tmp/horta-hell-assembly.jar /opt/codingteam/horta-hell/horta-hell.jar
-    $ sudo restart horta-hell
+    $ sudo restart horta-hell || sudo start horta-hell
