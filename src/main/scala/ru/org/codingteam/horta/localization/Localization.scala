@@ -1,13 +1,6 @@
 package ru.org.codingteam.horta.localization
 
-import java.nio.file.{Files, Paths}
-
-import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.security.Credential
-
-import scala.collection.JavaConversions._
-
-case class LocaleDefinition(name: String)
 
 object Localization {
 
@@ -28,18 +21,7 @@ object Localization {
     } getOrElse key
   }
 
-  private def loadLocales() = {
-    Files.newDirectoryStream(Paths.get(Configuration.localizationPath)).toStream.map { case filePath =>
-      val regex = "^(.*)\\.conf$".r
-      val fileName = filePath.getFileName.toString
-      val localeName = fileName match {
-        case regex(name) => name
-        case _ => sys.error(s"Invalid path entry $fileName")
-      }
-
-      (LocaleDefinition(localeName), new LocalizationMap(localeName))
-    }.toMap
-  }
+  private def loadLocales() = ResourceLocalizationManager.locales
 
   private def withLocale(locale: LocaleDefinition)
                         (action: LocalizationMap => Option[String]): Option[String] = {
