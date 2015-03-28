@@ -47,6 +47,7 @@ object Configuration {
   lazy val logDirectory = properties.getProperty("log_directory")
   lazy val logEncoding = properties.getProperty("log_encoding")
 
+  lazy val localizationListerType = properties.getProperty("localization.lister", "resource")
   lazy val defaultLocalization = LocaleDefinition(properties.getProperty("localization.default", "en"))
   lazy val localizationPath = properties.getProperty("localization.path", "./src/main/resources/localization")
 

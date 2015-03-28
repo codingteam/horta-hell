@@ -1,14 +1,11 @@
 package ru.org.codingteam.horta.localization
 
-import java.nio.file.Paths
-
-import com.typesafe.config.{ConfigUtil, ConfigFactory, ConfigValue, ConfigValueType}
-import ru.org.codingteam.horta.configuration.Configuration
+import com.typesafe.config.{ConfigFactory, ConfigUtil, ConfigValue, ConfigValueType}
 
 import scala.collection.JavaConversions._
 import scala.util.Random
 
-class LocalizationMap(localeName: String) {
+class LocalizationMap(localizationLister: LocalizationLister, localeName: String) {
 
   private lazy val (values, arrays) = parseLocalization()
 
@@ -19,9 +16,8 @@ class LocalizationMap(localeName: String) {
   }
 
   private def parseLocalization(): (Map[String, String], Map[String, Vector[String]]) = {
-    val path = Paths.get(Configuration.localizationPath, s"$localeName.conf")
-    val file = path.toFile
-    val conf = ConfigFactory.parseFile(file)
+    val reader = localizationLister.getReader(localeName)
+    val conf = ConfigFactory.parseReader(reader)
     val (valueEntries, listEntries) = conf.entrySet.partition { case entry =>
       entry.getValue.valueType == ConfigValueType.STRING
     }
