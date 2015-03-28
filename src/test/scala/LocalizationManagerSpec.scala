@@ -4,28 +4,26 @@ import ru.org.codingteam.horta.localization.{ResourceLocalizationManager, Locale
 class LocalizationManagerSpec extends FlatSpec with Matchers {
 
   "A FileLocalizationManager" should "list ru and en locales" in {
-    val lister = new FileLocalizationManager("./src/main/resources/localization")
-    val locales = lister.locales
+    val manager = new FileLocalizationManager("./src/main/resources/localization")
+    val locales = manager.locales
 
     assert(List("ru", "en").forall(name => locales.contains(LocaleDefinition(name))))
   }
 
   "A FileLocalizationManager" should "should create a reader for en locale" in {
-    val lister = new FileLocalizationManager("./src/main/resources/localization")
-    val reader = lister.getReader("en")
+    val manager = new FileLocalizationManager("./src/main/resources/localization")
+    val reader = manager.getReader("en")
     assert(reader !== null)
   }
 
   "A ResourceLocalizationManager" should "list ru and en locales" in {
-    val lister = new ResourceLocalizationManager()
-    val locales = lister.locales
+    val locales = ResourceLocalizationManager.locales
 
     assert(List("ru", "en").forall(name => locales.contains(LocaleDefinition(name))))
   }
 
   "A ResourceLocalizationManager" should "should create a reader for en locale" in {
-    val lister = new ResourceLocalizationManager()
-    val reader = lister.getReader("en")
+    val reader = ResourceLocalizationManager.getReader("en")
     assert(reader !== null)
   }
 

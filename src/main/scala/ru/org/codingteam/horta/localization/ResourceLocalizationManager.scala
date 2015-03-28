@@ -5,7 +5,7 @@ import java.nio.file.Paths
 import java.util.jar.{JarEntry, JarFile}
 import scala.collection.JavaConversions._
 
-class ResourceLocalizationManager extends LocalizationManager {
+object ResourceLocalizationManager extends LocalizationManager {
 
   val resourcePath = "localization"
   
