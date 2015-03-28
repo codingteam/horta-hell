@@ -4,7 +4,7 @@ import java.io.Reader
 
 case class LocaleDefinition(name: String)
 
-trait LocalizationLister {
+trait LocalizationManager {
 
   final val nameRegex = "^(.*)\\.conf$".r
 

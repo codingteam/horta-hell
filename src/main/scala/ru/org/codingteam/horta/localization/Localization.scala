@@ -5,10 +5,10 @@ import ru.org.codingteam.horta.security.Credential
 
 object Localization {
 
-  private val lister = Configuration.localizationListerType match {
-    case "resource" => new ResourceLocalizationLister()
-    case "file" => new FileLocalizationLister(Configuration.localizationPath)
-    case other => sys.error("Unknown localization lister type: " + other)
+  private val manager = Configuration.localizationManagerType match {
+    case "resource" => new ResourceLocalizationManager()
+    case "file" => new FileLocalizationManager(Configuration.localizationPath)
+    case other => sys.error("Unknown localization manager type: " + other)
   }
 
   private val locales: Map[LocaleDefinition, LocalizationMap] = loadLocales()
@@ -28,7 +28,7 @@ object Localization {
     } getOrElse key
   }
 
-  private def loadLocales() = lister.locales
+  private def loadLocales() = manager.locales
 
   private def withLocale(locale: LocaleDefinition)
                         (action: LocalizationMap => Option[String]): Option[String] = {

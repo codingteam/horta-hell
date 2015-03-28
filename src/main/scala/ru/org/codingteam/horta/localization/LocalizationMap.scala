@@ -5,7 +5,7 @@ import com.typesafe.config.{ConfigFactory, ConfigUtil, ConfigValue, ConfigValueT
 import scala.collection.JavaConversions._
 import scala.util.Random
 
-class LocalizationMap(localizationLister: LocalizationLister, localeName: String) {
+class LocalizationMap(localizationLister: LocalizationManager, localeName: String) {
 
   private lazy val (values, arrays) = parseLocalization()
 

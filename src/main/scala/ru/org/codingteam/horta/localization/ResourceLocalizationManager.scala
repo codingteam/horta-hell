@@ -5,14 +5,14 @@ import java.nio.file.Paths
 import java.util.jar.{JarEntry, JarFile}
 import scala.collection.JavaConversions._
 
-class ResourceLocalizationLister extends LocalizationLister {
+class ResourceLocalizationManager extends LocalizationManager {
 
   val resourcePath = "localization"
   
   val fsPath = getClass.getProtectionDomain.getCodeSource.getLocation.toURI
   val location = Paths.get(fsPath).toFile
   val isJarFile = location.isFile // It may be a JAR file when running a program from JAR or a file system location otherwise
-  lazy val fileLister = new FileLocalizationLister(Paths.get(location.getAbsolutePath, resourcePath).toString)
+  lazy val fileLister = new FileLocalizationManager(Paths.get(location.getAbsolutePath, resourcePath).toString)
 
   override def locales: Map[LocaleDefinition, LocalizationMap] = {
     if (isJarFile) {

@@ -19,8 +19,8 @@ room3.room=fgs@fds.omg
 log_directory=/tmp
 log_encoding=UTF-8
 
-# Lister may be "file" or "resource"; "resource" is the default.
-localization.lister=file
+# Manager may be "file" or "resource"; "resource" is the default.
+localization.manager=file
 localization.path=./src/main/resources/localization
 localization.default=ru
 

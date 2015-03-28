@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 
 import scala.collection.JavaConversions._
 
-class FileLocalizationLister(path: String) extends LocalizationLister {
+class FileLocalizationManager(path: String) extends LocalizationManager {
 
   override def locales: Map[LocaleDefinition, LocalizationMap] = {
     Files.newDirectoryStream(Paths.get(path)).toStream.map { case filePath =>
