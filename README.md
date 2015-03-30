@@ -15,9 +15,9 @@ horta-foundation that has strict dependency on VirtualBox.
 
 Configuring the Vagrant
 -----------------------
-Ypu may want to change Vagrant default forwarded SSH port. To do that, edit the `Vagrantfile`.
+You may want to change Vagrant default forwarded SSH port. To do that, edit the `Vagrantfile`.
 
-Install the `trusty64` image if yo have not already done it:
+Install the `trusty64` image if you have not already done it:
 
     $ vagrant box add ubuntu/trusty64
 
