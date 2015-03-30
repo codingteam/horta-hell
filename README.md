@@ -1,5 +1,7 @@
 horta-foundation
 ================
+[![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-foundation/badge/pr?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-foundation) [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-foundation/badge/issue?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-foundation)
+
 horta-foundation is a project for providing the default [horta-hell](https://github.com/codingteam/horta-hell)
 environment ready for production.
 
