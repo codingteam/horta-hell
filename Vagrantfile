@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
   end
 
   # Disable the default ssh forwarding and enable another one
-  config.vm.network :forwarded_port, guest: 22, id: "ssh", disabled: true
+  config.vm.network :forwarded_port, guest: 22, host: 2200, id: "ssh", disabled: true
   config.vm.network :forwarded_port, guest: 22, host: 2202
 
   config.berkshelf.enabled = true
