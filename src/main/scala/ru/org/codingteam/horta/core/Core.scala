@@ -12,6 +12,7 @@ import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller
 import ru.org.codingteam.horta.plugins.karma.KarmaPlugin
 import ru.org.codingteam.horta.plugins.log.LogPlugin
+import ru.org.codingteam.horta.plugins.loglist.LogListPlugin
 import ru.org.codingteam.horta.plugins.mail.MailPlugin
 import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
@@ -51,7 +52,8 @@ class Core extends Actor with ActorLogging {
     Props[DiceRoller],
     Props[HtmlReaderPlugin],
     Props[HelperPlugin],
-    Props[KarmaPlugin]
+    Props[KarmaPlugin],
+    Props[LogListPlugin]
   )
 
   /**
