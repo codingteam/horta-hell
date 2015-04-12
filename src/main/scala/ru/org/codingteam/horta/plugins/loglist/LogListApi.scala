@@ -2,7 +2,7 @@ package ru.org.codingteam.horta.plugins.loglist
 
 import akka.event.LoggingAdapter
 
-import scala.io.Source
+import scala.io.{Codec, Source}
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
@@ -20,7 +20,7 @@ object LogListApi {
 
   private def retrieveQuoteFromUrl(url: String)(implicit log: LoggingAdapter): Quote = {
     log.info(s"Requesting $url")
-    val json = Source.fromURL(url).mkString
+    val json = Source.fromURL(url)(Codec.UTF8).mkString
     log.info(s"Json answer: $json")
 
     json.parseJson.asJsObject.getFields("id", "content") match {
