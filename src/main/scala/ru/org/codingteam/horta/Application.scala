@@ -5,6 +5,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Core
+import scalikejdbc.GlobalSettings
 
 object Application extends App with StrictLogging {
 
@@ -16,6 +17,8 @@ object Application extends App with StrictLogging {
   }
 
   private def initializeConfiguration(args: Array[String]) {
+    GlobalSettings.loggingSQLAndTime = GlobalSettings.loggingSQLAndTime.copy(singleLineMode = true)
+
     val configPath = args match {
       case Array(config, _*) => config
       case _ => "horta.properties"
