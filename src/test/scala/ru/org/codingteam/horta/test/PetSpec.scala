@@ -1,34 +1,13 @@
 package ru.org.codingteam.horta.test
 
-import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
-import akka.event.LoggingReceive
-import akka.testkit.{ImplicitSender, TestKit}
-import com.typesafe.config.ConfigFactory
+import akka.actor.Props
 import org.joda.time.DateTime
-import org.scalatest.concurrent.Eventually
-import org.scalatest.{Matchers, OptionValues, WordSpecLike}
 import ru.org.codingteam.horta.plugins.pet.Pet.{GetPetDataInternal, SetPetDataInternal}
 import ru.org.codingteam.horta.plugins.pet.{Pet, PetData}
 
 import scala.concurrent.duration._
 
-class PetSpec extends TestKit(ActorSystem("TestSystem", ConfigFactory.parseString(
-  """
-    |akka.loglevel = INFO
-    |akka.actor.debug.receive = on
-    |akka.actor.deployment {
-    |}
-  """.stripMargin)))
-with ImplicitSender
-with WordSpecLike
-with Matchers
-with OptionValues
-with Eventually {
-  val stubReceiver = system.actorOf(Props(new Actor with ActorLogging {
-    override def receive = LoggingReceive {
-      case _ =>
-    }
-  }), "stubReceiver")
+class PetSpec extends TestKitSpec {
 
   val petActor = system.actorOf(Props(classOf[Pet], "roomId", stubReceiver))
 
