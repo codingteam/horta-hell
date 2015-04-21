@@ -1,5 +1,7 @@
-import org.scalatest.{Matchers, FlatSpec}
-import ru.org.codingteam.horta.localization.{ResourceLocalizationManager, LocaleDefinition, FileLocalizationManager}
+package ru.org.codingteam.horta.test
+
+import org.scalatest.{FlatSpec, Matchers}
+import ru.org.codingteam.horta.localization.{FileLocalizationManager, LocaleDefinition, ResourceLocalizationManager}
 
 class LocalizationManagerSpec extends FlatSpec with Matchers {
 

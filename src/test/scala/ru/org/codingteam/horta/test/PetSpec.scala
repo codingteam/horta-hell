@@ -1,3 +1,5 @@
+package ru.org.codingteam.horta.test
+
 import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.event.LoggingReceive
 import akka.testkit.{ImplicitSender, TestKit}
@@ -5,8 +7,9 @@ import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{Matchers, OptionValues, WordSpecLike}
-import ru.org.codingteam.horta.plugins.pet.{PetData, Pet}
 import ru.org.codingteam.horta.plugins.pet.Pet.{GetPetDataInternal, SetPetDataInternal}
+import ru.org.codingteam.horta.plugins.pet.{Pet, PetData}
+
 import scala.concurrent.duration._
 
 class PetSpec extends TestKit(ActorSystem("TestSystem", ConfigFactory.parseString(
