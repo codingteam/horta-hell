@@ -119,6 +119,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
         network
 
       case None =>
+        // TODO: Get logs from the database, *block on the log getter with something like `become`*.
         val parsedNetwork = LogParser.parse(log, room, nick)
         network = Some(parsedNetwork)
         lastNetworkTime = Some(Calendar.getInstance)

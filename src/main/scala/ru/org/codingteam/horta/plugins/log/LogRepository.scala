@@ -34,4 +34,6 @@ case class LogRepository(session: DBSession) {
     result
   }
 
+  def getMessagesByUser(room: String, user: String, eventType: EventType): Seq[LogMessage] = ???
+
 }

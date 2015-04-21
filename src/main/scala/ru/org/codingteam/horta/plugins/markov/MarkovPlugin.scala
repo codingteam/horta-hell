@@ -9,18 +9,25 @@ import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.log.LogRepository
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+
 import scala.language.postfixOps
 
 case object SayCommand
 
 case object ReplaceCommand
 
-class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProcessor with DataAccessingPlugin[LogRepository] { // TODO: There's a problem because two plugins should share the same schema?
+class MarkovPlugin() extends BasePlugin
+  with CommandProcessor
+  with MessageProcessor
+  with DataAccessingPlugin[LogRepository] {
 
   // TODO: Drop inactive users?
   var users = Map[UserIdentity, ActorRef]()
 
   override def name = "markov"
+
+  override protected val schema: String = "log"
+  override protected val createRepository = LogRepository.apply _
 
   override def commands = List(
     CommandDefinition(CommonAccess, "say", SayCommand),
