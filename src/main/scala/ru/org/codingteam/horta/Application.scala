@@ -1,5 +1,7 @@
 package ru.org.codingteam.horta
 
+import java.nio.file.Paths
+
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
@@ -24,6 +26,6 @@ object Application extends App with StrictLogging {
       case _ => "horta.properties"
     }
 
-    Configuration.initialize(configPath)
+    Configuration.initialize(Paths.get(configPath))
   }
 }

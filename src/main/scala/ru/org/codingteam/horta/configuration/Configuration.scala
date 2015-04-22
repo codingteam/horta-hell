@@ -1,26 +1,38 @@
 package ru.org.codingteam.horta.configuration
 
-import java.io.{FileInputStream, InputStreamReader}
+import java.io.{StringReader, Reader, FileInputStream, InputStreamReader}
+import java.nio.file.Path
 import java.util.Properties
 
 import ru.org.codingteam.horta.localization.LocaleDefinition
 
 object Configuration {
 
-  def initialize(configPath: String) {
-    configFilePath = Some(configPath)
+  def initialize(configPath: Path): Unit = {
+    config = Some(Left(configPath))
   }
 
-  private var configFilePath: Option[String] = None
+  def initialize(content: String): Unit = {
+    config = Some(Right(content))
+  }
+
+  private def openReader(): Reader = config match {
+    case Some(Left(path)) => new InputStreamReader(new FileInputStream(path.toFile), "UTF8")
+    case Some(Right(content)) => new StringReader(content)
+    case None => sys.error("Configuration not defined")
+  }
+
+  private var config: Option[Either[Path, String]] = None
 
   private lazy val properties = {
     val properties = new Properties()
-    val stream = new InputStreamReader(new FileInputStream(configFilePath.get), "UTF8")
+    val reader = openReader()
     try {
-      properties.load(stream)
+      properties.load(reader)
     } finally {
-      stream.close()
+      reader.close()
     }
+    
     properties
   }
 

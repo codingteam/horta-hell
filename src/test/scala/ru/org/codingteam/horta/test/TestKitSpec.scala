@@ -6,6 +6,7 @@ import akka.testkit.{ImplicitSender, TestKit}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.Eventually
 import org.scalatest.{Matchers, OptionValues, WordSpecLike}
+import ru.org.codingteam.horta.configuration.Configuration
 
 abstract class TestKitSpec extends TestKit(ActorSystem("TestSystem", ConfigFactory.parseString(
   """
@@ -19,6 +20,7 @@ with WordSpecLike
 with Matchers
 with OptionValues
 with Eventually {
+  Configuration.initialize("")
   val stubReceiver = system.actorOf(Props(new Actor with ActorLogging {
     override def receive = LoggingReceive {
       case _ =>
