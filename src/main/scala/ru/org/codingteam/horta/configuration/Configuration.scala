@@ -32,7 +32,7 @@ object Configuration {
     } finally {
       reader.close()
     }
-    
+
     properties
   }
 
@@ -44,7 +44,7 @@ object Configuration {
   lazy val dftName = properties.getProperty("nickname")
   lazy val dftMessage = properties.getProperty("message")
 
-  lazy val roomIds = properties.getProperty("rooms").split(",")
+  lazy val roomIds = Option(properties.getProperty("rooms")).map(_.split(",")).getOrElse(Array())
   lazy val roomDescriptors = roomIds map {
     case rid => new RoomDescriptor(
       rid,
