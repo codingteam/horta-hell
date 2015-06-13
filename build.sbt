@@ -8,10 +8,7 @@ scalaVersion := "2.11.4"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
-resolvers ++= Seq(
-  "codingteam" at "http://archiva.fornever.me/repository/codingteam",
-  "codingteam-snapshots" at "http://archiva.fornever.me/repository/codingteam-snapshots"
-)
+resolvers += "bintray-fornever-maven" at "http://dl.bintray.com/fornever/maven"
 
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "2.1.2",
