@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 
 class PetSpec extends TestKitSpec {
 
-  val petActor = system.actorOf(Props(classOf[Pet], "roomId", stubReceiver))
+  val petActor = system.actorOf(Props(classOf[Pet], "roomId", testActor))
 
   "Pet" should {
     "Save & return PetData" in within (500.millis) {

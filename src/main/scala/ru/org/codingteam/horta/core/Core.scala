@@ -4,22 +4,9 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
-import ru.org.codingteam.horta.database.{RepositoryFactory, PersistentStore}
+import ru.org.codingteam.horta.database.{PersistentStore, RepositoryFactory}
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins._
-import ru.org.codingteam.horta.plugins.bash.BashPlugin
-import ru.org.codingteam.horta.plugins.dice.DiceRoller
-import ru.org.codingteam.horta.plugins.karma.KarmaPlugin
-import ru.org.codingteam.horta.plugins.log.LogPlugin
-import ru.org.codingteam.horta.plugins.loglist.LogListPlugin
-import ru.org.codingteam.horta.plugins.mail.MailPlugin
-import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
-import ru.org.codingteam.horta.plugins.pet.PetPlugin
-import ru.org.codingteam.horta.plugins.visitor.VisitorPlugin
-import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
-import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
-import ru.org.codingteam.horta.plugins.htmlreader.HtmlReaderPlugin
 import ru.org.codingteam.horta.security._
 
 import scala.concurrent.duration._
@@ -29,32 +16,11 @@ import scala.language.postfixOps
 /**
  * Horta core actor. Manages all plugins, routes global messages.
  */
-class Core extends Actor with ActorLogging {
+class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with ActorLogging {
 
   import context.dispatcher
 
   implicit val timeout = Timeout(60 seconds)
-
-  /**
-   * List of plugin props to be started.
-   */
-  val plugins: List[Props] = List(
-    Props[FortunePlugin],
-    Props[AccessPlugin],
-    Props[LogPlugin],
-    Props[VisitorPlugin],
-    Props[WtfPlugin],
-    Props[MailPlugin],
-    Props[PetPlugin],
-    Props[MarkovPlugin],
-    Props[VersionPlugin],
-    Props[BashPlugin],
-    Props[DiceRoller],
-    Props[HtmlReaderPlugin],
-    Props[HelperPlugin],
-    Props[KarmaPlugin],
-    Props[LogListPlugin]
-  )
 
   /**
    * List of registered commands.
@@ -72,6 +38,11 @@ class Core extends Actor with ActorLogging {
   var roomReceivers = List[ActorRef]()
 
   /**
+   * Initialized plugin definitions and corresponding actor references.
+   */
+  var definitions = List[(ActorRef, PluginDefinition)]()
+
+  /**
    * List of plugins receiving the user notifications.
    */
   var participantReceivers = List[ActorRef]()
@@ -79,7 +50,7 @@ class Core extends Actor with ActorLogging {
   val parsers = List(SlashParsers, DollarParsers)
 
   override def preStart() {
-    val definitions = getPluginDefinitions
+    definitions = getPluginDefinitions
     parseNotifications(definitions)
 
     commands = Core.getCommands(definitions)
@@ -87,9 +58,8 @@ class Core extends Actor with ActorLogging {
 
     val storages = Core.getStorages(definitions)
 
-    // TODO: What is the Akka way to create these?
     val store = context.actorOf(Props(classOf[PersistentStore], storages), "store")
-    val protocol = context.actorOf(Props[JabberProtocol], "jabber")
+    protocols.foreach(context.actorOf)
   }
 
   override def receive = {
@@ -100,11 +70,12 @@ class Core extends Actor with ActorLogging {
     case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
     case CoreParticipantLeft(time, roomJID, participantJID, reason, actor) =>
       processParticipantLeave(time, roomJID, participantJID, reason, actor)
-    case CoreGetCommands => sender ! Core.getCommandsDescription(getPluginDefinitions)
+    case Core.GetPluginDefinitions => sender ! definitions
+    case CoreGetCommands => sender ! Core.getCommandsDescription(definitions)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
-    val responses = Future.sequence(for (plugin <- plugins) yield {
+    val responses = Future.sequence(for (plugin <- pluginProps) yield {
       val actor = context.actorOf(plugin)
       ask(actor, GetPluginDefinition).mapTo[PluginDefinition].map(definition => (actor, definition))
     })
@@ -214,6 +185,18 @@ class Core extends Actor with ActorLogging {
 
 object Core {
 
+  private case object GetPluginDefinitions
+
+  /**
+   * Asynchronously retrieve all plugin definitions from Core actor.
+   *
+   * @param core Core actor reference.
+   * @return a list of initialized plugin definitions.
+   */
+  def getPluginDefinitions(core: ActorRef)(implicit timeout: Timeout): Future[List[(ActorRef, PluginDefinition)]] = {
+    (core ? Core.GetPluginDefinitions).mapTo[List[(ActorRef, PluginDefinition)]]
+  }
+
   private def getCommands(pluginDefinitions: List[(ActorRef, PluginDefinition)]): Map[String, List[(ActorRef, CommandDefinition)]] = {
     val commands = for ((actor, pluginDefinition) <- pluginDefinitions) yield {
       for (command <- pluginDefinition.commands) yield (command.name, actor, command)
@@ -234,5 +217,4 @@ object Core {
       definition.repositoryFactory.map(factory => (definition.name, factory))
     }.toMap
   }
-
 }
