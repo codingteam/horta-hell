@@ -8,21 +8,22 @@ import ru.org.codingteam.horta.localization.LocaleDefinition
 
 object Configuration {
 
-  def initialize(configPath: Path): Unit = {
-    config = Some(Left(configPath))
+  def initialize(path: Path): Unit = {
+    configPath = Some(path)
   }
 
   def initialize(content: String): Unit = {
-    config = Some(Right(content))
+    configContent = Some(content)
   }
 
-  private def openReader(): Reader = config match {
-    case Some(Left(path)) => new InputStreamReader(new FileInputStream(path.toFile), "UTF8")
-    case Some(Right(content)) => new StringReader(content)
-    case None => sys.error("Configuration not defined")
+  private def openReader(): Reader = {
+    configContent.map(content => new StringReader(content))
+      .getOrElse(configPath.map(path => new InputStreamReader(new FileInputStream(path.toFile), "UTF8"))
+        .getOrElse(sys.error("Configuration not defined")))
   }
 
-  private var config: Option[Either[Path, String]] = None
+  private var configPath: Option[Path] = None
+  private var configContent: Option[String] = None
 
   private lazy val properties = {
     val properties = new Properties()
