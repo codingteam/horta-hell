@@ -141,6 +141,7 @@ class MarkovPlugin() extends BasePlugin
 
   private def disposeUser(identity: UserIdentity): Unit = {
     log.info(s"Disposing user $identity")
+    users.get(identity) map context.stop
     users -= identity
   }
 
