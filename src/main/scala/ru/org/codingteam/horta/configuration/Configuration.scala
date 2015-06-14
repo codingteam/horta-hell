@@ -57,9 +57,6 @@ object Configuration {
 
   lazy val markovMessagesPerMinute = properties.getProperty("markov_messages_per_minute", "5").toInt
 
-  lazy val logDirectory = properties.getProperty("log_directory")
-  lazy val logEncoding = properties.getProperty("log_encoding")
-
   lazy val defaultLocalization = LocaleDefinition(properties.getProperty("localization.default", "en"))
 
   lazy val storageUrl = properties.getProperty("storage.url")
