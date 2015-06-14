@@ -1,2 +1,0 @@
-cd $PSScriptRoot
-vagrant up --provision

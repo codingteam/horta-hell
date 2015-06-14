@@ -41,6 +41,15 @@ And destroy with
 
 All sensitive data such as horta database will be preserved at the host even after you destroy the image.
 
+### Windows
+If you want to automatically start horta-foundation with your operating system,
+then the recommended way is to setup scheduled task to be run _under your
+administrator account_ when the system starts. It should execute
+`vagrant-up.ps1` file from the horta-foundation directory.
+
+Unfortunately, there are problems with starting Vagrant or VirtualBox as a
+Windows service, so currently it is not recommended.
+
 Configuring the horta
 ---------------------
 You should create and place the `horta.properties` file inside the image directory. Please take a look at the
