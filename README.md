@@ -77,16 +77,6 @@ If the nickname is not registered on server, someone else may take the nick and 
 
 * `$karma` - karma plugin for expression of public approval. Type `$karma` for details.
 
-### Log parser
-
-`MarkovPlugin` (the one providing a `$say` command) uses the log parser. Parser loads the conference log from
-`log_directory/conference_jid`, where `log_directory` is taken from the configuration file. File read in the
-`log_encoding`. Every user phrase should be in the following format:
-
-    [timestamp] User name: phrase containing \r as line separators if needed
-
-Subsequent phrases should be separated with `\r\n`.
-
 Contributing
 ------------
 
