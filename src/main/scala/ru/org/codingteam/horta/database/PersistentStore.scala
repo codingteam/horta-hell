@@ -8,7 +8,7 @@ import akka.util.Timeout
 import com.googlecode.flyway.core.Flyway
 import org.h2.jdbcx.JdbcConnectionPool
 import ru.org.codingteam.horta.configuration.Configuration
-import scalikejdbc.{ConnectionPool, DB, DBSession, DataSourceConnectionPool}
+import scalikejdbc._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

@@ -1,4 +1,4 @@
-horta hell
+horta hell [![BuildStatus](https://travis-ci.org/codingteam/horta-hell.png?branch=develop)](https://travis-ci.org/codingteam/horta-hell)
 ==========
 [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/pr?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell) [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/issue?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell)
 
@@ -73,7 +73,9 @@ If the nickname is not registered on server, someone else may take the nick and 
 
 * `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
 
-* `$dice <number of faces> <number of throws>` — throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
+* `$dice <number of faces> <number of throws>` - throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
+
+* `$karma` - karma plugin for expression of public approval. Type `$karma` for details.
 
 ### Log parser
 

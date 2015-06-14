@@ -5,24 +5,24 @@ import akka.actor.ActorRef
 import akka.util.Timeout
 import scala.concurrent.Future
 
-abstract private sealed class ProtocolMessage()
+abstract sealed class ProtocolMessage()
 
-private case class SendMucMessage(toJID: String, message: String) extends ProtocolMessage()
+case class SendMucMessage(toJID: String, message: String) extends ProtocolMessage()
 
-private case class SendPrivateMessage(roomJID: String, nick: String, message: String) extends ProtocolMessage()
+case class SendPrivateMessage(roomJID: String, nick: String, message: String) extends ProtocolMessage()
 
-private case class SendChatMessage(toJID: String, message: String) extends ProtocolMessage()
+case class SendChatMessage(toJID: String, message: String) extends ProtocolMessage()
 
 /**
  * Request to send response to user.
  * @param credential user credential.
  * @param text response text.
  */
-private case class SendResponse(credential: Credential, text: String) extends ProtocolMessage()
+case class SendResponse(credential: Credential, text: String) extends ProtocolMessage()
 
 /**
  * Request to send response to user through the private message.
  * @param credential user credential.
  * @param text response text.
  */
-private case class SendPrivateResponse(credential: Credential, text: String) extends ProtocolMessage()
+case class SendPrivateResponse(credential: Credential, text: String) extends ProtocolMessage()

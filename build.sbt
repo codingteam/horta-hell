@@ -8,10 +8,7 @@ scalaVersion := "2.11.4"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
 
-resolvers ++= Seq(
-  "codingteam" at "http://archiva.fornever.me/repository/codingteam",
-  "codingteam-snapshots" at "http://archiva.fornever.me/repository/codingteam-snapshots"
-)
+resolvers += "bintray-fornever-maven" at "http://dl.bintray.com/fornever/maven"
 
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc" % "2.1.2",
@@ -32,5 +29,6 @@ libraryDependencies ++= Seq(
   "joda-time" % "joda-time" % "2.3",
   "org.joda" % "joda-convert" % "1.5",
   "org.apache.commons" % "commons-lang3" % "3.0",
-  "org.jsoup" % "jsoup" % "1.7.3"
+  "org.jsoup" % "jsoup" % "1.7.3",
+  "io.spray" %%  "spray-json" % "1.3.1"
 )
