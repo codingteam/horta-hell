@@ -49,10 +49,6 @@ example file bundled with the horta-hell.
 
 Please note that there should only be UNIX line endings (plain `\n`) in the `horta.properties` file!
 
-Currently horta uses the access to host directory for parsing the chat logs.  This directory should be defined in the
-host's `HORTA_LOGS` environment variable before starting the vagrant image. By default current directory will be mapped
-if `HORTA_LOGS` is undefined.
-
 There is an example of a simple start script `vagrant-up.ps1.example` for setting up the Vagrant environment.
 
 Configuring the horta-web

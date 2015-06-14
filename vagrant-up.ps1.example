@@ -1,3 +1,2 @@
 cd $PSScriptRoot
-$env:HORTA_LOGS = 'C:\Users\CptnHorta\Logs'
 vagrant up --provision

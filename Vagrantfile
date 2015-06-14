@@ -4,10 +4,6 @@ Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/trusty64"
   config.vm.network :forwarded_port, guest: 9000, host: 8059 # Change 8059 to the port you need
 
-  # Configure the horta log directory so it will read MUC logs from
-  # there:
-  config.vm.synced_folder ENV['HORTA_LOGS'] || "", "/horta_logs"
-
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["modifyvm", :id, "--memory", "1024"]
   end
