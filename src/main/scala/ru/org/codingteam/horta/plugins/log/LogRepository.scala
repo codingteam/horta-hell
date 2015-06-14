@@ -34,6 +34,16 @@ case class LogRepository(session: DBSession) {
     result
   }
 
-  def getMessagesByUser(room: String, user: String, eventType: EventType): Seq[LogMessage] = ???
-
+  def getMessagesByUser(room: String, user: String, eventType: EventType): Seq[LogMessage] = {
+    sql"""select id, time, type, message
+          from Log
+          where room = $room and sender = $user
+       """.map(rs => LogMessage(
+      Some(rs.int("id")),
+      rs.jodaDateTime("time"),
+      room,
+      user,
+      EventType(rs.string("type")),
+      rs.string("message"))).list().apply()
+  }
 }
