@@ -1,18 +1,20 @@
 package ru.org.codingteam.horta.plugins.markov
 
+import java.util.Locale
+
 import akka.actor.{Actor, ActorLogging}
 import akka.util.Timeout
-import java.util.{Calendar, Locale}
 import me.fornever.platonus.Network
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, Period}
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Clock
+import ru.org.codingteam.horta.localization.Localization._
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.Credential
+
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import ru.org.codingteam.horta.localization.Localization._
 
 class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging {
 
@@ -25,14 +27,19 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
   val cacheTime = 5 minutes
   val seriesTime = 1 minute
 
+  val plugin = context.parent
+
   var network: Option[Network] = None
   var firstSeriesMessageTime: Option[DateTime] = None
   var seriesMessages = 0
-  var lastMessage: Option[String] = None
-  var lastNetworkTime: Option[Calendar] = None
+  var lastMessage: Option[String] = None // TODO: It relies on a permanent message storage. Move this to another plugin.
+                                         // TODO: Currently there will be problems when a user gets disposed and
+                                         // TODO: restored (his last message will be forgotten by Horta).
+  var lastNetworkTime: Option[DateTime] = None
 
   override def preStart() {
     context.system.scheduler.schedule(cacheTime, cacheTime, self, Tick)
+    ensureInitialized()
   }
 
   def receive = {
@@ -46,10 +53,9 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
 
     case GeneratePhrase(credential, length, bloodMode) =>
       val location = credential.location
-      val network = getNetwork()
 
       def generator() = {
-        val phrase = generatePhrase(network, length)(credential)
+        val phrase = generatePhrase(network.get, length)(credential)
         if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase
       }
 
@@ -103,32 +109,37 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       // Analyse and flush cache on tick.
       lastNetworkTime match {
         case Some(time) =>
-          val msDiff = Calendar.getInstance.getTimeInMillis - time.getTimeInMillis
-          if (msDiff > cacheTime.toMillis) {
-            flushNetwork()
+          val period = new Period(time, Clock.now)
+          if (period.getMillis > cacheTime.toMillis) {
+            MarkovPlugin.disposeUser(plugin, UserIdentity(room, nick))
           }
 
         case None =>
       }
   }
 
-  def getNetwork(): Network = {
+  def ensureInitialized(): Unit = {
     network match {
-      case Some(network) =>
-        lastNetworkTime = Some(Calendar.getInstance)
-        network
+      case Some(_) =>
+        lastNetworkTime = Some(Clock.now)
 
       case None =>
-        // TODO: Get logs from the database, *block on the log getter with something like `become`*.
-        val parsedNetwork = LogParser.parse(log, room, nick)
-        network = Some(parsedNetwork)
-        lastNetworkTime = Some(Calendar.getInstance)
-        parsedNetwork
+        context.become {
+          case newNetwork: Network =>
+            log.debug("Received network")
+            network = Some(newNetwork)
+            lastNetworkTime = Some(Clock.now)
+            context.unbecome()
+        }
+
+        MarkovPlugin.parseLogs(plugin, UserIdentity(room, nick)).onSuccess({
+          case n => self ! n
+        })
     }
   }
 
   def flushNetwork() {
-    if (!network.isEmpty) {
+    if (network.isDefined) {
       log.info(s"Flushing Markov network cache of user $nick")
       network = None
     }
