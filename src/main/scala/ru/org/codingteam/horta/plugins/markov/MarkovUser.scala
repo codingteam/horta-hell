@@ -2,7 +2,7 @@ package ru.org.codingteam.horta.plugins.markov
 
 import java.util.Locale
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{Stash, Actor, ActorLogging}
 import akka.util.Timeout
 import me.fornever.platonus.Network
 import org.joda.time.{DateTime, Period}
@@ -16,7 +16,7 @@ import ru.org.codingteam.horta.security.Credential
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging {
+class MarkovUser(val room: String, val nick: String) extends Actor with ActorLogging with Stash {
 
   import context.dispatcher
 
@@ -130,6 +130,9 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
             network = Some(newNetwork)
             lastNetworkTime = Some(Clock.now)
             context.unbecome()
+            unstashAll()
+          case _ =>
+            stash()
         }
 
         MarkovPlugin.parseLogs(plugin, UserIdentity(room, nick)).onSuccess({
