@@ -39,7 +39,6 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
 
   override def preStart() {
     context.system.scheduler.schedule(cacheTime, cacheTime, self, Tick)
-    ensureInitialized()
   }
 
   def receive = {
@@ -52,45 +51,47 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       addPhrase(phrase)
 
     case GeneratePhrase(credential, length, bloodMode) =>
-      val location = credential.location
+      if (ensureInitialized()) {
+        val location = credential.location
 
-      def generator() = {
-        val phrase = generatePhrase(network.get, length)(credential)
-        if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase
-      }
+        def generator() = {
+          val phrase = generatePhrase(network.get, length)(credential)
+          if (bloodMode) phrase.toUpperCase(Locale.ROOT) else phrase
+        }
 
-      val result = if (bloodMode) {
-        (generator(), false)
-      } else {
-        val currentTime = Clock.now
-        def resetSeries() = {
-          firstSeriesMessageTime = Some(currentTime)
-          seriesMessages = 1
+        val result = if (bloodMode) {
           (generator(), false)
-        }
+        } else {
+          val currentTime = Clock.now
+          def resetSeries() = {
+            firstSeriesMessageTime = Some(currentTime)
+            seriesMessages = 1
+            (generator(), false)
+          }
 
-        firstSeriesMessageTime match {
-          case Some(time) =>
-            val inSeries = time.plusMillis(seriesTime.toMillis.toInt).isAfter(currentTime)
-            if (inSeries && seriesMessages < Configuration.markovMessagesPerMinute) {
-              seriesMessages += 1
-              (generator(), false)
-            } else if (!inSeries) {
+          firstSeriesMessageTime match {
+            case Some(time) =>
+              val inSeries = time.plusMillis(seriesTime.toMillis.toInt).isAfter(currentTime)
+              if (inSeries && seriesMessages < Configuration.markovMessagesPerMinute) {
+                seriesMessages += 1
+                (generator(), false)
+              } else if (!inSeries) {
+                resetSeries()
+              } else {
+                (generator(), true)
+              }
+
+            case _ =>
               resetSeries()
-            } else {
-              (generator(), true)
-            }
-
-          case _ =>
-            resetSeries()
+          }
         }
-      }
 
-      result match {
-        case (message, false) =>
-          Protocol.sendResponse(location, credential, message)
-        case (message, true) =>
-          Protocol.sendPrivateResponse(location, credential, message)
+        result match {
+          case (message, false) =>
+            Protocol.sendResponse(location, credential, message)
+          case (message, true) =>
+            Protocol.sendPrivateResponse(location, credential, message)
+        }
       }
 
     case ReplaceRequest(credential, from, to) =>
@@ -118,15 +119,18 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       }
   }
 
-  def ensureInitialized(): Unit = {
+  def ensureInitialized(): Boolean = {
     network match {
       case Some(_) =>
         lastNetworkTime = Some(Clock.now)
+        true
 
       case None =>
+        log.debug(s"Initializing cache for user $nick")
+
         context.become {
           case newNetwork: Network =>
-            log.debug("Received network")
+            log.debug(s"Received network for user $nick")
             network = Some(newNetwork)
             lastNetworkTime = Some(Clock.now)
             context.unbecome()
@@ -138,6 +142,10 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
         MarkovPlugin.parseLogs(plugin, UserIdentity(room, nick)).onSuccess({
           case n => self ! n
         })
+
+        stash()
+
+        false
     }
   }
 
