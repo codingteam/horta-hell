@@ -1,7 +1,0 @@
-name             'horta-web'
-maintainer       'Friedrich von Never'
-maintainer_email 'friedrich@fornever.me'
-license          'all_rights'
-description      'Installs/Configures horta-web'
-long_description 'Installs/Configures horta-web'
-version          '0.1.0'
