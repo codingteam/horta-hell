@@ -5,9 +5,8 @@ horta-foundation
 horta-foundation is a project for providing the default [horta-hell][]
 environment ready for production.
 
-It is a [docker][] image for deployment of horta-hell itself and
-[horta-web](https://github.com/codingteam/horta-hell). horta-hell is an XMPP
-bot, horta-web is a web interface for some its functions.
+It is a [docker][] image for deployment of horta-hell itself and [horta-web][].
+horta-hell is an XMPP bot, horta-web is a web interface for some its functions.
 
 *NOTE*: horta-web is currently not bundled with the image. It will be enabled in
 future.
