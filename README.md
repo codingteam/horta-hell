@@ -49,6 +49,10 @@ package and change the paths you want.
 By default horta-web will use host's `8059` port for web interface access. If
 you want to change this port, feel free to modify `Vagrantfile`.
 
+Running the container
+---------------------
+TODO: Write that.
+
 Updating the packages
 ---------------------
 The recommended way of upgrade is to [rebuild and recreate the whole
