@@ -54,12 +54,12 @@ Running the container
 Here's an example script for running the container. Windows users may be also
 interested in `Run-Container.ps1` script.
 
-    cd horta-foundation
-    cp -f /path/to/build/horta-hell-assembly.jar ./horta-hell.jar
-    docker build -t=codingteam/horta-hell .
-    docker stop horta-hell # in case it already exists
-    docker rm horta-hell
-    docker run -d --name horta-hell -v /path/to/local/horta/configuration/directory:/data codingteam/horta-hell
+    $ cd horta-foundation
+    $ cp -f /path/to/build/horta-hell-assembly.jar ./horta-hell.jar
+    $ docker build -t=codingteam/horta-hell .
+    $ docker stop horta-hell # in case it already exists
+    $ docker rm horta-hell
+    $ docker run -d --name horta-hell -v /path/to/local/horta/configuration/directory:/data codingteam/horta-hell
 
 Updating the packages
 ---------------------
