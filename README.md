@@ -70,4 +70,4 @@ so it will be fully preserved.
 [docker]: https://www.docker.com/
 [horta-hell]: https://github.com/codingteam/horta-hell
 [horta-web]: https://github.com/codingteam/horta-web
-[so-docker-upgrade]: http://stackoverflow.com/questions/26734402/how-to-upgrade-docker-container-after-its-image-changed
+[so-docker-upgrade]: http://stackoverflow.com/questions/26734402
