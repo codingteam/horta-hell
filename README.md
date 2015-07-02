@@ -6,10 +6,11 @@ horta-foundation is a project for providing the default [horta-hell][]
 environment ready for production.
 
 It is a [docker][] image for deployment of horta-hell itself and [horta-web][].
-horta-hell is an XMPP bot, horta-web is a web interface for some its functions.
+horta-hell is an XMPP bot, horta-web is a web interface for some of its
+functions.
 
 *NOTE*: horta-web is currently not bundled with the image. It will be enabled in
-future.
+the future.
 
 Prerequisites
 -------------
@@ -40,7 +41,7 @@ Please note that there should only be UNIX line endings (plain `\n`) in the
 Configuring the horta-web
 -------------------------
 *NOTE*: horta-web is currently not bundled with the image. It will be enabled in
-future. This section of Readme is outdated and will be updated.
+the future. This section of Readme is outdated and will be updated.
 
 You should place the `horta-web-app.conf` configuration file inside the image
 directory. Copy the initial `conf/application.conf` file from the [horta-web][]
