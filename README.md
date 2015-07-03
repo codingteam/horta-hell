@@ -2,89 +2,73 @@ horta-foundation
 ================
 [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-foundation/badge/pr?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-foundation) [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-foundation/badge/issue?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-foundation)
 
-horta-foundation is a project for providing the default [horta-hell](https://github.com/codingteam/horta-hell)
+horta-foundation is a project for providing the default [horta-hell][]
 environment ready for production.
 
-It is a [Vagrant](http://www.vagrantup.com/) image for deployment horta-hell itself and
-[horta-web](https://github.com/codingteam/horta-hell).  Vagrant is a virtual environment manager, horta-hell is an XMPP
-bot, horta-web is a web interface for some its functions.
+It is a [docker][] image for deployment of horta-hell itself and [horta-web][].
+horta-hell is an XMPP bot, horta-web is a web interface for some of its
+functions.
+
+*NOTE*: horta-web is currently not bundled with the image. It will be enabled in
+the future.
 
 Prerequisites
 -------------
-Install the Vagrant package for your operation system. By default you will also need
-[VirtualBox](https://www.virtualbox.org/). VirtualBox is just the default option; there is nothing in the
-horta-foundation that has strict dependency on VirtualBox.
+You should only install docker (boot2docker is a viable option too).
 
-Configuring the Vagrant
------------------------
-You may want to change Vagrant default forwarded SSH port. To do that, edit the `Vagrantfile`.
+Building the image
+------------------
+First, build the horta-hell according to its manual and copy it to
+`horta-hell.jar` file in the current image directory. After that, issue command
 
-Install the `trusty64` image if you have not already done it:
+    $ docker build -t=codingteam/horta-hell .
 
-    $ vagrant box add ubuntu/trusty64
-
-Install the [Berkshelf Vagrant plugin](https://github.com/berkshelf/vagrant-berkshelf):
-
-    $ vagrant plugin install vagrant-berkshelf
-
-After that, you can start the virtual machine at any moment with
-
-    $ vagrant up
-
-Stop it with
-
-    $ vagrant halt
-
-And destroy with
-
-    $ vagrant destroy
-
-All sensitive data such as horta database will be preserved at the host even after you destroy the image.
-
-### Windows
-If you want to automatically start horta-foundation with your operating system,
-then the recommended way is to setup scheduled task to be run _under your
-administrator account_ when the system starts. It should execute
-`vagrant-up.ps1` file from the horta-foundation directory.
-
-Unfortunately, there are problems with starting Vagrant or VirtualBox as a
-Windows service, so currently it is not recommended.
+Data volumes
+------------
+You should mount the volume containing `horta.properties` file to the `/data`
+mountpoint in the container.
 
 Configuring the horta
 ---------------------
-You should create and place the `horta.properties` file inside the image directory. Please take a look at the
-[horta documentation](https://github.com/codingteam/horta-hell) to know more about the configuration files. There is an
-example file bundled with the horta-hell.
+You should create and place the `horta.properties` file inside the `/data`
+container directory. Please take a look at the [horta documentation][horta-hell]
+to know more about the configuration files. There is an example file bundled
+with the horta-hell.
 
-Please note that there should only be UNIX line endings (plain `\n`) in the `horta.properties` file!
-
-There is an example of a simple start script `vagrant-up.ps1.example` for setting up the Vagrant environment.
+Please note that there should only be UNIX line endings (plain `\n`) in the
+`horta.properties` file!
 
 Configuring the horta-web
 -------------------------
-You should place the `horta-web-app.conf` configuration file inside the image directory. Copy the initial
-`conf/application.conf` file from the [horta-web](https://github.com/codingteam/horta-hell) package and change the paths
-you want.
+*NOTE*: horta-web is currently not bundled with the image. It will be enabled in
+the future. This section of Readme is outdated and will be updated.
 
-By default horta-web will use host's `8059` port for web interface access. If you want to change this port, feel free to
-modify `Vagrantfile`.
+You should place the `horta-web-app.conf` configuration file inside the image
+directory. Copy the initial `conf/application.conf` file from the [horta-web][]
+package and change the paths you want.
+
+By default horta-web will use host's `8059` port for web interface access. If
+you want to change this port, feel free to modify `Vagrantfile`.
+
+Running the container
+---------------------
+Here's an example script for running the container. Windows users may be also
+interested in `Run-Container.ps1` script.
+
+    $ cd horta-foundation
+    $ cp -f /path/to/build/horta-hell-assembly.jar ./horta-hell.jar
+    $ docker build -t=codingteam/horta-hell .
+    $ docker stop horta-hell # in case it already exists
+    $ docker rm horta-hell
+    $ docker run -d --name horta-hell -v /path/to/local/horta/configuration/directory:/data codingteam/horta-hell
 
 Updating the packages
 ---------------------
+The recommended way of upgrade is to [rebuild and recreate the whole
+container][so-docker-upgrade]. Your data is stored on an external data volume,
+so it will be fully preserved.
 
-### Automated deployment
-The default and recommended option is to build the packages somewhere else and copy them to the following locations:
-- `horta-hell` goes to `/opt/codingteam/horta-hell/horta-hell.jar`;
-- `horta-web` main executable goes to `/opt/codingteam/horta-web/bin/horta-web`.
-
-After you have deployed the packages, simply restart the corresponding services:
-
-    $ sudo restart horta-hell
-    $ sudo restart horta-web
-
-### Example script for horta-hell redeployment
-First, copy the `horta-hell-assembly.jar` file to the `/tmp` directory. Then,
-
-    $ sudo mkdir -p /opt/codingteam/horta-hell
-    $ sudo mv -f /tmp/horta-hell-assembly.jar /opt/codingteam/horta-hell/horta-hell.jar
-    $ sudo restart horta-hell || sudo start horta-hell
+[docker]: https://www.docker.com/
+[horta-hell]: https://github.com/codingteam/horta-hell
+[horta-web]: https://github.com/codingteam/horta-web
+[so-docker-upgrade]: http://stackoverflow.com/questions/26734402

@@ -1,6 +1,2 @@
-/.vagrant/
-/Berksfile.lock
-
-/horta.properties
-/hell.*
-/horta-web.app.conf
+horta-hell.jar
+Run-Container.private.ps1
