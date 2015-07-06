@@ -114,7 +114,7 @@ class MucMessageHandler(locale: LocaleDefinition,
   def jidByNick(nick: String) = s"$roomJID/$nick"
 
   def nickByJid(jid: String) = {
-      StringUtils.parseResource(jid)
+    StringUtils.parseResource(jid)
   }
 
   def sendMessage(credential: Credential, text: String, isPrivate: Boolean) {

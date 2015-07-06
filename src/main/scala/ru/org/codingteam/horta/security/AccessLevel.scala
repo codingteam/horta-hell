@@ -2,7 +2,7 @@ package ru.org.codingteam.horta.security
 
 /**
  * User access level.
-  */
+ */
 abstract class AccessLevel
 
 /**

@@ -8,7 +8,7 @@ import scala.collection.JavaConversions._
 object ResourceLocalizationManager extends LocalizationManager {
 
   val resourcePath = "localization"
-  
+
   val fsPath = getClass.getProtectionDomain.getCodeSource.getLocation.toURI
   val location = Paths.get(fsPath).toFile
   val isJarFile = location.isFile // It may be a JAR file when running a program from JAR or a file system location otherwise

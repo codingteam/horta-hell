@@ -80,8 +80,8 @@ object PersistentStore {
   private case class Execute(plugin: String, action: (Any) => Any)
 
   def execute[Repository, T: ClassTag](plugin: String, store: ActorSelection)
-                            (action: (Repository) => T)
-                            (implicit timeout: Timeout): Future[T] = {
+                                      (action: (Repository) => T)
+                                      (implicit timeout: Timeout): Future[T] = {
     val message = Execute(plugin, (r) => action(r.asInstanceOf[Repository]))
     (store ? message).mapTo[T]
   }

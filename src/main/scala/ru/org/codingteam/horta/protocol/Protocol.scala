@@ -24,7 +24,7 @@ object Protocol {
   }
 
   private def sendAndWrap(actor: ActorRef, message: ProtocolMessage)
-                 (implicit timeout: Timeout): Future[Boolean] = {
+                         (implicit timeout: Timeout): Future[Boolean] = {
     (actor ? message).mapTo[Boolean]
   }
 

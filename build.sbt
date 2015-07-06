@@ -30,5 +30,5 @@ libraryDependencies ++= Seq(
   "org.joda" % "joda-convert" % "1.5",
   "org.apache.commons" % "commons-lang3" % "3.0",
   "org.jsoup" % "jsoup" % "1.7.3",
-  "io.spray" %%  "spray-json" % "1.3.1"
+  "io.spray" %% "spray-json" % "1.3.1"
 )

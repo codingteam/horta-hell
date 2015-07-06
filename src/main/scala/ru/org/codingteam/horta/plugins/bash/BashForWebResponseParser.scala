@@ -20,8 +20,8 @@ object BashForWebResponseParser extends RegexParsers {
     }
     catch {
       case e: Exception =>
-      e.printStackTrace()
-      None
+        e.printStackTrace()
+        None
     }
   }
 

@@ -38,7 +38,7 @@ object Application extends App with StrictLogging {
     Props[BashPlugin],
     Props[DiceRoller],
     Props[HtmlReaderPlugin],
-     Props[HelperPlugin],
+    Props[HelperPlugin],
     Props[KarmaPlugin],
     Props[LogListPlugin]
   )
