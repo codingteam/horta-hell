@@ -9,7 +9,7 @@ object LogParser {
     val messages = log.getMessagesByUser(roomName, userName, MessageType).toStream
     val phrases = messages.map(message => tokenize(message.text))
 
-    phrases.foldLeft(Network(2)){ (network, message) =>
+    phrases.foldLeft(Network(2)) { (network, message) =>
       network.add(message)
     }
   }

@@ -66,8 +66,8 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor with
             (pet ? Pet.ExecuteCommand(command, credential, args.toArray)).mapTo[String].map(s => (false, s))
           case Array("transactions") =>
             withDatabase(_.readTransactions(credential.roomId.get, credential.name)) map { case transactions =>
-                (true, transactions.mkString("\n"))
-              }
+              (true, transactions.mkString("\n"))
+            }
           case _ => Future.successful((false, Localization.localize("Try $pet help.")(credential)))
         }
 

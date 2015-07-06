@@ -11,6 +11,7 @@ import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 import scala.concurrent.duration._
 
 private object KarmaCommand
+
 object KarmaAction extends Enumeration {
   type KarmaAction = String
   val KarmaChange = "change"
@@ -19,6 +20,7 @@ object KarmaAction extends Enumeration {
   val KarmaUp = "+"
   val KarmaDown = "-"
 }
+
 import ru.org.codingteam.horta.plugins.karma.KarmaAction._
 
 class KarmaPlugin extends BasePlugin with CommandProcessor with DataAccessingPlugin[KarmaRepository] {
@@ -40,8 +42,8 @@ class KarmaPlugin extends BasePlugin with CommandProcessor with DataAccessingPlu
   )
 
   override protected def processCommand(credential: Credential,
-                                          token: Any,
-                                          arguments: Array[String]): Unit = token match {
+                                        token: Any,
+                                        arguments: Array[String]): Unit = token match {
     case KarmaCommand => performKarmaCommand(credential, arguments)
     case _ => sendResponse(credential, Localization.localize("there is no such command")(credential))
   }
@@ -49,24 +51,24 @@ class KarmaPlugin extends BasePlugin with CommandProcessor with DataAccessingPlu
   def performKarmaCommand(credential: Credential, args: Array[String]): Unit = {
     val unknown = Localization.localize("unknown")(credential)
     args.toList match {
-        case List(KarmaShow) =>
-          showKarma(credential, credential.roomId.getOrElse(unknown), credential.name)
-        case List(KarmaTop) =>
-          showTopKarma(credential, credential.roomId.getOrElse(unknown))
-        case List(KarmaShow, _) =>
-          showKarma(credential, credential.roomId.getOrElse(unknown), args(1))
-        case List(_, KarmaUp) =>
-          changeKarma(credential, credential.roomId.getOrElse(unknown), args(0), 1)
-        case List(_, KarmaDown) =>
-          changeKarma(credential, credential.roomId.getOrElse(unknown), args(0), -1)
-        case _ => sendResponse(credential, HELP_MESSAGE)
-      }
+      case List(KarmaShow) =>
+        showKarma(credential, credential.roomId.getOrElse(unknown), credential.name)
+      case List(KarmaTop) =>
+        showTopKarma(credential, credential.roomId.getOrElse(unknown))
+      case List(KarmaShow, _) =>
+        showKarma(credential, credential.roomId.getOrElse(unknown), args(1))
+      case List(_, KarmaUp) =>
+        changeKarma(credential, credential.roomId.getOrElse(unknown), args(0), 1)
+      case List(_, KarmaDown) =>
+        changeKarma(credential, credential.roomId.getOrElse(unknown), args(0), -1)
+      case _ => sendResponse(credential, HELP_MESSAGE)
+    }
   }
 
   private def sendResponse(credential: Credential, message: String): Unit =
     Protocol.sendResponse(credential.location, credential, message)
 
-  private def showTopKarma(credential: Credential, room:String): Unit = {
+  private def showTopKarma(credential: Credential, room: String): Unit = {
     withDatabase(_.getTopKarma(room)) map { karma =>
       val msg = "\n" + karma.mkString("\n")
       sendResponse(credential, msg)
@@ -81,7 +83,7 @@ class KarmaPlugin extends BasePlugin with CommandProcessor with DataAccessingPlu
     }
   }
 
-  private def changeKarma(credential: Credential, room:String, user: String, value: Int): Unit = {
+  private def changeKarma(credential: Credential, room: String, user: String, value: Int): Unit = {
     implicit val c = credential
     if (credential.name == user)
       sendResponse(credential, Localization.localize("You cannot change your karma."))

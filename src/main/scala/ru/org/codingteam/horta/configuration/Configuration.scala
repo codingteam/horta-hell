@@ -19,7 +19,7 @@ object Configuration {
   private def openReader(): Reader = {
     configContent.map(content => new StringReader(content))
       .getOrElse(configPath.map(path => new InputStreamReader(new FileInputStream(path.toFile), "UTF8"))
-        .getOrElse(sys.error("Configuration not defined")))
+      .getOrElse(sys.error("Configuration not defined")))
   }
 
   private var configPath: Option[Path] = None

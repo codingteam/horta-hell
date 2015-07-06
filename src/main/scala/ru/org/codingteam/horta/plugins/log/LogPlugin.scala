@@ -93,7 +93,7 @@ class LogPlugin extends BasePlugin
     }
   }
 
-  private def getSearchResponse(room:String, phrase: String): Future[String] = {
+  private def getSearchResponse(room: String, phrase: String): Future[String] = {
     withDatabase(_.getMessages(room, phrase)) map { messages =>
       messages.map(message => s"${message.time} ${message.sender} ${prepareMessageText(message.text)}").mkString("\n")
     }

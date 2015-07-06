@@ -46,7 +46,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
       case DyingPet() =>
         PetTickResponse(pet.killed, takeDeathPenalty, { implicit c =>
           sayToEveryone(random("%s is dead.").format(nickname) + " " +
-          localize("All members have lost %dPTC.").format(DEATH_PENALTY))
+            localize("All members have lost %dPTC.").format(DEATH_PENALTY))
         })
 
       case HungryPet() if pet.random.nextInt(SPARSENESS_OF_EVENTS) == 0 =>

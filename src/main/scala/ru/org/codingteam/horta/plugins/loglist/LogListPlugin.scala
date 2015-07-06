@@ -37,7 +37,7 @@ class LogListPlugin extends BasePlugin with CommandProcessor {
       case e: FileNotFoundException => respond(localize("404 quote was not found"))
       case e: Exception => {
         respond(localize("[ERROR] Something bad happened. Please, do not panic and " +
-            "tell Dr. von Never to take a look at the logs."))
+          "tell Dr. von Never to take a look at the logs."))
         throw e
       }
     }
