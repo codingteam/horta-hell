@@ -1,26 +1,39 @@
 package ru.org.codingteam.horta.configuration
 
-import java.io.{FileInputStream, InputStreamReader}
+import java.io.{StringReader, Reader, FileInputStream, InputStreamReader}
+import java.nio.file.Path
 import java.util.Properties
 
 import ru.org.codingteam.horta.localization.LocaleDefinition
 
 object Configuration {
 
-  def initialize(configPath: String) {
-    configFilePath = Some(configPath)
+  def initialize(path: Path): Unit = {
+    configPath = Some(path)
   }
 
-  private var configFilePath: Option[String] = None
+  def initialize(content: String): Unit = {
+    configContent = Some(content)
+  }
+
+  private def openReader(): Reader = {
+    configContent.map(content => new StringReader(content))
+      .getOrElse(configPath.map(path => new InputStreamReader(new FileInputStream(path.toFile), "UTF8"))
+      .getOrElse(sys.error("Configuration not defined")))
+  }
+
+  private var configPath: Option[Path] = None
+  private var configContent: Option[String] = None
 
   private lazy val properties = {
     val properties = new Properties()
-    val stream = new InputStreamReader(new FileInputStream(configFilePath.get), "UTF8")
+    val reader = openReader()
     try {
-      properties.load(stream)
+      properties.load(reader)
     } finally {
-      stream.close()
+      reader.close()
     }
+
     properties
   }
 
@@ -32,7 +45,7 @@ object Configuration {
   lazy val dftName = properties.getProperty("nickname")
   lazy val dftMessage = properties.getProperty("message")
 
-  lazy val roomIds = properties.getProperty("rooms").split(",")
+  lazy val roomIds = Option(properties.getProperty("rooms")).map(_.split(",")).getOrElse(Array())
   lazy val roomDescriptors = roomIds map {
     case rid => new RoomDescriptor(
       rid,
@@ -44,11 +57,7 @@ object Configuration {
 
   lazy val markovMessagesPerMinute = properties.getProperty("markov_messages_per_minute", "5").toInt
 
-  lazy val logDirectory = properties.getProperty("log_directory")
-  lazy val logEncoding = properties.getProperty("log_encoding")
-
   lazy val defaultLocalization = LocaleDefinition(properties.getProperty("localization.default", "en"))
-  lazy val localizationPath = properties.getProperty("localization.path", "./src/main/resources/localization")
 
   lazy val storageUrl = properties.getProperty("storage.url")
   lazy val storageUser = properties.getProperty("storage.user")

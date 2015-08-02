@@ -1,30 +1,56 @@
 package ru.org.codingteam.horta.plugins.markov
 
 import akka.actor.{ActorRef, Props}
+import akka.pattern.ask
+import akka.util.Timeout
+import me.fornever.platonus.Network
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
+import ru.org.codingteam.horta.plugins.log.LogRepository
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.language.postfixOps
 
 case object SayCommand
-
 case object ReplaceCommand
 
-class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProcessor {
+class MarkovPlugin() extends BasePlugin
+  with CommandProcessor
+  with MessageProcessor
+  with DataAccessingPlugin[LogRepository] {
 
-  // TODO: Drop inactive users?
+  import context.dispatcher
+  implicit val timeout = MarkovPlugin.timeout
+
   var users = Map[UserIdentity, ActorRef]()
 
   override def name = "markov"
+
+  override protected val schema: String = "log"
+  override protected val createRepository = LogRepository.apply _
 
   override def commands = List(
     CommandDefinition(CommonAccess, "say", SayCommand),
     CommandDefinition(CommonAccess, "s", ReplaceCommand)
   )
+
+  override def receive: PartialFunction[Any, Unit] = {
+    case MarkovPlugin.DisposeUser(identity) =>
+      disposeUser(identity)
+    case MarkovPlugin.ParseLogs(identity) =>
+      val s = sender
+      parseLogs(identity).onSuccess({ case network =>
+        s ! network
+      })
+    case other =>
+      super.receive(other)
+  }
 
   override def processMessage(time: DateTime, credential: Credential, message: String) {
     val user = getUser(credential)
@@ -43,7 +69,7 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
   }
 
   def isMyself(credential: Credential): Boolean = {
-    (Configuration.roomDescriptors find { rd => rd.room == credential.roomId.getOrElse("")} map { rd => rd.nickname} getOrElse (Configuration.dftName)) == credential.name
+    (Configuration.roomDescriptors find { rd => rd.room == credential.roomId.getOrElse("") } map { rd => rd.nickname } getOrElse (Configuration.dftName)) == credential.name
   }
 
   def generatePhrase(credential: Credential, arguments: Array[String]) {
@@ -113,4 +139,29 @@ class MarkovPlugin() extends BasePlugin with CommandProcessor with MessageProces
     }
   }
 
+  private def disposeUser(identity: UserIdentity): Unit = {
+    log.info(s"Disposing user $identity")
+    users.get(identity) map context.stop
+    users -= identity
+  }
+
+  private def parseLogs(identity: UserIdentity): Future[Network] = {
+    withDatabase(repository => LogParser.parse(repository, identity.room, identity.nickname))
+  }
+}
+
+object MarkovPlugin {
+
+  case class DisposeUser(identity: UserIdentity)
+  case class ParseLogs(identity: UserIdentity)
+
+  implicit val timeout = Timeout(5.minutes)
+
+  def disposeUser(plugin: ActorRef, identity: UserIdentity): Unit = {
+    plugin ! DisposeUser(identity)
+  }
+
+  def parseLogs(plugin: ActorRef, identity: UserIdentity): Future[Network] = {
+    plugin.ask(ParseLogs(identity)).mapTo[Network]
+  }
 }

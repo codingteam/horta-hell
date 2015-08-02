@@ -1,6 +1,7 @@
 package ru.org.codingteam.horta.messages
 
 import org.jivesoftware.smack.packet.Message
+import ru.org.codingteam.horta.protocol.jabber.{Affiliation, Role}
 
 abstract sealed class LeaveReason {
   def text: String
@@ -13,7 +14,7 @@ case class UserRenamed(newNick: String) extends LeaveReason {
   override def text = "renamed to " + newNick
 }
 
-case class UserJoined(participant: String, affilation: String)
+case class UserJoined(participant: String, affiliation: Affiliation, role: Role)
 case class UserLeft(participant: String, reason: LeaveReason = UserLeftReason(""))
 case class OwnershipGranted(participant: String)
 case class OwnershipRevoked(participant: String)

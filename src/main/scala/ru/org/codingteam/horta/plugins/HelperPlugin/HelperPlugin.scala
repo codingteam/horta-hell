@@ -36,7 +36,7 @@ class HelperPlugin extends CommandProcessor {
           case Failure(exception) =>
             log.error("Unable to get command list from core", exception)
             val message = Localization.localize("Unable to get command list from core")(credential)
-            Protocol.sendResponse(credential.location, credential, s"$message: ${exception.getMessage }")
+            Protocol.sendResponse(credential.location, credential, s"$message: ${exception.getMessage}")
 
         }
       case t => log.warning(s"Unknown command token passed to plugin $name: $t")

@@ -1,6 +1,6 @@
-horta hell
+horta hell [![BuildStatus](https://travis-ci.org/codingteam/horta-hell.png?branch=develop)](https://travis-ci.org/codingteam/horta-hell)
 ==========
-![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/pr?style=flat-square) ![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/issue?style=flat-square)
+[![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/pr?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell) [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-hell/badge/issue?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-hell)
 
 horta hell is XMPP bot. It is based on the Akka framework.
 
@@ -19,8 +19,8 @@ to the configuration file from the program arguments.
 
 ### Deployment
 
-The recommended way of horta deployment is using of the
-[vagrant-horta-hell](https://github.com/codingteam/vagrant-horta-hell) Vagrant package.
+Deployment process management is the purpose of [horta-foundation](https://github.com/codingteam/horta-foundation)
+project. It is the recommended way of horta deployment.
 
 For development purposes, you may use the `sbt run` command or any IDE-compatible run activities.
 
@@ -73,17 +73,9 @@ If the nickname is not registered on server, someone else may take the nick and 
 
 * `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
 
-* `$dice <number of faces> <number of throws>` — throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
+* `$dice <number of faces> <number of throws>` - throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
 
-### Log parser
-
-`MarkovPlugin` (the one providing a `$say` command) uses the log parser. Parser loads the conference log from
-`log_directory/conference_jid`, where `log_directory` is taken from the configuration file. File read in the
-`log_encoding`. Every user phrase should be in the following format:
-
-    [timestamp] User name: phrase containing \r as line separators if needed
-
-Subsequent phrases should be separated with `\r\n`.
+* `$karma` - karma plugin for expression of public approval. Type `$karma` for details.
 
 Contributing
 ------------
