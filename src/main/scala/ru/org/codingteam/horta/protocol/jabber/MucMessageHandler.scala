@@ -5,7 +5,6 @@ import java.util.regex.Pattern
 import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
-import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.localization.LocaleDefinition
 import ru.org.codingteam.horta.messages._
@@ -108,14 +107,10 @@ class MucMessageHandler(locale: LocaleDefinition,
       }
     }
 
-    Credential(self, locale, accessLevel, Some(roomJID), nickByJid(jid), Some(jid))
+    Credential(self, locale, accessLevel, Some(roomJID), Protocol.nickByJid(jid), Some(jid))
   }
 
   def jidByNick(nick: String) = s"$roomJID/$nick"
-
-  def nickByJid(jid: String) = {
-    StringUtils.parseResource(jid)
-  }
 
   def sendMessage(credential: Credential, text: String, isPrivate: Boolean) {
     val name = credential.name
@@ -133,7 +128,7 @@ class MucMessageHandler(locale: LocaleDefinition,
       text
     } else {
       var message = text
-      for (nick <- participants.keys.map(nickByJid)) {
+      for (nick <- participants.keys.map(Protocol.nickByJid)) {
         if (nick != recipient && nick.length > 0) {
           val quoted = Pattern.quote(nick)
           val pattern = s"(?<=\\W|^)$quoted(?=\\W|$$)"
