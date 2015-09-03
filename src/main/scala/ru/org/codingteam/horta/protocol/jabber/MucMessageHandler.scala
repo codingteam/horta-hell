@@ -102,9 +102,9 @@ class MucMessageHandler(locale: LocaleDefinition,
       case None =>
         log.warning(s"Cannot find participant $jid in the participant list")
         CommonAccess
-      case Some(participant) => participant.affiliation match {
+      case Some(p) => p.affiliation match {
         case Owner | Admin => RoomAdminAccess
-        case User => CommonAccess
+        case _ => CommonAccess
       }
     }
 
