@@ -55,7 +55,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
             victim.map { v =>
               sayToEveryone(random("%s aggressively attacked %s").format(nickname, v)
                 + random(" due to hunger, taking some of his PTC.") + " "
-                + localize("%s loses %dPTC.").format(nickname, ATTACK_PENALTY))
+                + localize("%s loses %dPTC.").format(v, ATTACK_PENALTY))
             }
           })
         } else {
