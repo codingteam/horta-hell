@@ -129,10 +129,10 @@ class MucMessageHandler(locale: LocaleDefinition,
     } else {
       var message = text
       for (nick <- participants.keys.map(Protocol.nickByJid)) {
-        if (nick != recipient && nick.length > 0) {
+        if (nick != recipient && nick.length > 2) {
           val quoted = Pattern.quote(nick)
           val pattern = s"(?<=\\W|^)$quoted(?=\\W|$$)"
-          val replacement = nick.substring(0, 1) + "…"
+          val replacement = nick.substring(0, 1) + "-" + nick.substring(2)
           message = message.replaceAll(pattern, replacement)
         }
       }
