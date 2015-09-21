@@ -129,10 +129,10 @@ class MucMessageHandler(locale: LocaleDefinition,
     } else {
       var message = text
       for (nick <- participants.keys.map(Protocol.nickByJid)) {
-        if (nick != recipient && nick.length > 2) {
+        if (nick != recipient) {
           val quoted = Pattern.quote(nick)
           val pattern = s"(?<=\\W|^)$quoted(?=\\W|$$)"
-          val replacement = nick.substring(0, 1) + "-" + nick.substring(2)
+          val replacement = MucMessageHandler.getNickReplacement(nick)
           message = message.replaceAll(pattern, replacement)
         }
       }
@@ -164,5 +164,23 @@ class MucMessageHandler(locale: LocaleDefinition,
       core ! CoreParticipantLeft(Clock.now, roomJID, participantJID, reason, self)
     }
   }
+}
 
+object MucMessageHandler {
+
+  private val vowels = "(?i)[aeiouаоэиуыеёюя]".r // TODO: Use some phonetic definition instead of hardcode
+  private val dash = "-"
+
+  def getNickReplacement(nick: String): String = {
+    if (nick.length <= 1) {
+      nick
+    } else {
+      val replacement = vowels.replaceFirstIn(nick, dash)
+      if (replacement != nick) {
+        replacement
+      } else {
+        replacement.charAt(0) + dash + replacement.substring(2)
+      }
+    }
+  }
 }
