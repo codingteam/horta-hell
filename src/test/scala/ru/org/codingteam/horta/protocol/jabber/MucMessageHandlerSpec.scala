@@ -16,4 +16,10 @@ class MucMessageHandlerSpec extends FlatSpec with Matchers {
   it should "replace a second character if there is no vowels" in {
     assert(MucMessageHandler.getNickReplacement("т прнс") === "т-прнс")
   }
+
+  it should "never replace first or last letter"  in {
+    assert(MucMessageHandler.getNickReplacement("ass") === "a-s")
+    assert(MucMessageHandler.getNickReplacement("ssa") === "s-a")
+    assert(MucMessageHandler.getNickReplacement("uggur") === "ugg-r")
+  }
 }

@@ -172,15 +172,15 @@ object MucMessageHandler {
   private val dash = "-"
 
   def getNickReplacement(nick: String): String = {
-    if (nick.length <= 1) {
+    if (nick.length <= 2) {
       nick
     } else {
-      val replacement = vowels.replaceFirstIn(nick, dash)
-      if (replacement != nick) {
-        replacement
-      } else {
-        replacement.charAt(0) + dash + replacement.substring(2)
-      }
+      val matched = vowels.findAllMatchIn(nick)
+      val position = matched.collectFirst({ case m if m.start > 0 && m.end < nick.length =>
+        m.start
+      }).getOrElse(1)
+
+      nick.substring(0, position) + dash + nick.substring(position + 1)
     }
   }
 }
