@@ -169,7 +169,7 @@ class MucMessageHandler(locale: LocaleDefinition,
 object MucMessageHandler {
 
   private val vowels = "(?i)[aeiouаоэиуыеёюя]".r // TODO: Use some phonetic definition instead of hardcode
-  private val dash = "-"
+  private val separator = "-"
 
   def getNickReplacement(nick: String): String = {
     if (nick.length <= 2) {
@@ -180,7 +180,7 @@ object MucMessageHandler {
         m.start
       }).getOrElse(1)
 
-      nick.substring(0, position) + dash + nick.substring(position + 1)
+      nick.substring(0, position) + separator + nick.substring(position + 1)
     }
   }
 }
