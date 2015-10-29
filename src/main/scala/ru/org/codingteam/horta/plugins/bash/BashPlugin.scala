@@ -1,11 +1,12 @@
 package ru.org.codingteam.horta.plugins.bash
 
-import org.joda.time.{DateTime, Period}
+import org.joda.time.DateTime
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.localization.Localization
-import ru.org.codingteam.horta.plugins.{CommandProcessor, CommandDefinition, BasePlugin}
+import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
-import ru.org.codingteam.horta.security.{Credential, CommonAccess}
+import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+
 import scala.io.Source
 
 private object BashCommand
@@ -32,10 +33,9 @@ class BashPlugin extends BasePlugin with CommandProcessor {
         BashForWebResponseParser(bashImForWebResponse) match {
           case Some(BashQuote(number, rate, text)) =>
             val now = Clock.now
-            val period = new Period(lastRequestDateTime, now)
             var response = ""
 
-            if (period.getSeconds > coolDownPeriod) {
+            if (Clock.timeout(coolDownPeriod, lastRequestDateTime, now)) {
               // TODO: Move to the core facility
               response = s"$number $rate\n$text"
               lastRequestDateTime = now
@@ -52,5 +52,4 @@ class BashPlugin extends BasePlugin with CommandProcessor {
       case _ =>
     }
   }
-
 }
