@@ -50,6 +50,8 @@ Known command list:
 
 * `$bash` - shows a random quote from http://bash.im.
 
+* `$diag participants` - participant diagnostic command. 
+
 * `$fortune` - shows a fortune from @rexim database.
 
 * `$link` - shows a HTML document title from provided URL.

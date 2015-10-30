@@ -5,7 +5,6 @@ import java.util.regex.Pattern
 import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
-import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.localization.LocaleDefinition
 import ru.org.codingteam.horta.messages._
@@ -102,20 +101,16 @@ class MucMessageHandler(locale: LocaleDefinition,
       case None =>
         log.warning(s"Cannot find participant $jid in the participant list")
         CommonAccess
-      case Some(participant) => participant.affiliation match {
+      case Some(p) => p.affiliation match {
         case Owner | Admin => RoomAdminAccess
-        case User => CommonAccess
+        case _ => CommonAccess
       }
     }
 
-    Credential(self, locale, accessLevel, Some(roomJID), nickByJid(jid), Some(jid))
+    Credential(self, locale, accessLevel, Some(roomJID), Protocol.nickByJid(jid), Some(jid))
   }
 
   def jidByNick(nick: String) = s"$roomJID/$nick"
-
-  def nickByJid(jid: String) = {
-    StringUtils.parseResource(jid)
-  }
 
   def sendMessage(credential: Credential, text: String, isPrivate: Boolean) {
     val name = credential.name
@@ -133,11 +128,11 @@ class MucMessageHandler(locale: LocaleDefinition,
       text
     } else {
       var message = text
-      for (nick <- participants.keys.map(nickByJid)) {
-        if (nick != recipient && nick.length > 0) {
+      for (nick <- participants.keys.map(Protocol.nickByJid)) {
+        if (nick != recipient) {
           val quoted = Pattern.quote(nick)
           val pattern = s"(?<=\\W|^)$quoted(?=\\W|$$)"
-          val replacement = nick.substring(0, 1) + "…"
+          val replacement = MucMessageHandler.getNickReplacement(nick)
           message = message.replaceAll(pattern, replacement)
         }
       }
@@ -169,5 +164,23 @@ class MucMessageHandler(locale: LocaleDefinition,
       core ! CoreParticipantLeft(Clock.now, roomJID, participantJID, reason, self)
     }
   }
+}
 
+object MucMessageHandler {
+
+  private val vowels = "(?i)[aeiouаоэиуыеёюя]".r // TODO: Use some phonetic definition instead of hardcode
+  private val separator = "-"
+
+  def getNickReplacement(nick: String): String = {
+    if (nick.length <= 2) {
+      nick
+    } else {
+      val matched = vowels.findAllMatchIn(nick)
+      val position = matched.collectFirst({ case m if m.start > 0 && m.end < nick.length =>
+        m.start
+      }).getOrElse(1)
+
+      nick.substring(0, position) + separator + nick.substring(position + 1)
+    }
+  }
 }

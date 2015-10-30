@@ -7,13 +7,12 @@ import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.database.PersistentStore
 import ru.org.codingteam.horta.localization.Localization._
-import ru.org.codingteam.horta.messages.GetParticipants
 import ru.org.codingteam.horta.plugins.pet.commands.AbstractCommand
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.Credential
 
 import scala.concurrent.duration._
-import scala.concurrent.{ExecutionContext, Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
 class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
@@ -56,7 +55,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
             victim.map { v =>
               sayToEveryone(random("%s aggressively attacked %s").format(nickname, v)
                 + random(" due to hunger, taking some of his PTC.") + " "
-                + localize("%s loses %dPTC.").format(ATTACK_PENALTY))
+                + localize("%s loses %dPTC.").format(v, ATTACK_PENALTY))
             }
           })
         } else {
@@ -75,7 +74,7 @@ class Pet(roomId: String, location: ActorRef) extends Actor with ActorLogging {
   }
 
   private def getPetVictimAsync(pet: PetData, coinHolders: Iterable[String]) = {
-    (location ? GetParticipants).mapTo[Protocol.ParticipantCollection].map { map =>
+    Protocol.getParticipants(location).map { map =>
       val possibleVictims = map.keys.map(StringUtils.parseResource)
       pet.randomChoice((coinHolders.toSet & possibleVictims.toSet).toList)
     }

@@ -9,6 +9,7 @@ import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Core
 import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
+import ru.org.codingteam.horta.plugins.diag.DiagnosticPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller
 import ru.org.codingteam.horta.plugins.htmlreader.HtmlReaderPlugin
 import ru.org.codingteam.horta.plugins.karma.KarmaPlugin
@@ -26,6 +27,7 @@ import scalikejdbc.GlobalSettings
 object Application extends App with StrictLogging {
 
   val plugins = List(
+    Props[DiagnosticPlugin],
     Props[FortunePlugin],
     Props[AccessPlugin],
     Props[LogPlugin],

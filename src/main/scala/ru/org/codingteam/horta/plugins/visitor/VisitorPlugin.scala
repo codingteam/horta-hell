@@ -1,14 +1,11 @@
 package ru.org.codingteam.horta.plugins.visitor
 
-import akka.pattern.ask
 import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
-
-import ru.org.codingteam.horta.messages.GetParticipants
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.protocol.jabber.NoneAffiliation
-import ru.org.codingteam.horta.security.{RoomAdminAccess, Credential}
+import ru.org.codingteam.horta.security.{Credential, RoomAdminAccess}
 
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -40,7 +37,7 @@ class VisitorPlugin extends CommandProcessor {
    * @param arguments command argument array.
    */
   override protected def processCommand(credential: Credential, token: Any, arguments: Array[String]): Unit = {
-    (credential.location ? GetParticipants).mapTo[Protocol.ParticipantCollection] map { case participants =>
+    Protocol.getParticipants(credential.location) map { case participants =>
       val visitors = participants.values.filter(_.affiliation == NoneAffiliation).map {
         participant => StringUtils.parseResource(participant.jid)
       }
