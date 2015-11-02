@@ -73,11 +73,17 @@ If the nickname is not registered on server, someone else may take the nick and 
   bot's database. If used without the definition argument, shows the
   stored definition. To delete a definition use `$wtf-delete <word>`.
 
-* `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
+* `$version` - tells the code version.
 
 * `$dice <number of faces> <number of throws>` - throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
 
 * `$karma` - karma plugin for expression of public approval. Type `$karma` for details.
+
+### Development
+
+When running from IDE, don't forget to execute `sbt copyResources` before
+executing `sbt run`. It will generate necessary resources for proper version
+tracking.
 
 Contributing
 ------------

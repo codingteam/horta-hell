@@ -32,3 +32,5 @@ libraryDependencies ++= Seq(
   "org.jsoup" % "jsoup" % "1.7.3",
   "io.spray" %% "spray-json" % "1.3.1"
 )
+
+resourceGenerators in Compile <+= genVersionProperties
