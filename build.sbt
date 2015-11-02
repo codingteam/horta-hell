@@ -1,4 +1,3 @@
-
 name := "horta-hell"
 
 version := "0.13"

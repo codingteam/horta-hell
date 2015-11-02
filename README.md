@@ -79,6 +79,12 @@ If the nickname is not registered on server, someone else may take the nick and 
 
 * `$karma` - karma plugin for expression of public approval. Type `$karma` for details.
 
+### Development
+
+When running from IDE, don't forget to execute `sbt copyResources` before
+executing `sbt run`. It will generate necessary resources for proper version
+tracking.
+
 Contributing
 ------------
 
