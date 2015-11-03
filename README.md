@@ -22,7 +22,10 @@ to the configuration file from the program arguments.
 Deployment process management is the purpose of [horta-foundation](https://github.com/codingteam/horta-foundation)
 project. It is the recommended way of horta deployment.
 
-For development purposes, you may use the `sbt run` command or any IDE-compatible run activities.
+For the development purposes, you may use the `sbt run` command or any
+IDE-compatible run activities. When running from IDE, don't forget to execute
+`sbt copyResources` before starting an application. It will generate necessary
+resources for proper version tracking.
 
 ### Building
 
@@ -78,12 +81,6 @@ If the nickname is not registered on server, someone else may take the nick and 
 * `$dice <number of faces> <number of throws>` - throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
 
 * `$karma` - karma plugin for expression of public approval. Type `$karma` for details.
-
-### Development
-
-When running from IDE, don't forget to execute `sbt copyResources` before
-executing `sbt run`. It will generate necessary resources for proper version
-tracking.
 
 Contributing
 ------------
