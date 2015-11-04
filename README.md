@@ -19,13 +19,11 @@ to the configuration file from the program arguments.
 
 ### Deployment
 
-Deployment process management is the purpose of [horta-foundation](https://github.com/codingteam/horta-foundation)
-project. It is the recommended way of horta deployment.
+Deployment process management is the purpose of [horta-foundation][] project.
+It is the recommended way of horta deployment.
 
-For the development purposes, you may use the `sbt run` command or any
-IDE-compatible run activities. When running from IDE, don't forget to execute
-`sbt copyResources` before starting an application. It will generate necessary
-resources for proper version tracking.
+For the development purposes, use `sbt run` command from terminal or any
+compatible IDE.
 
 ### Building
 
@@ -53,7 +51,7 @@ Known command list:
 
 * `$bash` - shows a random quote from http://bash.im.
 
-* `$diag participants` - participant diagnostic command. 
+* `$diag participants` - participant diagnostic command.
 
 * `$fortune` - shows a fortune from @rexim database.
 
@@ -100,3 +98,5 @@ If you want to write new plugin for Horta, [read the following documentation](do
 
 Report any bugs to [the issues list](https://github.com/codingteam/horta-hell/issues). You may ask for support in our
 XMPP conference: `codingteam@conference.jabber.ru`.
+
+[horta-foundation]: https://github.com/codingteam/horta-foundation
