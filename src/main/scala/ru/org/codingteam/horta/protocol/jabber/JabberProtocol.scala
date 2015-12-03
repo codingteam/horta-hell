@@ -33,6 +33,8 @@ class JabberProtocol() extends Actor with ActorLogging {
   var privateHandler: ActorRef = null
   var rooms = Map[String, RoomDefinition]()
 
+  private val rejoinInterval = 5.seconds
+
   override def preStart() {
     privateHandler = context.actorOf(
       Props(new PrivateMessageHandler(Configuration.defaultLocalization, self)), "privateHandler")
@@ -52,26 +54,34 @@ class JabberProtocol() extends Actor with ActorLogging {
     case Reconnect(otherConnection) =>
       log.info(s"Ignored reconnect request from connection $otherConnection")
 
-    case JoinRoom(jid, locale, nickname, greeting) =>
+    case message@JoinRoom(jid, locale, nickname, greeting) =>
       log.info(s"Joining room $jid")
       val actor = context.actorOf(
         Props(new MucMessageHandler(locale, self, jid, nickname)), jid)
 
-      val muc = new MultiUserChat(connection, jid)
-      rooms = rooms.updated(jid, RoomDefinition(muc, actor))
+      try {
+        // TODO: Move this code to the room actor and use "let it fall" strategy ~ F
+        val muc = new MultiUserChat(connection, jid)
+        rooms = rooms.updated(jid, RoomDefinition(muc, actor))
 
-      muc.addMessageListener(new MucMessageListener(jid, actor, log))
-      muc.addParticipantStatusListener(new MucParticipantStatusListener(muc, actor))
+        muc.addMessageListener(new MucMessageListener(jid, actor, log))
+        muc.addParticipantStatusListener(new MucParticipantStatusListener(muc, actor))
 
-      val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
-      connection.addPacketListener(
-        new MessageAutoRepeater(context.system, self, context.system.scheduler, jid, context.dispatcher),
-        filter)
+        val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
+        connection.addPacketListener(
+          new MessageAutoRepeater(context.system, self, context.system.scheduler, jid, context.dispatcher),
+          filter)
 
-      muc.join(nickname)
-      greeting match {
-        case Some(message) => muc.sendMessage(message)
-        case None =>
+        muc.join(nickname)
+        greeting match {
+          case Some(text) => muc.sendMessage(text)
+          case None =>
+        }
+      } catch {
+        case t: Throwable =>
+          log.warning(s"Cannot join room $jid, retrying in $rejoinInterval")
+          context.stop(actor)
+          context.system.scheduler.scheduleOnce(rejoinInterval, self, message)
       }
 
     case ChatOpened(chat) => {
