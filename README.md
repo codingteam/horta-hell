@@ -19,10 +19,11 @@ to the configuration file from the program arguments.
 
 ### Deployment
 
-Deployment process management is the purpose of [horta-foundation](https://github.com/codingteam/horta-foundation)
-project. It is the recommended way of horta deployment.
+Deployment process management is the purpose of [horta-foundation][] project.
+It is the recommended way of horta deployment.
 
-For development purposes, you may use the `sbt run` command or any IDE-compatible run activities.
+For the development purposes, use `sbt run` command from terminal or any
+compatible IDE.
 
 ### Building
 
@@ -50,7 +51,7 @@ Known command list:
 
 * `$bash` - shows a random quote from http://bash.im.
 
-* `$diag participants` - participant diagnostic command. 
+* `$diag participants` - participant diagnostic command.
 
 * `$fortune` - shows a fortune from @rexim database.
 
@@ -73,7 +74,7 @@ If the nickname is not registered on server, someone else may take the nick and 
   bot's database. If used without the definition argument, shows the
   stored definition. To delete a definition use `$wtf-delete <word>`.
 
-* `$version` - tells the code version (unfortunately, this won't work in `sbt run` mode - only when run from jar).
+* `$version` - tells the code version.
 
 * `$dice <number of faces> <number of throws>` - throws the dice and returns all range of random numbers and its sum, separated with vertical bar; result example: 1 2 3 | 6. In case if no arguments are passed, returns the throwing a dice with 100 faces.
 
@@ -97,3 +98,5 @@ If you want to write new plugin for Horta, [read the following documentation](do
 
 Report any bugs to [the issues list](https://github.com/codingteam/horta-hell/issues). You may ask for support in our
 XMPP conference: `codingteam@conference.jabber.ru`.
+
+[horta-foundation]: https://github.com/codingteam/horta-foundation
