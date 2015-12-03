@@ -79,7 +79,7 @@ class JabberProtocol() extends Actor with ActorLogging {
         }
       } catch {
         case t: Throwable =>
-          log.warning(s"Cannot join room $jid, retrying in $rejoinInterval")
+          log.warning(s"Cannot join room $jid, retrying in $rejoinInterval. Error was $t")
           context.stop(actor)
           context.system.scheduler.scheduleOnce(rejoinInterval, self, message)
       }
