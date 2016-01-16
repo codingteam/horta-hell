@@ -39,7 +39,7 @@ object Application extends App with StrictLogging {
     Props[VersionPlugin],
     Props[BashPlugin],
     Props[DiceRoller],
-    Props[HtmlReaderPlugin],
+    // Props[HtmlReaderPlugin], // TODO: Disabled for security reeasons, see #366
     Props[HelperPlugin],
     Props[KarmaPlugin],
     Props[LogListPlugin]
