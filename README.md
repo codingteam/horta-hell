@@ -55,7 +55,8 @@ Known command list:
 
 * `$fortune` - shows a fortune from @rexim database.
 
-* `$link` - shows a HTML document title from provided URL.
+* `$link` - shows a HTML document title from provided URL. *This plugin is
+  disabled for security reasons, see [#366][issue-366] for details.
 
 * `$pet` - Tamagochi-like plugin, contains internal subcommand system. Enter `$pet help` for details. Distinct pets are
 created for every room.
@@ -99,4 +100,5 @@ If you want to write new plugin for Horta, [read the following documentation](do
 Report any bugs to [the issues list](https://github.com/codingteam/horta-hell/issues). You may ask for support in our
 XMPP conference: `codingteam@conference.jabber.ru`.
 
+[issue-366]: https://github.com/codingteam/horta-hell/issues/366
 [horta-foundation]: https://github.com/codingteam/horta-foundation
