@@ -1,6 +1,6 @@
 name := "horta-hell"
 
-version := "0.13.1"
+version := "0.14"
 
 mainClass in (Compile, run) := Some("ru.org.codingteam.horta.Application")
 
