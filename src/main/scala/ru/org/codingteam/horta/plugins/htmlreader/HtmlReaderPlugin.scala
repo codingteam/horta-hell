@@ -7,6 +7,8 @@ import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 import scala.io.{Codec, Source}
 
@@ -39,17 +41,20 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
               val url = new URL(address)
               url.getProtocol match {
                 case "http" | "https" =>
-                  val connection = url.openConnection().asInstanceOf[HttpURLConnection]
-                  connection.setRequestMethod("GET")
-                  connection.connect()
+                  Future {
+                    val connection = url.openConnection().asInstanceOf[HttpURLConnection]
+                    connection.setRequestMethod("GET")
+                    connection.connect()
 
-                  val code = connection.getResponseCode
-                  val encoding = Option(connection.getContentEncoding).getOrElse("UTF-8")
-                  responseText.append("HTTP: ").append(code).append(", ")
+                    val code = connection.getResponseCode
+                    val encoding = Option(connection.getContentEncoding).getOrElse("UTF-8")
+                    responseText.append("HTTP: ").append(code).append(", ")
 
-                  val doc = Jsoup.parse(Source.fromURL(url)(Codec(encoding)).take(headerSize).mkString)
-                  val title = doc.title()
-                  responseText.append(title)
+                    val doc = Jsoup.parse(Source.fromURL(url)(Codec(encoding)).take(headerSize).mkString)
+                    val title = doc.title()
+                    responseText.append(title)
+                    Protocol.sendResponse(credential.location, credential, responseText.toString())
+                  }
                 case _ => throw new java.net.MalformedURLException()
               }
             case _ =>
@@ -65,12 +70,9 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
             responseText.append(Localization.localize(httpResponseNotOK))
           case e: Exception =>
             log.error(e, e.toString)
-            Protocol.sendResponse(credential.location, credential, Localization.localize("[ERROR] Something's wrong!"))
-        }
-        if (responseText.nonEmpty) {
+            responseText.append(Localization.localize("[ERROR] Something's wrong!"))
           Protocol.sendResponse(credential.location, credential, responseText.toString())
         }
-
       case _ =>
     }
   }
