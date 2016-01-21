@@ -34,14 +34,14 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
     implicit val c = credential
     token match {
       case HtmlReaderCommand =>
-        val responseText = new StringBuilder()
-        try {
-          arguments match {
-            case Array(address) =>
-              val url = new URL(address)
-              url.getProtocol match {
-                case "http" | "https" =>
-                  Future {
+        Future {
+          val responseText = new StringBuilder()
+          try {
+            arguments match {
+              case Array(address) =>
+                val url = new URL(address)
+                url.getProtocol match {
+                  case "http" | "https" =>
                     val connection = url.openConnection().asInstanceOf[HttpURLConnection]
                     connection.setRequestMethod("GET")
                     connection.connect()
@@ -54,24 +54,24 @@ class HtmlReaderPlugin() extends BasePlugin with CommandProcessor {
                     val title = doc.title()
                     responseText.append(title)
                     Protocol.sendResponse(credential.location, credential, responseText.toString())
-                  }
-                case _ => throw new java.net.MalformedURLException()
-              }
-            case _ =>
-              Protocol.sendResponse(credential.location, credential, Localization.localize(usageText))
+                  case _ => throw new java.net.MalformedURLException()
+                }
+              case _ =>
+                Protocol.sendResponse(credential.location, credential, Localization.localize(usageText))
+            }
+          } catch {
+            case e@(_: java.net.MalformedURLException | _: java.lang.IllegalArgumentException) =>
+              responseText.append(Localization.localize(malformedUrl))
+            case e: java.net.UnknownHostException =>
+              responseText.append(Localization.localize(unknownHost))
+            case e@(_: org.jsoup.HttpStatusException | _: java.io.IOException) =>
+              log.error(e, "HTTP exception")
+              responseText.append(Localization.localize(httpResponseNotOK))
+            case e: Exception =>
+              log.error(e, e.toString)
+              responseText.append(Localization.localize("[ERROR] Something's wrong!"))
+              Protocol.sendResponse(credential.location, credential, responseText.toString())
           }
-        } catch {
-          case e@(_: java.net.MalformedURLException | _: java.lang.IllegalArgumentException) =>
-            responseText.append(Localization.localize(malformedUrl))
-          case e: java.net.UnknownHostException =>
-            responseText.append(Localization.localize(unknownHost))
-          case e@(_: org.jsoup.HttpStatusException | _: java.io.IOException) =>
-            log.error(e, "HTTP exception")
-            responseText.append(Localization.localize(httpResponseNotOK))
-          case e: Exception =>
-            log.error(e, e.toString)
-            responseText.append(Localization.localize("[ERROR] Something's wrong!"))
-          Protocol.sendResponse(credential.location, credential, responseText.toString())
         }
       case _ =>
     }
