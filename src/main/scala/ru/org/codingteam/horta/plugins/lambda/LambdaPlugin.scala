@@ -4,6 +4,8 @@ import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, Bas
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
+import me.rexim.morganey.syntax.LambdaParser
+
 private object LambdaCommand
 
 class LambdaPlugin extends BasePlugin with CommandProcessor {
@@ -28,9 +30,19 @@ class LambdaPlugin extends BasePlugin with CommandProcessor {
     implicit val l = log
 
     (token, arguments) match {
-      case (LambdaCommand, Array(unparsedTerm, _*)) =>
-        Protocol.sendResponse(credential.location, credential, "khooy")
+      case (LambdaCommand, Array(unparsedTerm, _*)) => {
+        val term = LambdaParser.parse(LambdaParser.term, unparsedTerm)
+        if (term.successful) {
+          respond(term.get.normalOrder().toString)
+        } else {
+          respond(term.toString)
+        }
+      }
       case _ => // ignore
     }
+  }
+
+  private def respond(responseMessage: String)(implicit credential: Credential) = {
+    Protocol.sendResponse(credential.location, credential, responseMessage)
   }
 }
