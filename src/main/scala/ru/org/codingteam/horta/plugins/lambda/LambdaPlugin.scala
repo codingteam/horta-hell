@@ -1,10 +1,13 @@
 package ru.org.codingteam.horta.plugins.lambda
 
+import me.rexim.morganey.ast.MorganeyBinding
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, BasePlugin}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
 import me.rexim.morganey.syntax.LambdaParser
+import me.rexim.morganey.ast.LambdaTermHelpers._
+import me.rexim.morganey.ReplHelper
 
 private object LambdaCommand
 
@@ -29,11 +32,14 @@ class LambdaPlugin extends BasePlugin with CommandProcessor {
     implicit val c = credential
     implicit val l = log
 
+    val context = Seq[MorganeyBinding](MorganeyBinding(lvar("I"), lfunc("x", lvar("x"))))
+
     (token, arguments) match {
       case (LambdaCommand, Array(unparsedTerm, _*)) => {
         val term = LambdaParser.parse(LambdaParser.term, unparsedTerm)
         if (term.successful) {
-          respond(term.get.normalOrder().toString)
+          val result = term.get.addContext(context).normalOrder()
+          respond(ReplHelper.smartPrintTerm(result))
         } else {
           respond(term.toString)
         }

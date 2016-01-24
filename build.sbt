@@ -31,7 +31,7 @@ libraryDependencies ++= Seq(
   "org.apache.commons" % "commons-lang3" % "3.0",
   "org.jsoup" % "jsoup" % "1.7.3",
   "io.spray" %% "spray-json" % "1.3.1",
-  "me.rexim" %% "morganey" % "0.0.1"
+  "me.rexim" %% "morganey" % "0.0.1-SNAPSHOT"
 )
 
 resourceGenerators in Compile <+= genVersionProperties
