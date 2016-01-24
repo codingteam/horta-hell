@@ -13,6 +13,7 @@ import ru.org.codingteam.horta.plugins.diag.DiagnosticPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller
 import ru.org.codingteam.horta.plugins.htmlreader.HtmlReaderPlugin
 import ru.org.codingteam.horta.plugins.karma.KarmaPlugin
+import ru.org.codingteam.horta.plugins.lambda.LambdaPlugin
 import ru.org.codingteam.horta.plugins.log.LogPlugin
 import ru.org.codingteam.horta.plugins.loglist.LogListPlugin
 import ru.org.codingteam.horta.plugins.mail.MailPlugin
@@ -42,7 +43,8 @@ object Application extends App with StrictLogging {
     // Props[HtmlReaderPlugin], // TODO: Disabled for security reeasons, see #366
     Props[HelperPlugin],
     Props[KarmaPlugin],
-    Props[LogListPlugin]
+    Props[LogListPlugin],
+    Props[LambdaPlugin]
   )
 
   val protocols = List(Props[JabberProtocol])
