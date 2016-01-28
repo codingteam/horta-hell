@@ -2,33 +2,31 @@ package ru.org.codingteam.horta.plugins.lambda
 
 import java.io.InputStreamReader
 
+import me.rexim.morganey.MorganeyInterpreter._
+import me.rexim.morganey.ReplHelper
 import me.rexim.morganey.ast.MorganeyBinding
-import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor, BasePlugin}
+import me.rexim.morganey.syntax.LambdaParser
+import ru.org.codingteam.horta.core.TryWith
+import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
-
-import me.rexim.morganey.syntax.LambdaParser
-import me.rexim.morganey.{MorganeyInterpreter, ReplHelper}
 
 private object LambdaCommand
 private object LambdaBindingsCommand
 
 class LambdaPlugin extends BasePlugin with CommandProcessor {
-  private val initScriptFileName = "morganey/init.morganey"
-  private lazy val initScriptReader =
-    new InputStreamReader(ClassLoader.getSystemResourceAsStream(initScriptFileName))
+  private val initScriptFileName = "/morganey/init.morganey"
 
-  private val globalContext: Seq[MorganeyBinding] =
-    MorganeyInterpreter
-      .interpretReader(initScriptReader, List())
-      .map (_.lastOption.map(_._2).getOrElse(List()))
-      .recover {
-        case t: Throwable => {
-          log.error(t, "Could not load morganey init script")
-          List()
-        }
-      }
-      .getOrElse(List())
+  private lazy val globalContext: Seq[MorganeyBinding] =
+    TryWith(new InputStreamReader(getClass.getResourceAsStream(initScriptFileName))) { reader =>
+      readNodes(reader)
+    } map { nodes =>
+      evalNodes(nodes)(List()).context
+    } recover {
+      case t: Throwable =>
+        log.error(t, s"Cannot read the Global Morganey Context from $initScriptFileName")
+        List()
+    } getOrElse List()
 
   /**
     * Plugin name.
