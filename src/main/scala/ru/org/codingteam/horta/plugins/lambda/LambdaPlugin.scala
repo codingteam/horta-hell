@@ -15,16 +15,16 @@ private object LambdaCommand
 private object LambdaBindingsCommand
 
 class LambdaPlugin extends BasePlugin with CommandProcessor {
-  private val initScriptFileName = "/morganey/init.morganey"
+  private val initScriptResourceName = "/morganey/init.morganey"
 
   private lazy val globalContext: Seq[MorganeyBinding] =
-    TryWith(new InputStreamReader(getClass.getResourceAsStream(initScriptFileName))) { reader =>
+    TryWith(new InputStreamReader(getClass.getResourceAsStream(initScriptResourceName))) { reader =>
       readNodes(reader)
     } map { nodes =>
       evalNodes(nodes)(List()).context
     } recover {
       case t: Throwable =>
-        log.error(t, s"Cannot read the Global Morganey Context from $initScriptFileName")
+        log.error(t, s"Cannot read the Global Morganey Context from $initScriptResourceName")
         List()
     } getOrElse List()
 
