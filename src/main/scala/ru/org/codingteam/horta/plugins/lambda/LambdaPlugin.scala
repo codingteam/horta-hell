@@ -11,6 +11,7 @@ import me.rexim.morganey.syntax.LambdaParser
 import me.rexim.morganey.{MorganeyInterpreter, ReplHelper}
 
 private object LambdaCommand
+private object LambdaBindingsCommand
 
 class LambdaPlugin extends BasePlugin with CommandProcessor {
   private val initScriptFileName = "morganey/init.morganey"
@@ -35,7 +36,10 @@ class LambdaPlugin extends BasePlugin with CommandProcessor {
     */
   override protected def name: String = "lambda"
 
-  override protected def commands = List(CommandDefinition(CommonAccess, "lambda", LambdaCommand))
+  override protected def commands = List(
+    CommandDefinition(CommonAccess, "lambda", LambdaCommand),
+    CommandDefinition(CommonAccess, "lambda-bindings", LambdaBindingsCommand)
+  )
 
   /**
     * Process a command.
@@ -59,6 +63,12 @@ class LambdaPlugin extends BasePlugin with CommandProcessor {
           respond(term.toString)
         }
       }
+
+      case (LambdaBindingsCommand, _) => {
+        val outputThreshold = 30
+        respond(globalContext.take(outputThreshold).map(_.variable.name).mkString(", "))
+      }
+
       case _ => // ignore
     }
   }
