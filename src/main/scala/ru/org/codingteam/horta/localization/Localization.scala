@@ -15,6 +15,10 @@ object Localization {
     } getOrElse key
   }
 
+  def localizeOpt(key: String)(implicit credential: Credential): Option[String] = {
+    withLocale(credential.locale) {_.get(key)}
+  }
+
   def random(key: String, locale: LocaleDefinition): String = {
     withLocale(locale) { case map =>
       map.random(key)
