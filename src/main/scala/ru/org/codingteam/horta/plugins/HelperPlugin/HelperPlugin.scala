@@ -12,11 +12,9 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-private object ManCommand
+object ManCommand
 
 class HelperPlugin extends CommandProcessor {
-  override protected def name: String = "helper"
-
   implicit val timeout = Timeout(60 seconds)
 
   override def commands = List(
@@ -31,7 +29,12 @@ class HelperPlugin extends CommandProcessor {
       case ManCommand =>
         (core ? CoreGetCommands).mapTo[Map[String, List[(String, AccessLevel)]]].onComplete {
           case Success(commands) =>
-            Protocol.sendResponse(credential.location, credential, formatMan(commands, credential))
+            arguments match {
+              case Array() => Protocol.sendResponse(credential.location, credential, formatMan(commands, credential))
+              case Array(command) => Protocol.sendResponse(credential.location, credential, commandMan(credential, command))
+              case _ => Protocol.sendResponse(credential.location, credential,
+                errorResponse(credential))
+            }
 
           case Failure(exception) =>
             log.error("Unable to get command list from core", exception)
@@ -41,6 +44,18 @@ class HelperPlugin extends CommandProcessor {
         }
       case t => log.warning(s"Unknown command token passed to plugin $name: $t")
     }
+  }
+
+  override protected def name: String = "helper"
+
+  def errorResponse(credential: Credential): String = {
+    implicit val c = credential
+    Localization.localize("I'm sorry, %s. I'm afraid I can't help you with that.").format(credential.name)
+  }
+
+  def commandMan(credential: Credential, command: String): String = {
+    implicit val c = credential
+    Localization.localizeOpt("command.help."+command) getOrElse { errorResponse(credential) }
   }
 
   def formatMan(commands: Map[String, List[(String, AccessLevel)]], credential: Credential): String = {
