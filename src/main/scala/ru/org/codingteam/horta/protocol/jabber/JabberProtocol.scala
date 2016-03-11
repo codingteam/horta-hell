@@ -120,6 +120,8 @@ class JabberProtocol() extends Actor with ActorLogging {
         case Some(chat) => sendMessage(message, chat.sendMessage)
         case None => false
       })
+
+    case ResolveJid(jid) => sender ! (rooms.get(jid) map { _.actor})
   }
 
   private def initializeConnection() {

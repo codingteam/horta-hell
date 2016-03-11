@@ -18,3 +18,4 @@ case class JoinRoom(roomJID: String,
 
 case class ChatOpened(chat: Chat) extends MessengerMessage
 
+case class ResolveJid(jid: String) extends MessengerMessage

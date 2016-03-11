@@ -1,13 +1,16 @@
 package ru.org.codingteam.horta.protocol.jabber
 
-import org.jivesoftware.smack.{MessageListener, Chat, ChatManagerListener}
 import akka.actor.ActorRef
-import org.jivesoftware.smack.packet.Message
-import ru.org.codingteam.horta.messages.{ChatOpened, UserMessage}
+import akka.pattern.ask
 import akka.util.Timeout
+import org.jivesoftware.smack.packet.Message
+import org.jivesoftware.smack.util.StringUtils
+import org.jivesoftware.smack.{Chat, ChatManagerListener, MessageListener}
+import ru.org.codingteam.horta.messages.{UserMessage, ChatOpened, ResolveJid}
+
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 import scala.language.postfixOps
-import concurrent.ExecutionContext
 
 class ChatListener(val messenger: ActorRef,
                    val privateHandler: ActorRef,
@@ -19,7 +22,14 @@ class ChatListener(val messenger: ActorRef,
       messenger ! ChatOpened(chat)
       chat.addMessageListener(new MessageListener {
         def processMessage(chat: Chat, message: Message) {
-          privateHandler ! UserMessage(message)
+          messenger ? ResolveJid(StringUtils.parseBareAddress(chat.getParticipant)) map {
+            case Some(actorRef: ActorRef) => actorRef
+            case _ => privateHandler
+          } recover {
+            case _ => privateHandler
+          } map {
+            _ ! UserMessage(message)
+          }
         }
       })
     }
