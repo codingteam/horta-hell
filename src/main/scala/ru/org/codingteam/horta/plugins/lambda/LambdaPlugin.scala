@@ -6,10 +6,16 @@ import me.rexim.morganey.MorganeyInterpreter._
 import me.rexim.morganey.ReplHelper
 import me.rexim.morganey.ast.MorganeyBinding
 import me.rexim.morganey.syntax.LambdaParser
+import me.rexim.morganey.reduction.NormalOrder._
 import ru.org.codingteam.horta.core.TryWith
 import ru.org.codingteam.horta.plugins.{BasePlugin, CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+
+import scala.concurrent._
+import scala.concurrent.duration._
+import scala.language.postfixOps
+import scala.util.Try
 
 private object LambdaCommand
 private object LambdaBindingsCommand
@@ -55,8 +61,15 @@ class LambdaPlugin extends BasePlugin with CommandProcessor {
       case (LambdaCommand, Array(unparsedTerm, _*)) => {
         val term = LambdaParser.parse(LambdaParser.term, unparsedTerm)
         if (term.successful) {
-          val result = term.get.addContext(globalContext).normalOrder()
-          respond(ReplHelper.smartPrintTerm(result))
+          val computation = term.get.addContext(globalContext).norReduceComputation()
+          try {
+            val term = Await.result(computation.future, 2 seconds)
+            respond(ReplHelper.smartPrintTerm(term))
+          } catch {
+            case e: TimeoutException =>
+              computation.cancel
+              respond("Computation took too long and was cancelled by a timeout")
+          }
         } else {
           respond(term.toString)
         }
