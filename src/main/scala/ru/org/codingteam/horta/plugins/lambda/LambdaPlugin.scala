@@ -4,7 +4,8 @@ import java.io.InputStreamReader
 
 import me.rexim.morganey.MorganeyInterpreter._
 import me.rexim.morganey.ReplHelper
-import me.rexim.morganey.ast.MorganeyBinding
+import me.rexim.morganey.ast.{LambdaTerm, MorganeyBinding}
+import me.rexim.morganey.reduction.Computation
 import me.rexim.morganey.syntax.LambdaParser
 import me.rexim.morganey.reduction.NormalOrder._
 import ru.org.codingteam.horta.core.TryWith
@@ -21,6 +22,11 @@ private object LambdaCommand
 private object LambdaBindingsCommand
 
 class LambdaPlugin extends BasePlugin with CommandProcessor {
+  private val computationTimeout = 2 seconds
+  private val outputThreshold = 30
+
+  private var currentComputation: Option[Computation[LambdaTerm]] = None
+
   private val initScriptResourceName = "/morganey/init.morganey"
 
   private lazy val globalContext: Seq[MorganeyBinding] =
@@ -58,29 +64,37 @@ class LambdaPlugin extends BasePlugin with CommandProcessor {
     implicit val l = log
 
     (token, arguments) match {
-      case (LambdaCommand, Array(unparsedTerm, _*)) => {
-        val term = LambdaParser.parse(LambdaParser.term, unparsedTerm)
-        if (term.successful) {
-          val computation = term.get.addContext(globalContext).norReduceComputation()
-          try {
-            val term = Await.result(computation.future, 2 seconds)
-            respond(ReplHelper.smartPrintTerm(term))
-          } catch {
-            case e: TimeoutException =>
-              computation.cancel
-              respond("Computation took too long and was cancelled by a timeout")
-          }
-        } else {
-          respond(term.toString)
+      case (LambdaCommand, Array(rawTerm, _*)) => {
+        currentComputation match {
+          case Some(computation) if !computation.future.isCompleted =>
+            respond("The previous computation is not cancelled yet. Please wait or contact Dr. ForNeVeR.")
+          case _ => evalTerm(rawTerm)
         }
       }
 
       case (LambdaBindingsCommand, _) => {
-        val outputThreshold = 30
         respond(globalContext.take(outputThreshold).map(_.variable.name).mkString(", "))
       }
 
       case _ => // ignore
+    }
+  }
+
+  private def evalTerm(rawTerm: String)(implicit credential: Credential) = {
+    val term = LambdaParser.parse(LambdaParser.term, rawTerm)
+    if (term.successful) {
+      val computation = term.get.addContext(globalContext).norReduceComputation()
+      currentComputation = Some(computation)
+      try {
+        val term = Await.result(computation.future, computationTimeout)
+        respond(ReplHelper.smartPrintTerm(term))
+      } catch {
+        case e: TimeoutException =>
+          computation.cancel
+          respond("The computation took too long and was scheduled for the cancellation")
+      }
+    } else {
+      respond(term.toString)
     }
   }
 
