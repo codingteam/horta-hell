@@ -11,7 +11,6 @@ import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol.{SendChatMessage, SendMucMessage, SendPrivateMessage}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Lock
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -22,8 +21,6 @@ class JabberProtocol() extends Actor with ActorLogging {
   import context.dispatcher
 
   implicit val timeout = Timeout(1 minute)
-
-  val lock = new Lock()
 
   val core = context.actorSelection("/user/core")
 
@@ -84,10 +81,9 @@ class JabberProtocol() extends Actor with ActorLogging {
           context.system.scheduler.scheduleOnce(rejoinInterval, self, message)
       }
 
-    case ChatOpened(chat) => {
+    case ChatOpened(chat) =>
       chats = chats.updated(chat.getParticipant, chat)
       sender ! PositiveReply
-    }
 
     case SendMucMessage(jid, message) =>
       val muc = rooms.get(jid)
@@ -105,8 +101,13 @@ class JabberProtocol() extends Actor with ActorLogging {
           // TODO: This check is unreliable, implement something better. ~ ForNeVeR
           val occupants = muc.chat.getOccupants
           if (occupants.asScala.contains(jid)) {
-            val chat = muc.chat.createPrivateChat(jid, null)
-            sendMessage(message, chat.sendMessage)
+            //try to find an existing chat first
+            if (!chats.contains(jid)) {
+              val handler = context.actorOf(Props(new PrivateMucMessageHandler(muc.actor, nick, context.dispatcher)))
+              chats = chats.updated(jid, muc.chat.createPrivateChat(jid, new ChatMessageListener(handler)))
+            }
+            val chat = chats.get(jid)
+            sendMessage(message, chat.get.sendMessage) // get is safe here
           } else {
             false
           }
