@@ -4,11 +4,12 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
+import org.jivesoftware.smack.util.StringUtils
 import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection, XMPPException}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.configuration._
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.protocol.{SendChatMessage, SendMucMessage, SendPrivateMessage}
+import ru.org.codingteam.horta.protocol.{Protocol, SendChatMessage, SendMucMessage, SendPrivateMessage}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -83,7 +84,10 @@ class JabberProtocol() extends Actor with ActorLogging {
 
     case ChatOpened(chat) =>
       chats = chats.updated(chat.getParticipant, chat)
-      sender ! PositiveReply
+      val actor: ActorRef = getRoomActor(chat.getParticipant) map {
+        actor => context.actorOf(Props(new PrivateMucMessageHandler(actor, Protocol.nickByJid(chat.getParticipant), context.dispatcher)))
+      } getOrElse privateHandler
+      sender ! Some(actor)
 
     case SendMucMessage(jid, message) =>
       val muc = rooms.get(jid)
@@ -122,7 +126,13 @@ class JabberProtocol() extends Actor with ActorLogging {
         case None => false
       })
 
-    case ResolveJid(jid) => sender ! (rooms.get(jid) map { _.actor})
+    case ResolveJid(jid) => sender ! getRoomActor(jid)
+  }
+
+  def getRoomActor(jid: String): Option[ActorRef] = {
+    rooms.get(StringUtils.parseBareAddress(jid)) map {
+      _.actor
+    }
   }
 
   private def initializeConnection() {
@@ -149,7 +159,7 @@ class JabberProtocol() extends Actor with ActorLogging {
     }
 
     connection.addConnectionListener(new XMPPConnectionListener(self, connection))
-    chatManager.addChatListener(new ChatListener(self, privateHandler, context.system.dispatcher))
+    chatManager.addChatListener(new ChatListener(self, context.system.dispatcher))
 
     connection.login(Configuration.login, Configuration.password)
     log.info("Login succeed")

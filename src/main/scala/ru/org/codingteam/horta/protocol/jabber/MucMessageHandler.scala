@@ -2,10 +2,9 @@ package ru.org.codingteam.horta.protocol.jabber
 
 import java.util.regex.Pattern
 
-import akka.actor.{ActorRef, Props}
+import akka.actor.ActorRef
 import akka.pattern.{ask, pipe}
 import akka.util.Timeout
-import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.localization.LocaleDefinition
 import ru.org.codingteam.horta.messages._
@@ -93,16 +92,6 @@ class MucMessageHandler(locale: LocaleDefinition,
 
     case GetCredential(jid) =>
       sender ! getCredential(jid)
-
-    case ChatOpened(chat) =>
-      val participant = chat.getParticipant
-      val chatAddress = StringUtils.parseBareAddress(participant)
-      if (!roomJID.equals(chatAddress)) {
-        log.error(s"Tried to create chat with `$chatAddress` as a MUC (`$roomJID`) private chat.")
-        sender ! None
-      }
-      val chatActor = context.actorOf(Props(new PrivateMucMessageHandler(self, Protocol.nickByJid(participant), context.dispatcher)))
-      sender ! Some(chatActor)
 
     case other =>
       super.receive(other)
