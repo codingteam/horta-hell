@@ -6,7 +6,7 @@ import akka.util.Timeout
 import org.jivesoftware.smack.packet.Message
 import org.jivesoftware.smack.util.StringUtils
 import org.jivesoftware.smack.{Chat, ChatManagerListener, MessageListener}
-import ru.org.codingteam.horta.messages.{UserMessage, ChatOpened, ResolveJid}
+import ru.org.codingteam.horta.messages.{ChatOpened, ResolveJid, UserMessage}
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -19,19 +19,20 @@ class ChatListener(val messenger: ActorRef,
 
   def chatCreated(chat: Chat, createdLocally: Boolean) {
     if (!createdLocally) {
-      messenger ! ChatOpened(chat)
-      chat.addMessageListener(new MessageListener {
-        def processMessage(chat: Chat, message: Message) {
-          messenger ? ResolveJid(StringUtils.parseBareAddress(chat.getParticipant)) map {
-            case Some(actorRef: ActorRef) => actorRef
-            case _ => privateHandler
-          } recover {
-            case _ => privateHandler
-          } map {
-            _ ! UserMessage(message)
-          }
-        }
-      })
+      messenger ? ChatOpened(chat)
+      messenger ? ResolveJid(StringUtils.parseBareAddress(chat.getParticipant)) flatMap {
+        case Some(roomActor: ActorRef) => roomActor ? ChatOpened(chat)
+      } map {
+        case Some(chatActor: ActorRef) => new ChatMessageListener(chatActor)
+      } recover {
+        case _ => new ChatMessageListener(privateHandler)
+      } map chat.addMessageListener
     }
+  }
+}
+
+class ChatMessageListener(chatActor: ActorRef) extends MessageListener {
+  override def processMessage(chat: Chat, message: Message): Unit = {
+    chatActor ! UserMessage(message)
   }
 }
