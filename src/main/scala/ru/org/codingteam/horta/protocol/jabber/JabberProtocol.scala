@@ -125,8 +125,6 @@ class JabberProtocol() extends Actor with ActorLogging {
         case Some(chat) => sendMessage(message, chat.sendMessage)
         case None => false
       })
-
-    case ResolveJid(jid) => sender ! getRoomActor(jid)
   }
 
   def getRoomActor(jid: String): Option[ActorRef] = {

@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.messages
 
-import org.jivesoftware.smack.{XMPPConnection, Chat}
+import org.jivesoftware.smack.{Chat, XMPPConnection}
 import ru.org.codingteam.horta.localization.LocaleDefinition
 
 abstract sealed class MessengerMessage
@@ -17,5 +17,3 @@ case class JoinRoom(roomJID: String,
                     greeting: Option[String]) extends MessengerMessage
 
 case class ChatOpened(chat: Chat) extends MessengerMessage
-
-case class ResolveJid(jid: String) extends MessengerMessage
