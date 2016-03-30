@@ -25,3 +25,4 @@ case class UserMessage(message: Message)
 case class GenerateCommand(jid: String, command: String, arguments: Array[String])
 case class ReplaceCommand(jid: String, arguments: Array[String])
 case object GetParticipants
+case class GetCredential(jid: String)

@@ -4,14 +4,14 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import org.jivesoftware.smack.filter.{AndFilter, FromContainsFilter, PacketTypeFilter}
 import org.jivesoftware.smack.packet.Message
+import org.jivesoftware.smack.util.StringUtils
 import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection, XMPPException}
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.configuration._
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.protocol.{SendChatMessage, SendMucMessage, SendPrivateMessage}
+import ru.org.codingteam.horta.protocol.{Protocol, SendChatMessage, SendMucMessage, SendPrivateMessage}
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Lock
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
@@ -22,8 +22,6 @@ class JabberProtocol() extends Actor with ActorLogging {
   import context.dispatcher
 
   implicit val timeout = Timeout(1 minute)
-
-  val lock = new Lock()
 
   val core = context.actorSelection("/user/core")
 
@@ -84,10 +82,12 @@ class JabberProtocol() extends Actor with ActorLogging {
           context.system.scheduler.scheduleOnce(rejoinInterval, self, message)
       }
 
-    case ChatOpened(chat) => {
+    case ChatOpened(chat) =>
       chats = chats.updated(chat.getParticipant, chat)
-      sender ! PositiveReply
-    }
+      val actor: ActorRef = getRoomActor(chat.getParticipant) map {
+        actor => context.actorOf(Props(new PrivateMucMessageHandler(actor, Protocol.nickByJid(chat.getParticipant), context.dispatcher)))
+      } getOrElse privateHandler
+      sender ! Some(actor)
 
     case SendMucMessage(jid, message) =>
       val muc = rooms.get(jid)
@@ -105,8 +105,13 @@ class JabberProtocol() extends Actor with ActorLogging {
           // TODO: This check is unreliable, implement something better. ~ ForNeVeR
           val occupants = muc.chat.getOccupants
           if (occupants.asScala.contains(jid)) {
-            val chat = muc.chat.createPrivateChat(jid, null)
-            sendMessage(message, chat.sendMessage)
+            //try to find an existing chat first
+            if (!chats.contains(jid)) {
+              val handler = context.actorOf(Props(new PrivateMucMessageHandler(muc.actor, nick, context.dispatcher)))
+              chats = chats.updated(jid, muc.chat.createPrivateChat(jid, new ChatMessageListener(handler)))
+            }
+            val chat = chats.get(jid)
+            sendMessage(message, chat.get.sendMessage) // get is safe here
           } else {
             false
           }
@@ -120,6 +125,12 @@ class JabberProtocol() extends Actor with ActorLogging {
         case Some(chat) => sendMessage(message, chat.sendMessage)
         case None => false
       })
+  }
+
+  def getRoomActor(jid: String): Option[ActorRef] = {
+    rooms.get(StringUtils.parseBareAddress(jid)) map {
+      _.actor
+    }
   }
 
   private def initializeConnection() {
@@ -146,7 +157,7 @@ class JabberProtocol() extends Actor with ActorLogging {
     }
 
     connection.addConnectionListener(new XMPPConnectionListener(self, connection))
-    chatManager.addChatListener(new ChatListener(self, privateHandler, context.system.dispatcher))
+    chatManager.addChatListener(new ChatListener(self, context.system.dispatcher))
 
     connection.login(Configuration.login, Configuration.password)
     log.info("Login succeed")

@@ -82,13 +82,16 @@ class MucMessageHandler(locale: LocaleDefinition,
       }
 
     case SendResponse(credential, text) =>
-      sendMessage(credential, text, false)
+      sendMessage(credential, text, isPrivate = false)
 
     case SendPrivateResponse(credential, text) =>
-      sendMessage(credential, text, true)
+      sendMessage(credential, text, isPrivate = true)
 
     case GetParticipants =>
       sender ! participants
+
+    case GetCredential(jid) =>
+      sender ! getCredential(jid)
 
     case other =>
       super.receive(other)
