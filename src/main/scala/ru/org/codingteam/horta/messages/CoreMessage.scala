@@ -63,3 +63,22 @@ case class CoreParticipantLeft(time: DateTime,
  * Ask Core for a list of available commands
  */
 case object CoreGetCommands
+
+/**
+ * Subscribe a plugin to external events
+ * @param filter describes what events should be sent to a plugin
+ * @param actor reference to a plugin's actor
+ */
+case class Subscribe(filter : PartialFunction[Event, Boolean], actor: ActorRef)
+
+/**
+ * Unsubscribe plugin from all external events
+ * @param actor actor of a plugin to unsubscribe
+ */
+case class Unsubscribe(actor: ActorRef)
+
+/**
+ * External event occured.
+ * @param event event that occured
+ */
+case class EventMessage(event: Event)

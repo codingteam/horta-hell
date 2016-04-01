@@ -21,33 +21,31 @@ class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with 
   import context.dispatcher
 
   implicit val timeout = Timeout(60 seconds)
-
+  val parsers = List(SlashParsers, DollarParsers)
   /**
    * List of registered commands.
    */
   var commands = Map[String, List[(ActorRef, CommandDefinition)]]()
-
   /**
    * List of plugins receiving all the messages.
    */
   var messageReceivers = List[ActorRef]()
-
   /**
    * List of plugins receiving room notifications.
    */
   var roomReceivers = List[ActorRef]()
-
   /**
    * Initialized plugin definitions and corresponding actor references.
    */
   var definitions = List[(ActorRef, PluginDefinition)]()
-
+  /**
+   * List of plugins' subscriptions to external events
+   */
+  var subscriptions = List[Subscribe]()
   /**
    * List of plugins receiving the user notifications.
    */
   var participantReceivers = List[ActorRef]()
-
-  val parsers = List(SlashParsers, DollarParsers)
 
   override def preStart() {
     definitions = getPluginDefinitions
@@ -60,18 +58,6 @@ class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with 
 
     val store = context.actorOf(Props(classOf[PersistentStore], storages), "store")
     protocols.foreach(context.actorOf)
-  }
-
-  override def receive = {
-    case CoreMessage(time, credential, text) => processMessage(time, credential, text)
-    case CoreRoomJoin(time, roomJID, actor) => processRoomJoin(time, roomJID, actor)
-    case CoreRoomLeave(time, roomJID) => processRoomLeave(time, roomJID)
-    case CoreRoomTopicChanged(time, roomId, text, actor) => processRoomTopicChanged(time, roomId, text, actor)
-    case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
-    case CoreParticipantLeft(time, roomJID, participantJID, reason, actor) =>
-      processParticipantLeave(time, roomJID, participantJID, reason, actor)
-    case Core.GetPluginDefinitions => sender ! definitions
-    case CoreGetCommands => sender ! Core.getCommandsDescription(definitions)
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
@@ -99,6 +85,25 @@ class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with 
     }
   }
 
+  override def receive = {
+    case CoreMessage(time, credential, text) => processMessage(time, credential, text)
+    case CoreRoomJoin(time, roomJID, actor) => processRoomJoin(time, roomJID, actor)
+    case CoreRoomLeave(time, roomJID) => processRoomLeave(time, roomJID)
+    case CoreRoomTopicChanged(time, roomId, text, actor) => processRoomTopicChanged(time, roomId, text, actor)
+    case CoreParticipantJoined(time, roomJID, participantJID, actor) => processParticipantJoin(time, roomJID, participantJID, actor)
+    case CoreParticipantLeft(time, roomJID, participantJID, reason, actor) =>
+      processParticipantLeave(time, roomJID, participantJID, reason, actor)
+    case Core.GetPluginDefinitions => sender ! definitions
+    case CoreGetCommands => sender ! Core.getCommandsDescription(definitions)
+    case s: Subscribe =>
+      subscribe(s)
+      sender ! PositiveReply
+    case Unsubscribe(actor) =>
+      unsubscribe(actor)
+      sender ! PositiveReply
+    case EventMessage(event) => dispatchEvent(event)
+  }
+
   private def processMessage(time: DateTime, credential: Credential, text: String) {
     val command = parseCommand(text)
     command match {
@@ -109,40 +114,6 @@ class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with 
 
     for (plugin <- messageReceivers) {
       plugin ! ProcessMessage(time, credential, text)
-    }
-  }
-
-  private def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef) {
-    for (plugin <- roomReceivers) {
-      plugin ! ProcessRoomJoin(time, roomJID, actor)
-    }
-  }
-
-  private def processRoomLeave(time: DateTime, roomJID: String) {
-    for (plugin <- roomReceivers) {
-      plugin ! ProcessRoomLeave(time, roomJID)
-    }
-  }
-
-  private def processRoomTopicChanged(time: DateTime, roomId: String, text: String, roomActor: ActorRef) {
-    for (plugin <- roomReceivers) {
-      plugin ! ProcessRoomTopicChange(time, roomId, text)
-    }
-  }
-
-  private def processParticipantJoin(time: DateTime, roomJID: String, participantJID: String, roomActor: ActorRef) {
-    for (plugin <- participantReceivers) {
-      plugin ! ProcessParticipantJoin(time, roomJID, participantJID, roomActor)
-    }
-  }
-
-  private def processParticipantLeave(time: DateTime,
-                                      roomJID: String,
-                                      participantJID: String,
-                                      reason: LeaveReason,
-                                      roomActor: ActorRef) {
-    for (plugin <- participantReceivers) {
-      plugin ! ProcessParticipantLeave(time, roomJID, participantJID, reason, roomActor)
     }
   }
 
@@ -181,11 +152,59 @@ class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with 
     }
   }
 
+  private def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef) {
+    for (plugin <- roomReceivers) {
+      plugin ! ProcessRoomJoin(time, roomJID, actor)
+    }
+  }
+
+  private def processRoomLeave(time: DateTime, roomJID: String) {
+    for (plugin <- roomReceivers) {
+      plugin ! ProcessRoomLeave(time, roomJID)
+    }
+  }
+
+  private def processRoomTopicChanged(time: DateTime, roomId: String, text: String, roomActor: ActorRef) {
+    for (plugin <- roomReceivers) {
+      plugin ! ProcessRoomTopicChange(time, roomId, text)
+    }
+  }
+
+  private def processParticipantJoin(time: DateTime, roomJID: String, participantJID: String, roomActor: ActorRef) {
+    for (plugin <- participantReceivers) {
+      plugin ! ProcessParticipantJoin(time, roomJID, participantJID, roomActor)
+    }
+  }
+
+  private def processParticipantLeave(time: DateTime,
+                                      roomJID: String,
+                                      participantJID: String,
+                                      reason: LeaveReason,
+                                      roomActor: ActorRef) {
+    for (plugin <- participantReceivers) {
+      plugin ! ProcessParticipantLeave(time, roomJID, participantJID, reason, roomActor)
+    }
+  }
+
+  private def subscribe(subscription: Subscribe) = {
+    subscriptions ::= subscription
+  }
+
+  private def unsubscribe(actor: ActorRef) = {
+    subscriptions = subscriptions.filterNot { sub => sub.actor.equals(actor) }
+  }
+
+  private def dispatchEvent(event: Event) = {
+    subscriptions.filter {
+      _.filter(event)
+    } foreach {
+      _.actor ! EventMessage(event)
+    }
+  }
+
 }
 
 object Core {
-
-  private case object GetPluginDefinitions
 
   /**
    * Asynchronously retrieve all plugin definitions from Core actor.
@@ -217,4 +236,7 @@ object Core {
       definition.repositoryFactory.map(factory => (definition.name, factory))
     }.toMap
   }
+
+  private case object GetPluginDefinitions
+
 }
