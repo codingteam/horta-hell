@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.configuration
 
-import java.io.{StringReader, Reader, FileInputStream, InputStreamReader}
+import java.io.{FileInputStream, InputStreamReader, Reader, StringReader}
 import java.nio.file.Path
 import java.util.Properties
 
@@ -62,4 +62,8 @@ object Configuration {
   lazy val storageUrl = properties.getProperty("storage.url")
   lazy val storageUser = properties.getProperty("storage.user")
   lazy val storagePassword = properties.getProperty("storage.password")
+
+  def apply(key: String): String = {
+    properties.getProperty(key)
+  }
 }

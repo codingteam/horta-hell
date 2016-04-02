@@ -1,9 +1,11 @@
 package ru.org.codingteam.horta.plugins
 
+import akka.pattern.ask
 import akka.util.Timeout
 import ru.org.codingteam.horta.messages.{Event, EventMessage, Subscribe, Unsubscribe}
-import akka.pattern.ask
+
 import scala.concurrent.duration._
+import scala.languageFeature.postfixOps
 
 
 /**
@@ -25,11 +27,13 @@ abstract class EventProcessor extends BasePlugin {
   implicit val timeout = Timeout(60 seconds)
 
   override def preStart() = {
+    super.preStart()
     core ? Subscribe(filter, self)
   }
 
   override def postStop() = {
     core ? Unsubscribe(self)
+    super.postStop()
   }
 
   override def receive = {
