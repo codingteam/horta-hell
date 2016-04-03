@@ -1,21 +1,33 @@
 package ru.org.codingteam.horta.events
 
-import ru.org.codingteam.horta.messages.Event
+import ru.org.codingteam.horta.messages.{Event, EventMessage}
 import ru.org.codingteam.horta.plugins.BasePlugin
 
-class EventCollector() extends BasePlugin {
+class EventCollector(endpointFactories: Seq[EndpointFactory]) extends BasePlugin {
+
+  val endpoints = endpointFactories map {
+    _.construct(this)
+  }
 
   override def preStart(): Unit = {
     super.preStart()
+    endpoints foreach {
+      _.start()
+    }
     log.info("EventCollector started")
   }
 
   override def postStop(): Unit = {
+    endpoints foreach {
+      _.stop()
+    }
     log.info("EventCollector stopped")
     super.postStop()
   }
 
-  override protected def name: String = "eventCollector"
+  def onEvent(event: Event) = {
+    core ! EventMessage(event)
+  }
 
-  def onEvent(event: Event) = ???
+  override protected def name: String = "eventCollector"
 }

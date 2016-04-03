@@ -9,10 +9,7 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor
 import com.twitter.hbc.httpclient.auth.OAuth1
 import ru.org.codingteam.horta.configuration.Configuration
 
-/**
- * Created by hgn on 02.04.2016.
- */
-class TwitterEndpoint(eventCollector: EventCollector) {
+class TwitterEndpoint(eventCollector: EventCollector) extends EventEndpoint {
 
   val auth = new OAuth1(
     Configuration("twitter.auth.consumerKey"),
@@ -22,21 +19,23 @@ class TwitterEndpoint(eventCollector: EventCollector) {
   )
 
   val queue = new LinkedBlockingQueue[String](1000)
+  private val apiEndpoint = new UserstreamEndpoint()
+
   val client = new ClientBuilder()
     .authentication(auth)
     .hosts(Constants.STREAM_HOST)
     .endpoint(apiEndpoint)
-    .processor(new StringDelimitedProcessor(queue)).build()
-  private val apiEndpoint = new UserstreamEndpoint()
+    .processor(new StringDelimitedProcessor(queue))
+    .build()
 
-  def start(): Unit = {
+  override def start(): Unit = {
     apiEndpoint.stallWarnings(false)
     apiEndpoint.withFollowings(true)
 
     client.connect()
   }
 
-  def stop(): Unit = {
+  override def stop(): Unit = {
     client.stop()
   }
 }
