@@ -11,4 +11,9 @@ trait EventEndpoint {
    * Stop gathering events from this endpoint
    */
   def stop(): Unit
+
+  /**
+   * Gather events here
+   */
+  def process(eventCollector: EventCollector): Unit
 }

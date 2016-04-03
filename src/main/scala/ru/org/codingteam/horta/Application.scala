@@ -7,7 +7,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Core
-import ru.org.codingteam.horta.events.{EndpointFactory, EventCollector, EventEndpoint, TwitterEndpoint}
+import ru.org.codingteam.horta.events.{EventCollector, TwitterEndpoint}
 import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.diag.DiagnosticPlugin
@@ -27,10 +27,8 @@ import scalikejdbc.GlobalSettings
 object Application extends App with StrictLogging {
 
   //TODO: This should be eventually handled by some kind of dependency injeciton
-  val eventEndpointFactories = List(
-    new EndpointFactory {
-      override def construct(eventCollector: EventCollector): EventEndpoint = new TwitterEndpoint(eventCollector)
-    }
+  val eventEndpoints = List(
+    new TwitterEndpoint()
   )
 
   val plugins = List(
@@ -58,7 +56,7 @@ object Application extends App with StrictLogging {
 
   val system = ActorSystem("CodingteamSystem", ConfigFactory.parseResources("application.conf"))
   val core = system.actorOf(Props(new Core(plugins, protocols)), "core")
-  val eventCollector = system.actorOf(Props(classOf[EventCollector], eventEndpointFactories))
+  val eventCollector = system.actorOf(Props(classOf[EventCollector], eventEndpoints))
 
   private def initializeConfiguration(args: Array[String]) {
     GlobalSettings.loggingSQLAndTime = GlobalSettings.loggingSQLAndTime.copy(singleLineMode = true)

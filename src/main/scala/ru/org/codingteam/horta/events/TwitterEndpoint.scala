@@ -9,7 +9,7 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor
 import com.twitter.hbc.httpclient.auth.OAuth1
 import ru.org.codingteam.horta.configuration.Configuration
 
-class TwitterEndpoint(eventCollector: EventCollector) extends EventEndpoint {
+class TwitterEndpoint extends EventEndpoint {
 
   val auth = new OAuth1(
     Configuration("twitter.auth.consumerKey"),
@@ -18,10 +18,9 @@ class TwitterEndpoint(eventCollector: EventCollector) extends EventEndpoint {
     Configuration("twitter.auth.tokenSecret")
   )
 
-  val queue = new LinkedBlockingQueue[String](1000)
+  private val queue = new LinkedBlockingQueue[String](1000)
   private val apiEndpoint = new UserstreamEndpoint()
-
-  val client = new ClientBuilder()
+  private val client = new ClientBuilder()
     .authentication(auth)
     .hosts(Constants.STREAM_HOST)
     .endpoint(apiEndpoint)
@@ -36,6 +35,13 @@ class TwitterEndpoint(eventCollector: EventCollector) extends EventEndpoint {
   }
 
   override def stop(): Unit = {
-    client.stop()
+    client.stop() // after this client.isDone() should return true
+  }
+
+  override def process(eventCollector: EventCollector): Unit = {
+    while (!client.isDone) {
+      val message = queue.take()
+      //TODO: Parse JSON and invoke onEvent callback
+    }
   }
 }
