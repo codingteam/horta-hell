@@ -8,6 +8,9 @@ import com.twitter.hbc.core.endpoint.UserstreamEndpoint
 import com.twitter.hbc.core.processor.StringDelimitedProcessor
 import com.twitter.hbc.httpclient.auth.OAuth1
 import ru.org.codingteam.horta.configuration.Configuration
+import ru.org.codingteam.horta.messages.TwitterEvent
+import spray.json.DefaultJsonProtocol._
+import spray.json._
 
 class TwitterEndpoint extends EventEndpoint {
 
@@ -40,8 +43,20 @@ class TwitterEndpoint extends EventEndpoint {
 
   override def process(eventCollector: EventCollector): Unit = {
     while (!client.isDone) {
-      val message = queue.take()
-      //TODO: Parse JSON and invoke onEvent callback
+      val message = queue.take().toJson.asJsObject
+      val author = message.fields.get("user") flatMap {
+        _.asJsObject.fields.get("screen_name")
+      } map {
+        _.toString()
+      }
+      val tweet = message.fields.get("text") map {
+        _.toString()
+      }
+
+      (author, tweet) match {
+        case (Some(authorStr:String), Some(tweetStr:String)) => eventCollector.onEvent(TwitterEvent(authorStr, tweetStr))
+        case _ => //Probably not a tweet
+      }
     }
   }
 }
