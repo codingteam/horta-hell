@@ -8,7 +8,6 @@ import ru.org.codingteam.horta.protocol.SendResponse
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
 
 class HelperPluginSpec extends TestKitSpec {
-  override val pluginProps = List(Props[HelperPlugin])
 
   val credential = Credential(
     testActor,
@@ -27,6 +26,7 @@ class HelperPluginSpec extends TestKitSpec {
       plugin ! ProcessCommand(credential, ManCommand, Array())
       val message = expectMsgType[SendResponse](timeout.duration)
       assert(!message.text.isEmpty)
+      assert(!message.text.equals(errorMessage))
     }
     "should answer with command usage text when given a command name as an argument" in {
       plugin ! ProcessCommand(credential, ManCommand, Array("say"))
