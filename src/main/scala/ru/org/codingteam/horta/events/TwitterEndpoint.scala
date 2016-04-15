@@ -16,16 +16,16 @@ import spray.json._
 class TwitterEndpoint extends EventEndpoint {
 
   private val log = Logger(classOf[TwitterEndpoint], "TwitterEndpoint")
-  private val consumerKey = Configuration("twitter.auth.consumerKey")
-  private val consumerSecret = Configuration("twitter.auth.consumerSecret")
-  private val authToken = Configuration("twitter.auth.token")
-  private val tokenSecret = Configuration("twitter.auth.tokenSecret")
+  private lazy val consumerKey = Configuration("twitter.auth.consumerKey")
+  private lazy val consumerSecret = Configuration("twitter.auth.consumerSecret")
+  private lazy val authToken = Configuration("twitter.auth.token")
+  private lazy val tokenSecret = Configuration("twitter.auth.tokenSecret")
 
-  private val auth = new OAuth1(consumerKey, consumerSecret, authToken, tokenSecret)
+  private lazy val auth = new OAuth1(consumerKey, consumerSecret, authToken, tokenSecret)
 
   private val queue = new LinkedBlockingQueue[String](1000)
   private val apiEndpoint = new UserstreamEndpoint()
-  private val client = new ClientBuilder()
+  private lazy val client = new ClientBuilder()
     .authentication(auth)
     .hosts(Constants.STREAM_HOST)
     .endpoint(apiEndpoint)
