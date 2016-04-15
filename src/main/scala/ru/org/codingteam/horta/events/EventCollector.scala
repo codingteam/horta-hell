@@ -13,7 +13,7 @@ class EventCollector(endpoints: Seq[EventEndpoint]) extends BasePlugin {
 
   override def preStart(): Unit = {
     super.preStart()
-    endpoints foreach { ep =>
+    endpoints filter { _.validate() } foreach { ep =>
       ep.start()
       Future {
         ep.process(this)
@@ -26,12 +26,13 @@ class EventCollector(endpoints: Seq[EventEndpoint]) extends BasePlugin {
     endpoints foreach {
       _.stop()
     }
-    executor.shutdownNow() // TODO: do not headshot executor, shutdown it gracefully
+    executor.shutdownNow() // TODO: do not headshot the executor, shut it down gracefully
     log.info("EventCollector stopped")
     super.postStop()
   }
 
   def onEvent(event: Event) = {
+    log.info("Received event: {}", event)
     core ! EventMessage(event)
   }
 

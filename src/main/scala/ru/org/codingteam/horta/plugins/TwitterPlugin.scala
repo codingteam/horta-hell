@@ -2,6 +2,7 @@ package ru.org.codingteam.horta.plugins
 
 import akka.actor.{ActorLogging, ActorRef}
 import org.joda.time.DateTime
+import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.messages.{Event, TwitterEvent}
 import ru.org.codingteam.horta.protocol.Protocol
@@ -50,7 +51,10 @@ class TwitterPlugin extends EventProcessor with RoomProcessor with ActorLogging 
    * @param actor actor representing the room.
    */
   override protected def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef): Unit = {
-    rooms = rooms.updated(roomJID, actor)
+    Configuration.roomDescriptors.find( _.isEventEnabled("twitter")) match {
+      case Some(_) => rooms = rooms.updated(roomJID, actor)
+      case None =>
+    }
   }
 
   /**

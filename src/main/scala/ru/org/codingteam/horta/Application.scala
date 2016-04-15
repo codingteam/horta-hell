@@ -27,7 +27,7 @@ import scalikejdbc.GlobalSettings
 object Application extends App with StrictLogging {
 
   //TODO: This should be eventually handled by some kind of dependency injeciton
-  val eventEndpoints = List(
+  var eventEndpoints = List(
     new TwitterEndpoint()
   )
 
