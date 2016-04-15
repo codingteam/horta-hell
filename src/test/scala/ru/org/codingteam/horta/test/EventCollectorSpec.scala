@@ -16,6 +16,8 @@ class EventCollectorSpec extends TestKitSpec {
     override def process(eventCollector: EventCollector): Unit = {
       eventCollector.onEvent(TwitterEvent("",""))
     }
+
+    override def validate(): Boolean = { true }
   }
 
   "EventCollector" should {
