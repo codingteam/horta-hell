@@ -100,8 +100,10 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       lastMessage match {
         case Some(message) =>
           val newMessage = message.replace(from, to)
-          lastMessage = Some(newMessage)
-          Protocol.sendResponse(location, credential, newMessage)
+          if (newMessage != message) {
+              lastMessage = Some(newMessage)
+              Protocol.sendResponse(location, credential, newMessage)
+          }
         case None =>
           Protocol.sendResponse(location, credential, localize("No messages for you, sorry.")(credential))
       }
