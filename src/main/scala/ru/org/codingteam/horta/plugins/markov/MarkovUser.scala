@@ -172,7 +172,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
 
   def generatePhrase(network: Network, length: Integer)(implicit credential: Credential): String = {
     for (i <- 1 to 25) {
-      val phrase = network.generate()
+      val phrase = network.generate(Configuration.markovMessageWordLimit)
       if (phrase.length >= length) {
         return phrase.mkString(" ")
       }
