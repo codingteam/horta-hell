@@ -56,6 +56,7 @@ object Configuration {
   }
 
   lazy val markovMessagesPerMinute = properties.getProperty("markov_messages_per_minute", "5").toInt
+  lazy val markovMessageWordLimit = properties.getProperty("markov_message_word_limit", "30").toInt
 
   lazy val defaultLocalization = LocaleDefinition(properties.getProperty("localization.default", "en"))
 
