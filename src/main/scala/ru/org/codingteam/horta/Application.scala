@@ -20,7 +20,7 @@ import ru.org.codingteam.horta.plugins.markov.MarkovPlugin
 import ru.org.codingteam.horta.plugins.pet.PetPlugin
 import ru.org.codingteam.horta.plugins.visitor.VisitorPlugin
 import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
-import ru.org.codingteam.horta.plugins.{AccessPlugin, FortunePlugin, VersionPlugin}
+import ru.org.codingteam.horta.plugins.{AccessPlugin, FortunePlugin, TwitterPlugin, VersionPlugin}
 import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import scalikejdbc.GlobalSettings
 
@@ -47,7 +47,8 @@ object Application extends App with StrictLogging {
     // Props[HtmlReaderPlugin], // TODO: Disabled for security reeasons, see #366
     Props[HelperPlugin],
     Props[KarmaPlugin],
-    Props[LogListPlugin]
+    Props[LogListPlugin],
+    Props[TwitterPlugin]
   )
 
   val protocols = List(Props[JabberProtocol])

@@ -6,6 +6,9 @@
     </encoder>
   </appender>
 
+  <logger name="ru.org.codingteam.horta.events.TwitterEndpoint" level="INFO" />
+  <logger name="org.apache.http.wire" level="INFO" />
+  <logger name="ru.org.codingteam.horta.plugins.TwitterPlugin" level="INFO" />
   <root>
     <level value="DEBUG"/>
     <appender-ref ref="STDOUT"/>

@@ -6,6 +6,7 @@ import ru.org.codingteam.horta.messages.{Event, EventMessage, Subscribe, Unsubsc
 
 import scala.concurrent.duration._
 import scala.languageFeature.postfixOps
+import scala.util.{Failure, Success}
 
 
 /**
@@ -26,13 +27,23 @@ abstract class EventProcessor extends BasePlugin {
 
   implicit val timeout = Timeout(60 seconds)
 
+  implicit val executor = context.dispatcher
+
   override def preStart() = {
     super.preStart()
-    core ? Subscribe(filter, self)
+    log.debug("Subscribing {} to external events", this)
+    (core ? Subscribe(filter, self)) onComplete {
+      case Success(_) => log.info("Subscribed {} to external events", this)
+      case Failure(ex) => log.error("Failure while trying to subscribe {}", ex)
+    }
   }
 
   override def postStop() = {
-    core ? Unsubscribe(self)
+    log.debug("Unsubscribing {} from external events", this)
+    (core ? Unsubscribe(self)) onComplete {
+      case Success(_) => log.info("Unsubscribed {} from external events", this)
+      case Failure(ex) => log.error("Failure while trying to unsubscribe {}", ex)
+    }
     super.postStop()
   }
 

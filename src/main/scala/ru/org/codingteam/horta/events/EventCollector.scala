@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.events
 
-import java.util.concurrent.ForkJoinPool
+import java.util.concurrent.Executors
 
 import ru.org.codingteam.horta.messages.{Event, EventMessage}
 import ru.org.codingteam.horta.plugins.BasePlugin
@@ -9,7 +9,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class EventCollector(endpoints: Seq[EventEndpoint]) extends BasePlugin {
 
-  implicit val executor = ExecutionContext.fromExecutorService(new ForkJoinPool(EventCollector.paralellism))
+  implicit val executor = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(EventCollector.paralellism))
 
   override def preStart(): Unit = {
     super.preStart()
@@ -17,6 +17,7 @@ class EventCollector(endpoints: Seq[EventEndpoint]) extends BasePlugin {
       ep.start()
       Future {
         ep.process(this)
+        log.info("Processing for endpoint {} stopped.", ep)
       }
     }
     log.info("EventCollector started")
