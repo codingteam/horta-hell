@@ -100,8 +100,10 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
       lastMessage match {
         case Some(message) =>
           val newMessage = message.replace(from, to)
-          lastMessage = Some(newMessage)
-          Protocol.sendResponse(location, credential, newMessage)
+          if (newMessage != message) {
+              lastMessage = Some(newMessage)
+              Protocol.sendResponse(location, credential, newMessage)
+          }
         case None =>
           Protocol.sendResponse(location, credential, localize("No messages for you, sorry.")(credential))
       }
@@ -170,7 +172,7 @@ class MarkovUser(val room: String, val nick: String) extends Actor with ActorLog
 
   def generatePhrase(network: Network, length: Integer)(implicit credential: Credential): String = {
     for (i <- 1 to 25) {
-      val phrase = network.generate()
+      val phrase = network.generate(Configuration.markovMessageWordLimit)
       if (phrase.length >= length) {
         return phrase.mkString(" ")
       }

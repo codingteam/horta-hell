@@ -24,8 +24,10 @@ class PrivateMucMessageHandler(muc: ActorRef, nick: String, implicit val executo
     case UserMessage(message) =>
       val jid = message.getFrom
       val text = message.getBody
-      (muc ? GetCredential(jid)) onSuccess {
-        case roomCred: Credential => core ! CoreMessage(Clock.now, roomCred.copy(location = self), text)
+      if (text != null) {
+        (muc ? GetCredential(jid)) onSuccess {
+          case roomCred: Credential => core ! CoreMessage(Clock.now, roomCred.copy(location = self), text)
+        }
       }
   }
 }

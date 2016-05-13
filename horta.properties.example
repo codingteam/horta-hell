@@ -20,6 +20,7 @@ room3.room=fgs@fds.omg
 localization.default=ru
 
 markov_messages_per_minute=5
+markov_message_word_limit=30
 
 storage.url=jdbc:h2:hell;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
 storage.user=sa

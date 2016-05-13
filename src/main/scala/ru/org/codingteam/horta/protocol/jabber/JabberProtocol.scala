@@ -14,6 +14,7 @@ import ru.org.codingteam.horta.protocol.{Protocol, SendChatMessage, SendMucMessa
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.language.postfixOps
+import scala.util.Try
 
 class JabberProtocol() extends Actor with ActorLogging {
 
@@ -57,30 +58,33 @@ class JabberProtocol() extends Actor with ActorLogging {
       val actor = context.actorOf(
         Props(new MucMessageHandler(locale, self, jid, nickname)), jid)
 
-      try {
+      val muc = Try({
         // TODO: Move this code to the room actor and use "let it fall" strategy ~ F
         val muc = new MultiUserChat(connection, jid)
-        rooms = rooms.updated(jid, RoomDefinition(muc, actor))
-
         muc.addMessageListener(new MucMessageListener(jid, actor, log))
         muc.addParticipantStatusListener(new MucParticipantStatusListener(muc, actor))
-
-        val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
-        connection.addPacketListener(
-          new MessageAutoRepeater(context.system, self, context.system.scheduler, jid, context.dispatcher),
-          filter)
 
         muc.join(nickname)
         greeting match {
           case Some(text) => muc.sendMessage(text)
           case None =>
         }
-      } catch {
+
+        muc
+      })
+
+      muc.map(instance => {
+        rooms = rooms.updated(jid, RoomDefinition(instance, actor))
+        val filter = new AndFilter(new PacketTypeFilter(classOf[Message]), new FromContainsFilter(jid))
+        connection.addPacketListener(
+          new MessageAutoRepeater(context.system, self, context.system.scheduler, jid, context.dispatcher),
+          filter)
+      }).recover({
         case t: Throwable =>
           log.warning(s"Cannot join room $jid, retrying in $rejoinInterval. Error was $t")
           context.stop(actor)
           context.system.scheduler.scheduleOnce(rejoinInterval, self, message)
-      }
+      })
 
     case ChatOpened(chat) =>
       chats = chats.updated(chat.getParticipant, chat)
