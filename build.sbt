@@ -32,6 +32,7 @@ libraryDependencies ++= Seq(
   "org.jsoup" % "jsoup" % "1.7.3",
   "io.spray" %% "spray-json" % "1.3.1",
   "com.twitter" % "hbc-core" % "2.2.0"
+    exclude("commons-logging", "commons-logging") // because jcl-over-slf4j is its drop-in replacement
 )
 
 resourceGenerators in Compile <+= genVersionProperties
