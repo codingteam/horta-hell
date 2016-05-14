@@ -9,13 +9,22 @@ Using
 
 ### Configuration
 
-Copy `horta.properties.example` file to `horta.properties` and tune it. All options should be self-explanatory.
+Copy `horta.properties.example` file to `horta.properties` and tune it. All
+options should be self-explanatory.
 
-Horta designed to use the embedded H2 database. You may tune the `storage` parameter group in the configuration file.
-Note that `AUTO_SERVER` parameter should be set to `TRUE` for coordinated database access of multiple applications.
+Horta designed to use the embedded H2 database. You may tune the `storage`
+parameter group in the configuration file. Note that `AUTO_SERVER` parameter
+should be set to `TRUE` for coordinated database access of multiple
+applications.
 
-By default horta will use the configuration file `horta.properties` from the current directory but it will read the path
-to the configuration file from the program arguments.
+By default horta will use the configuration file `horta.properties` from the
+current directory but it will read the path to the configuration file from the
+program arguments.
+
+#### Twitter integration
+
+To set up the Twitter integration, you should create an app on [Twitter
+application management site][twitter-new-app], and generate access token there.
 
 ### Deployment
 
@@ -102,3 +111,4 @@ XMPP conference: `codingteam@conference.jabber.ru`.
 
 [issue-366]: https://github.com/codingteam/horta-hell/issues/366
 [horta-foundation]: https://github.com/codingteam/horta-foundation
+[twitter-new-app]: https://apps.twitter.com/app/new
