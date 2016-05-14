@@ -1,6 +1,6 @@
 package ru.org.codingteam.horta.configuration
 
-import java.io.{StringReader, Reader, FileInputStream, InputStreamReader}
+import java.io.{FileInputStream, InputStreamReader, Reader, StringReader}
 import java.nio.file.Path
 import java.util.Properties
 
@@ -19,7 +19,7 @@ object Configuration {
   private def openReader(): Reader = {
     configContent.map(content => new StringReader(content))
       .getOrElse(configPath.map(path => new InputStreamReader(new FileInputStream(path.toFile), "UTF8"))
-      .getOrElse(sys.error("Configuration not defined")))
+      .getOrElse(sys.error(s"Configuration not found at '$configPath'.")))
   }
 
   private var configPath: Option[Path] = None
@@ -47,12 +47,13 @@ object Configuration {
 
   lazy val roomIds = Option(properties.getProperty("rooms")).map(_.split(",")).getOrElse(Array())
   lazy val roomDescriptors = roomIds map {
-    case rid => new RoomDescriptor(
+    case rid => RoomDescriptor(
       rid,
       properties.getProperty(rid + ".room"),
       LocaleDefinition(properties.getProperty(rid + ".locale", defaultLocalization.name)),
       properties.getProperty(rid + ".nickname", dftName),
-      properties.getProperty(rid + ".message", dftMessage))
+      properties.getProperty(rid + ".message", dftMessage),
+      properties.getProperty(rid + ".events", ""))
   }
 
   lazy val markovMessagesPerMinute = properties.getProperty("markov_messages_per_minute", "5").toInt
@@ -63,4 +64,8 @@ object Configuration {
   lazy val storageUrl = properties.getProperty("storage.url")
   lazy val storageUser = properties.getProperty("storage.user")
   lazy val storagePassword = properties.getProperty("storage.password")
+
+  def apply(key: String): String = {
+    properties.getProperty(key)
+  }
 }
