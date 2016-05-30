@@ -47,6 +47,19 @@ interested in `Run-Container.ps1` script.
     $ docker rm horta-hell
     $ docker run -d --name horta-hell -v /path/to/local/horta/configuration/directory:/data codingteam/horta-hell
 
+### Configuring for Windows
+
+It's recommended to create `Run-Container.private.ps1` script like this:
+
+    docker-machine env | Invoke-Expression
+
+    $HortaArtifact = 'some\path\target\scala-2.11\horta-hell-assembly.jar'
+    $VolumePath = '/c/Users/UserName/Docker-Data/horta-hell'
+    & $PSScriptRoot\Run-Container.ps1 $HortaArtifact $VolumePath
+
+After that you can run this script and have all the deployment process
+automated.
+
 Updating the packages
 ---------------------
 The recommended way of upgrading is to [rebuild and recreate the whole
