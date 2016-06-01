@@ -49,13 +49,16 @@ interested in `Run-Container.ps1` script.
 
 ### Configuring for Windows
 
-It's recommended to create `Run-Container.private.ps1` script like this:
+It's recommended to execute `Run-Container.ps1` script like this (please check
+the parameter section):
 
     docker-machine env | Invoke-Expression
 
+    $docker = 'C:\Program Files\Docker Toolbox\docker.exe'
     $HortaArtifact = 'some\path\target\scala-2.11\horta-hell-assembly.jar'
     $VolumePath = '/c/Users/UserName/Docker-Data/horta-hell'
-    & $PSScriptRoot\Run-Container.ps1 $HortaArtifact $VolumePath
+
+    & horta-foundation\Run-Container.ps1 $HortaArtifact $VolumePath $docker
 
 After that you can run this script and have all the deployment process
 automated.
