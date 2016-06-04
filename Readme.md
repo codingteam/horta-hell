@@ -49,16 +49,16 @@ interested in `Run-Container.ps1` script.
 
 ### Configuring for Windows
 
+Currently the recommended way of running the container on Windows is to deploy
+it through [Docker for Windows][docker-for-windows].
+
 It's recommended to execute `Run-Container.ps1` script like this (please check
 the parameter section):
 
-    docker-machine env | Invoke-Expression
-
-    $docker = 'C:\Program Files\Docker Toolbox\docker.exe'
     $HortaArtifact = 'some\path\target\scala-2.11\horta-hell-assembly.jar'
-    $VolumePath = '/c/Users/UserName/Docker-Data/horta-hell'
+    $VolumePath = 'c:/Users/UserName/Docker-Data/horta-hell'
 
-    & horta-foundation\Run-Container.ps1 $HortaArtifact $VolumePath $docker
+    & horta-foundation\Run-Container.ps1 $HortaArtifact $VolumePath
 
 After that you can run this script and have all the deployment process
 automated.
@@ -70,6 +70,7 @@ container][so-docker-upgrade]. Your data is stored on an external data volume,
 so it will be fully preserved.
 
 [docker]: https://www.docker.com/
+[docker-for-windows]: https://beta.docker.com/docs/windows/
 [horta-hell]: https://github.com/codingteam/horta-hell
 [horta-web]: https://github.com/codingteam/horta-web
 [so-docker-upgrade]: http://stackoverflow.com/questions/26734402
