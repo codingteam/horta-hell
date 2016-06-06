@@ -31,3 +31,5 @@ twitter.auth.consumerKey=aa
 twitter.auth.consumerSecret=aa
 twitter.auth.token=aa
 twitter.auth.tokenSecret=aa
+
+loglist.url = https://loglist.net

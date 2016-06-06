@@ -65,6 +65,8 @@ object Configuration {
   lazy val storageUser = properties.getProperty("storage.user")
   lazy val storagePassword = properties.getProperty("storage.password")
 
+  lazy val loglistUrl = properties.getProperty("loglist.url", "https://loglist.net")
+
   def apply(key: String): String = {
     properties.getProperty(key)
   }
