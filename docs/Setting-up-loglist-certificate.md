@@ -13,8 +13,7 @@ could be done like this (Linux, `bash`):
     openssl s_client -showcerts -connect loglist.net:443 </dev/null 2>/dev/null|openssl x509 -outform PEM >loglist.net.pem
     keytool -import -file ./loglist.net.pem -keystore $JAVA_HOME/lib/security/cacerts -alias loglist.net
 
-_(Please note that the default password for keystore is `changeit`, but I have
-yet to see someone who actually did changed it.)_
+_(Note that the default password for keystore is `changeit`.)_
 
 Or like this (Windows, PowerShell):
 
