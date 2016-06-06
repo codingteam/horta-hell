@@ -1,14 +1,15 @@
 package ru.org.codingteam.horta.plugins.loglist
 
 import akka.event.LoggingAdapter
+import ru.org.codingteam.horta.configuration.Configuration
 
 import scala.io.{Codec, Source}
 import spray.json._
 import spray.json.DefaultJsonProtocol._
 
 object LogListApi {
-  private val LOGLIST_QUOTE_API_BASE_URL = "http://www.loglist.net/api/quote"
-  private val LOGLIST_QUOTE_BASE_URL = "http://www.loglist.net/quote"
+  private lazy val LOGLIST_QUOTE_API_BASE_URL = s"${Configuration.loglistUrl}/api/quote"
+  private lazy val LOGLIST_QUOTE_BASE_URL = s"${Configuration.loglistUrl}/quote"
 
   def getRandomQuote(implicit log: LoggingAdapter): Quote = {
     retrieveQuoteFromUrl(s"$LOGLIST_QUOTE_API_BASE_URL/random")
