@@ -11,7 +11,7 @@ connect to it) is to obtain and install its certificate to your JVM storage. It
 could be done like this (Linux, `bash`):
 
     openssl s_client -showcerts -connect loglist.net:443 </dev/null 2>/dev/null|openssl x509 -outform PEM >loglist.net.pem
-    keytool -import -file ./loglist.net.pem -keystore $JAVA_HOME/lib/security/cacerts -alias loglist.net
+    keytool -import -file ./loglist.net.pem -keystore $JAVA_HOME/jre/lib/security/cacerts -alias loglist.net
 
 _(Note that the default password for keystore is `changeit`.)_
 
@@ -19,7 +19,7 @@ Or like this (Windows, PowerShell):
 
     $env:PATH += ';C:\Program Files\Git\usr\bin'
     bash -c 'openssl s_client -showcerts -connect loglist.net:443 </dev/null 2>/dev/null|openssl x509 -outform PEM >loglist.net.pem'
-    & $env:JAVA_HOME/bin/keytool -import -file ./loglist.net.pem -keystore $env:JAVA_HOME/lib/security/cacerts -alias loglist.net
+    & $env:JAVA_HOME/bin/keytool -import -file ./loglist.net.pem -keystore $env:JAVA_HOME/jre/lib/security/cacerts -alias loglist.net
 
 _(Please check `$env:JAVA_HOME` if it points to a proper location before
 executing this command. Also I apologize for cheating with `bash` from `git`
