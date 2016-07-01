@@ -32,4 +32,6 @@ twitter.auth.consumerSecret=aa
 twitter.auth.token=aa
 twitter.auth.tokenSecret=aa
 
+pet.rooms=room1,room3
+
 loglist.url = https://loglist.net

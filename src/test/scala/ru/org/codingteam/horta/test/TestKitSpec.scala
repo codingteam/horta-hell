@@ -20,19 +20,21 @@ abstract class TestKitSpec extends TestKit(ActorSystem("TestSystem", ConfigFacto
     |akka.actor.deployment {
     |}
   """.stripMargin)))
-with ImplicitSender
-with WordSpecLike
-with Matchers
-with OptionValues
-with Eventually {
+  with ImplicitSender
+  with WordSpecLike
+  with Matchers
+  with OptionValues
+  with Eventually {
   implicit val timeout = Timeout(15.seconds)
 
-  Configuration.initialize(
+  val configuration =
     """
       |storage.url=jdbc:h2:hell_test;DB_CLOSE_DELAY=-1
       |storage.user=sa
       |storage.password=
-      |""".stripMargin)
+      |""".stripMargin
+
+  Configuration.initialize(configuration)
 
   val pluginProps = List[Props]()
   val core = system.actorOf(Props(new Core(List(Props[LogPlugin]), List())), "core")
