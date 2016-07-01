@@ -67,6 +67,9 @@ object Configuration {
 
   lazy val loglistUrl = properties.getProperty("loglist.url", "https://loglist.net")
 
+  lazy val petRoomNames = properties.getProperty("pet.rooms", "").split(',').map(_.trim)
+  lazy val petRoomIds = petRoomNames.map(roomDescriptors).map(_.room).toSet
+
   def apply(key: String): String = {
     properties.getProperty(key)
   }

@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import org.joda.time.DateTime
+import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.localization.Localization
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.plugins.pet.commands._
@@ -82,7 +83,9 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor with
   }
 
   override def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef) {
-    initializePet(roomJID, actor)
+    if (Configuration.petRoomIds.contains(roomJID)) {
+      initializePet(roomJID, actor)
+    }
   }
 
   override def processRoomLeave(time: DateTime, roomJID: String) {
