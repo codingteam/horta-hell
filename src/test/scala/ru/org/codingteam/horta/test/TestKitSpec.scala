@@ -34,7 +34,11 @@ abstract class TestKitSpec extends TestKit(ActorSystem("TestSystem", ConfigFacto
       |storage.password=
       |""".stripMargin
 
-  Configuration.initialize(configuration)
+  def configure(): Unit = {
+    Configuration.initialize(configuration)
+  }
+
+  configure()
 
   val pluginProps = List[Props]()
   val core = system.actorOf(Props(new Core(List(Props[LogPlugin]), List())), "core")
