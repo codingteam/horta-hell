@@ -1,9 +1,9 @@
-package ru.org.codingteam.horta.test
+package ru.org.codingteam.horta.events
 
 import akka.actor.Props
 import akka.pattern.ask
-import ru.org.codingteam.horta.events.{EventCollector, EventEndpoint}
 import ru.org.codingteam.horta.messages.{EventMessage, Subscribe, TwitterEvent}
+import ru.org.codingteam.horta.test.TestKitSpec
 
 class EventCollectorSpec extends TestKitSpec {
 

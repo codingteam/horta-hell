@@ -1,7 +1,7 @@
-package ru.org.codingteam.horta.test
+package ru.org.codingteam.horta.messages
 
 import akka.pattern.ask
-import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.test.TestKitSpec
 
 import scala.concurrent.Await
 
