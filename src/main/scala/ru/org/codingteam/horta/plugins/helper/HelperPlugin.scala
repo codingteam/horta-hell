@@ -1,4 +1,4 @@
-package ru.org.codingteam.horta.plugins.HelperPlugin
+package ru.org.codingteam.horta.plugins.helper
 
 import akka.pattern.ask
 import akka.util.Timeout

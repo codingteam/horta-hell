@@ -1,9 +1,9 @@
-package ru.org.codingteam.horta.test
+package ru.org.codingteam.horta.plugins.pet
 
 import akka.actor.Props
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.plugins.pet.Pet.{GetPetDataInternal, SetPetDataInternal}
-import ru.org.codingteam.horta.plugins.pet.{Pet, PetData}
+import ru.org.codingteam.horta.test.TestKitSpec
 
 import scala.concurrent.duration._
 

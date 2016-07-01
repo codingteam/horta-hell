@@ -1,11 +1,12 @@
-package ru.org.codingteam.horta.test
+package ru.org.codingteam.horta.plugins.helper
 
 import akka.actor.Props
 import ru.org.codingteam.horta.localization.{LocaleDefinition, Localization}
-import ru.org.codingteam.horta.plugins.HelperPlugin.{HelperPlugin, ManCommand}
+import ru.org.codingteam.horta.plugins.helper.{HelperPlugin, ManCommand}
 import ru.org.codingteam.horta.plugins.ProcessCommand
 import ru.org.codingteam.horta.protocol.SendResponse
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+import ru.org.codingteam.horta.test.TestKitSpec
 
 class HelperPluginSpec extends TestKitSpec {
 

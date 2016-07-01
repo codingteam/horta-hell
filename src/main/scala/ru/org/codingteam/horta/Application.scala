@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.StrictLogging
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Core
 import ru.org.codingteam.horta.events.{EventCollector, TwitterEndpoint}
-import ru.org.codingteam.horta.plugins.HelperPlugin.HelperPlugin
+import ru.org.codingteam.horta.plugins.helper.HelperPlugin
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.diag.DiagnosticPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller

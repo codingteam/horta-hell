@@ -1,12 +1,12 @@
-package ru.org.codingteam.horta.test
+package ru.org.codingteam.horta.plugins.log
 
 import akka.actor.Props
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.localization.LocaleDefinition
-import ru.org.codingteam.horta.plugins.log.{LogPlugin, SearchLogCommand}
 import ru.org.codingteam.horta.plugins.{ProcessCommand, ProcessMessage}
 import ru.org.codingteam.horta.protocol.SendResponse
 import ru.org.codingteam.horta.security.{CommonAccess, Credential}
+import ru.org.codingteam.horta.test.TestKitSpec
 
 class LogPluginSpec extends TestKitSpec {
 
