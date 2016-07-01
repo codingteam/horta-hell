@@ -69,7 +69,7 @@ class MarkovPlugin() extends BasePlugin
   }
 
   def isMyself(credential: Credential): Boolean = {
-    (Configuration.roomDescriptors find { rd => rd.room == credential.roomId.getOrElse("") } map { rd => rd.nickname } getOrElse (Configuration.dftName)) == credential.name
+    (Configuration.roomDescriptors.values find { rd => rd.room == credential.roomId.getOrElse("") } map { rd => rd.nickname } getOrElse (Configuration.dftName)) == credential.name
   }
 
   def generatePhrase(credential: Credential, arguments: Array[String]) {

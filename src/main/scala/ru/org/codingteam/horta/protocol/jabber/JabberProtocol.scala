@@ -166,7 +166,7 @@ class JabberProtocol() extends Actor with ActorLogging {
     connection.login(Configuration.login, Configuration.password)
     log.info("Login succeed")
 
-    Configuration.roomDescriptors foreach {
+    Configuration.roomDescriptors.values foreach {
       case rd =>
         if (rd.room != null) self ! JoinRoom(rd.room, rd.locale, rd.nickname, Option(rd.message))
         else log.warning(s"No JID given for room ${rd.id}")

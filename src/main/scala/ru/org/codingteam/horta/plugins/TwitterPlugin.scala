@@ -56,7 +56,7 @@ class TwitterPlugin extends EventProcessor with RoomProcessor with ActorLogging 
     * @param actor   actor representing the room.
     */
   override protected def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef): Unit = {
-    Configuration.roomDescriptors find { rd => roomJID.equals(rd.room) } filter {
+    Configuration.roomDescriptors.values find { rd => roomJID.equals(rd.room) } filter {
       _.isEventEnabled("twitter")
     } match {
       case Some(_) =>

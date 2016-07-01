@@ -46,15 +46,15 @@ object Configuration {
   lazy val dftMessage = properties.getProperty("message")
 
   lazy val roomIds = Option(properties.getProperty("rooms")).map(_.split(",")).getOrElse(Array())
-  lazy val roomDescriptors = roomIds map {
-    case rid => RoomDescriptor(
+  lazy val roomDescriptors = roomIds.map({
+    case rid => (rid, RoomDescriptor(
       rid,
       properties.getProperty(rid + ".room"),
       LocaleDefinition(properties.getProperty(rid + ".locale", defaultLocalization.name)),
       properties.getProperty(rid + ".nickname", dftName),
       properties.getProperty(rid + ".message", dftMessage),
-      properties.getProperty(rid + ".events", ""))
-  }
+      properties.getProperty(rid + ".events", "")))
+  }).toMap
 
   lazy val markovMessagesPerMinute = properties.getProperty("markov_messages_per_minute", "5").toInt
   lazy val markovMessageWordLimit = properties.getProperty("markov_message_word_limit", "30").toInt
