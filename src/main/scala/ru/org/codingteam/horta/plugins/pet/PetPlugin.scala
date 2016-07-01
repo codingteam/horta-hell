@@ -59,33 +59,33 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor with
 
     credential.roomId match {
       case Some(room) =>
-        val pet = initializePet(room, location)
-
-        // (isPrivate, text):
-        val responseF: Future[(Boolean, String)] = arguments match {
-          case Array(PetCommandMatcher(command), args@_*) =>
-            (pet ? Pet.ExecuteCommand(command, credential, args.toArray)).mapTo[String].map(s => (false, s))
-          case Array("transactions") =>
-            withDatabase(_.readTransactions(credential.roomId.get, credential.name)) map { case transactions =>
-              (true, transactions.mkString("\n"))
+        initializePet(room, location) match {
+          case Some(pet) =>
+            // (isPrivate, text):
+            val responseF: Future[(Boolean, String)] = arguments match {
+              case Array(PetCommandMatcher(command), args@_*) =>
+                (pet ? Pet.ExecuteCommand(command, credential, args.toArray)).mapTo[String].map(s => (false, s))
+              case Array("transactions") =>
+                withDatabase(_.readTransactions(credential.roomId.get, credential.name)) map { case transactions =>
+                  (true, transactions.mkString("\n"))
+                }
+              case _ => Future.successful((false, Localization.localize("Try $pet help.")(credential)))
             }
-          case _ => Future.successful((false, Localization.localize("Try $pet help.")(credential)))
-        }
 
-        for (response <- responseF) {
-          response match {
-            case (true, message) => Protocol.sendPrivateResponse(location, credential, message)
-            case (false, message) => Protocol.sendResponse(location, credential, message)
-          }
+            for (response <- responseF) {
+              response match {
+                case (true, message) => Protocol.sendPrivateResponse(location, credential, message)
+                case (false, message) => Protocol.sendResponse(location, credential, message)
+              }
+            }
+          case None =>
         }
       case None =>
     }
   }
 
   override def processRoomJoin(time: DateTime, roomJID: String, actor: ActorRef) {
-    if (Configuration.petRoomIds.contains(roomJID)) {
-      initializePet(roomJID, actor)
-    }
+    initializePet(roomJID, actor)
   }
 
   override def processRoomLeave(time: DateTime, roomJID: String) {
@@ -97,16 +97,19 @@ class PetPlugin extends BasePlugin with CommandProcessor with RoomProcessor with
     }
   }
 
-  private def initializePet(roomId: String, location: ActorRef): ActorRef = {
-    pets.get(roomId) match {
-      case Some(actor) => actor
-      case None =>
-        val actor = context.actorOf(Props(classOf[Pet], roomId, location))
-        pets = pets.updated(roomId, actor)
-        actor
+  private def initializePet(roomId: String, location: ActorRef): Option[ActorRef] = {
+    if (!Configuration.petRoomIds.contains(roomId)) {
+      None
+    } else {
+      pets.get(roomId) match {
+        case Some(actor) => Some(actor)
+        case None =>
+          val actor = context.actorOf(Props(classOf[Pet], roomId, location))
+          pets = pets.updated(roomId, actor)
+          Some(actor)
+      }
     }
   }
-
 }
 
 object PetPlugin {
