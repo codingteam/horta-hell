@@ -27,18 +27,19 @@ abstract class TestKitSpec extends TestKit(ActorSystem("TestSystem", ConfigFacto
   with Eventually {
   implicit val timeout = Timeout(15.seconds)
 
-  val configuration =
+  Configuration.initialize(
     """
       |storage.url=jdbc:h2:hell_test;DB_CLOSE_DELAY=-1
       |storage.user=sa
       |storage.password=
-      |""".stripMargin
-
-  def configure(): Unit = {
-    Configuration.initialize(configuration)
-  }
-
-  configure()
+      |
+      |rooms=room1,room2,room3
+      |room1.room=foo@example.com
+      |room2.room=bar@example.com
+      |room3.room=baz@example.com
+      |
+      |pet.rooms=room1,room2
+    """.stripMargin)
 
   val pluginProps = List[Props]()
   val core = system.actorOf(Props(new Core(List(Props[LogPlugin]), List())), "core")

@@ -7,19 +7,6 @@ import ru.org.codingteam.horta.test.TestKitSpec
 
 class PetPluginSpec extends TestKitSpec {
 
-  override def configure(): Unit = {
-    val content = configuration +
-      """
-        |
-        |rooms=room1,room2,room3
-        |room1.room=foo@example.com
-        |room2.room=bar@example.com
-        |room3.room=baz@example.com
-        |pet.rooms=room1,room2
-      """.stripMargin
-    Configuration.initialize(content)
-  }
-
   def createPlugin() = TestActorRef[PetPlugin].underlyingActor
 
   "PetPlugin" should {
