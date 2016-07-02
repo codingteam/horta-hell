@@ -1,7 +1,6 @@
 package ru.org.codingteam.horta.plugins.pet
 
 import akka.testkit.TestActorRef
-import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.test.TestKitSpec
 
