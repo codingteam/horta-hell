@@ -65,7 +65,7 @@ Known command list:
 * `$fortune` - shows a fortune from @rexim database.
 
 * `$link` - shows a HTML document title from provided URL. *This plugin is
-  disabled for security reasons, see [#366][issue-366] for details.
+  disabled for security reasons, see [#366][issue-366] for details.*
 
 * `$pet` - Tamagochi-like plugin, contains internal subcommand system. Enter `$pet help` for details. Distinct pets are
 created for every room.
