@@ -1,6 +1,5 @@
-horta-foundation
+horta-foundation [![Status Ventis][status-ventis]][andivionian-status-classifier]
 ================
-[![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-foundation/badge/pr?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-foundation) [![codingteam/horta-hell](http://issuestats.com/github/codingteam/horta-foundation/badge/issue?style=flat-square)](http://www.issuestats.com/github/codingteam/horta-foundation)
 
 horta-foundation is a project for providing the default [horta-hell][]
 environment ready for production.
@@ -74,3 +73,6 @@ so it will be fully preserved.
 [horta-hell]: https://github.com/codingteam/horta-hell
 [horta-web]: https://github.com/codingteam/horta-web
 [so-docker-upgrade]: http://stackoverflow.com/questions/26734402
+[andivionian-status-classifier]: https://github.com/ForNeVeR/andivionian-status-classifier#status-ventis-
+
+[status-ventis]: https://img.shields.io/badge/status-ventis-yellow.svg
