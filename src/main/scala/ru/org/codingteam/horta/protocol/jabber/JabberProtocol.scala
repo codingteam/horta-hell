@@ -65,6 +65,7 @@ class JabberProtocol() extends Actor with ActorLogging {
         muc.addParticipantStatusListener(new MucParticipantStatusListener(muc, actor))
 
         muc.join(nickname)
+        log.info(s"Joined room $jid")
         greeting match {
           case Some(text) => muc.sendMessage(text)
           case None =>
@@ -81,7 +82,7 @@ class JabberProtocol() extends Actor with ActorLogging {
           filter)
       }).recover({
         case t: Throwable =>
-          log.warning(s"Cannot join room $jid, retrying in $rejoinInterval. Error was $t")
+          log.error(t, s"Cannot join room $jid, retrying in $rejoinInterval")
           context.stop(actor)
           context.system.scheduler.scheduleOnce(rejoinInterval, self, message)
       })
