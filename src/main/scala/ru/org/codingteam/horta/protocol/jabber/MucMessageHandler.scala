@@ -34,6 +34,7 @@ class MucMessageHandler(locale: LocaleDefinition,
   override def postStop() {
     core ! CoreRoomLeave(Clock.now, roomJID)
     super.postStop()
+    log.info(s"Room $roomJID stopped")
   }
 
   override def receive = {
