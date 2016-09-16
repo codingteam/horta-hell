@@ -54,9 +54,11 @@ class JabberProtocol() extends Actor with ActorLogging {
       log.info(s"Ignored reconnect request from connection $otherConnection")
 
     case message@JoinRoom(jid, locale, nickname, greeting) =>
+      Thread.sleep(rejoinInterval.toMillis)
+
       log.info(s"Joining room $jid")
       val actor = context.actorOf(
-        Props(new MucMessageHandler(locale, self, jid, nickname)), jid)
+        Props(new MucMessageHandler(locale, self, jid, nickname)))
 
       val muc = Try({
         // TODO: Move this code to the room actor and use "let it fall" strategy ~ F
@@ -66,6 +68,7 @@ class JabberProtocol() extends Actor with ActorLogging {
 
         muc.join(nickname)
         log.info(s"Joined room $jid")
+
         greeting match {
           case Some(text) => muc.sendMessage(text)
           case None =>
