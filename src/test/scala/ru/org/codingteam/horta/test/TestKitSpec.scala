@@ -42,6 +42,6 @@ abstract class TestKitSpec extends TestKit(ActorSystem("TestSystem", ConfigFacto
     """.stripMargin)
 
   val pluginProps = List[Props]()
-  val core = system.actorOf(Props(new Core(List(Props[LogPlugin]), List())), "core")
+  val core = system.actorOf(Props(new Core(List(Props[LogPlugin]))), "core")
   val plugins = Await.result(Core.getPluginDefinitions(core), timeout.duration)
 }

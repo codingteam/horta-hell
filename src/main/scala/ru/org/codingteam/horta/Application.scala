@@ -8,10 +8,10 @@ import com.typesafe.scalalogging.StrictLogging
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Core
 import ru.org.codingteam.horta.events.{EventCollector, TwitterEndpoint}
-import ru.org.codingteam.horta.plugins.helper.HelperPlugin
 import ru.org.codingteam.horta.plugins.bash.BashPlugin
 import ru.org.codingteam.horta.plugins.diag.DiagnosticPlugin
 import ru.org.codingteam.horta.plugins.dice.DiceRoller
+import ru.org.codingteam.horta.plugins.helper.HelperPlugin
 import ru.org.codingteam.horta.plugins.karma.KarmaPlugin
 import ru.org.codingteam.horta.plugins.log.LogPlugin
 import ru.org.codingteam.horta.plugins.loglist.LogListPlugin
@@ -21,7 +21,6 @@ import ru.org.codingteam.horta.plugins.pet.PetPlugin
 import ru.org.codingteam.horta.plugins.visitor.VisitorPlugin
 import ru.org.codingteam.horta.plugins.wtf.WtfPlugin
 import ru.org.codingteam.horta.plugins.{AccessPlugin, FortunePlugin, TwitterPlugin, VersionPlugin}
-import ru.org.codingteam.horta.protocol.jabber.JabberProtocol
 import scalikejdbc.GlobalSettings
 
 object Application extends App with StrictLogging {
@@ -51,12 +50,10 @@ object Application extends App with StrictLogging {
     Props[TwitterPlugin]
   )
 
-  val protocols = List(Props[JabberProtocol])
-
   initializeConfiguration(args)
 
   val system = ActorSystem("CodingteamSystem", ConfigFactory.parseResources("application.conf"))
-  val core = system.actorOf(Props(new Core(plugins, protocols)), "core")
+  val core = system.actorOf(Props(new Core(plugins)), "core")
   val eventCollector = system.actorOf(Props(classOf[EventCollector], eventEndpoints))
 
   private def initializeConfiguration(args: Array[String]) {

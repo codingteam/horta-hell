@@ -7,6 +7,8 @@ import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{PersistentStore, RepositoryFactory}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
+import ru.org.codingteam.horta.protocol.IProtocol
+import ru.org.codingteam.horta.protocol.xmpp.XmppProtocol
 import ru.org.codingteam.horta.security._
 
 import scala.concurrent.duration._
@@ -16,7 +18,7 @@ import scala.language.postfixOps
 /**
  * Horta core actor. Manages all plugins, routes global messages.
  */
-class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with ActorLogging {
+class Core(pluginProps: List[Props]) extends Actor with ActorLogging {
 
   import context.dispatcher
 
@@ -47,6 +49,8 @@ class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with 
    */
   var participantReceivers = List[ActorRef]()
 
+  private var protocols = Vector[IProtocol]()
+
   override def preStart() {
     definitions = getPluginDefinitions
     parseNotifications(definitions)
@@ -55,9 +59,13 @@ class Core(pluginProps: List[Props], protocols: List[Props]) extends Actor with 
     commands foreach (command => log.info(s"Registered command: $command"))
 
     val storages = Core.getStorages(definitions)
-
     val store = context.actorOf(Props(classOf[PersistentStore], storages), "store")
-    protocols.foreach(context.actorOf)
+    protocols = Vector(new XmppProtocol(log, self))
+  }
+
+  override def postStop(): Unit = {
+    protocols.foreach(_.dispose())
+    super.postStop()
   }
 
   private def getPluginDefinitions: List[(ActorRef, PluginDefinition)] = {
