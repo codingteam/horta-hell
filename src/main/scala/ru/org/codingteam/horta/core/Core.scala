@@ -8,7 +8,7 @@ import ru.org.codingteam.horta.database.{PersistentStore, RepositoryFactory}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
 import ru.org.codingteam.horta.protocol.IProtocol
-import ru.org.codingteam.horta.protocol.xmpp.XmppProtocol
+import ru.org.codingteam.horta.protocol.xmpp.{Xmpp, XmppProtocolWrapper}
 import ru.org.codingteam.horta.security._
 
 import scala.concurrent.duration._
@@ -49,7 +49,8 @@ class Core(pluginProps: List[Props]) extends Actor with ActorLogging {
    */
   var participantReceivers = List[ActorRef]()
 
-  private var protocols = Vector[IProtocol]()
+  private val xmpp = context.actorOf(Props[Xmpp], "xmpp")
+  private val protocols = Vector(new XmppProtocolWrapper(context.system, xmpp))
 
   override def preStart() {
     definitions = getPluginDefinitions
@@ -60,7 +61,6 @@ class Core(pluginProps: List[Props]) extends Actor with ActorLogging {
 
     val storages = Core.getStorages(definitions)
     val store = context.actorOf(Props(classOf[PersistentStore], storages), "store")
-    protocols = Vector(new XmppProtocol(log, self))
   }
 
   override def postStop(): Unit = {

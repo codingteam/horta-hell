@@ -41,10 +41,18 @@ trait IProtocol {
   def sendRoomMessage(roomId: RoomId, message: String): Future[Unit]
 
   /**
-   * Send private message to the user.
+   * Send private message to the room user.
    *
    * @param userId user identifier.
    * @param message message text.
    */
-  def sendPrivateMessage(userId: GlobalUserId, message: String): Future[Unit]
+  def sendPrivateRoomMessage(userId: RoomUserId, message: String): Future[Unit]
+
+  /**
+   * Send a message to the protocol user.
+   *
+   * @param userId user identifier.
+   * @param message message text.
+   */
+  def sendDirectMessage(userId: GlobalUserId, message: String): Future[Unit]
 }
