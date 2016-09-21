@@ -1,13 +1,13 @@
 package ru.org.codingteam.horta.protocol
 
+import ru.org.codingteam.horta.localization.LocaleDefinition
 import ru.org.codingteam.horta.protocol.jabber.{Affiliation, Role}
 
 import scala.concurrent.Future
 
 case class GlobalUserId(id: String)
 case class RoomId(id: String)
-case class RoomUserId(id: String)
-
+case class RoomUserId(roomId: RoomId, userId: String)
 case class Participant(id: RoomUserId, affiliation: Affiliation, role: Role)
 
 trait IProtocol {
@@ -22,11 +22,13 @@ trait IProtocol {
    * interval.
    *
    * @param roomId room identifier.
+   * @param locale locale used in the room.
    */
-  def joinRoom(roomId: RoomId): Unit
+  def joinRoom(roomId: RoomId, locale: LocaleDefinition): Unit
 
   /**
    * Get room participants.
+   *
    * @param roomId room identifier.
    * @return (name ⇒ participant) map
    */
@@ -35,7 +37,7 @@ trait IProtocol {
   /**
    * Send public message to the room.
    *
-   * @param roomId room identifier.
+   * @param roomId  room identifier.
    * @param message message text.
    */
   def sendRoomMessage(roomId: RoomId, message: String): Future[Unit]
@@ -43,7 +45,7 @@ trait IProtocol {
   /**
    * Send private message to the room user.
    *
-   * @param userId user identifier.
+   * @param userId  user identifier.
    * @param message message text.
    */
   def sendPrivateRoomMessage(userId: RoomUserId, message: String): Future[Unit]
@@ -51,7 +53,7 @@ trait IProtocol {
   /**
    * Send a message to the protocol user.
    *
-   * @param userId user identifier.
+   * @param userId  user identifier.
    * @param message message text.
    */
   def sendDirectMessage(userId: GlobalUserId, message: String): Future[Unit]

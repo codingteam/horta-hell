@@ -3,6 +3,7 @@ package ru.org.codingteam.horta.plugins.diag
 import akka.util.Timeout
 import ru.org.codingteam.horta.plugins.{CommandDefinition, CommandProcessor}
 import ru.org.codingteam.horta.protocol.Protocol
+import ru.org.codingteam.horta.protocol.xmpp.Xmpp
 import ru.org.codingteam.horta.security.{Credential, RoomAdminAccess}
 
 import scala.concurrent.duration._
@@ -30,7 +31,7 @@ class DiagnosticPlugin extends CommandProcessor {
           case Array("participants") =>
             val location = credential.location
             Protocol.getParticipants(location) map { participants =>
-              val nicknames = participants.toStream.map(item => Protocol.nickByJid(item._1))
+              val nicknames = participants.toStream.map(item => Xmpp.nickByJid(item._1))
               val message = nicknames.mkString(", ")
               Protocol.sendResponse(location, credential, message)
             }

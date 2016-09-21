@@ -9,7 +9,8 @@ import org.jivesoftware.smack.{Chat, ConnectionConfiguration, XMPPConnection, XM
 import org.jivesoftware.smackx.muc.MultiUserChat
 import ru.org.codingteam.horta.configuration._
 import ru.org.codingteam.horta.messages._
-import ru.org.codingteam.horta.protocol.{Protocol, SendChatMessage, SendMucMessage, SendPrivateMessage}
+import ru.org.codingteam.horta.protocol.xmpp.Xmpp
+import ru.org.codingteam.horta.protocol.{SendChatMessage, SendMucMessage, SendPrivateMessage}
 
 import scala.collection.JavaConverters._
 import scala.concurrent.duration._
@@ -93,7 +94,7 @@ class JabberProtocol() extends Actor with ActorLogging {
     case ChatOpened(chat) =>
       chats = chats.updated(chat.getParticipant, chat)
       val actor: ActorRef = getRoomActor(chat.getParticipant) map {
-        actor => context.actorOf(Props(new PrivateMucMessageHandler(actor, Protocol.nickByJid(chat.getParticipant), context.dispatcher)))
+        actor => context.actorOf(Props(new PrivateMucMessageHandler(actor, Xmpp.nickByJid(chat.getParticipant), context.dispatcher)))
       } getOrElse privateHandler
       sender ! Some(actor)
 

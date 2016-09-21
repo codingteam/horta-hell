@@ -9,6 +9,7 @@ import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.localization.LocaleDefinition
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.protocol._
+import ru.org.codingteam.horta.protocol.xmpp.Xmpp
 import ru.org.codingteam.horta.security._
 
 import scala.concurrent.duration._
@@ -111,7 +112,7 @@ class MucMessageHandler(locale: LocaleDefinition,
       }
     }
 
-    Credential(self, locale, accessLevel, Some(roomJID), Protocol.nickByJid(jid), Some(jid))
+    Credential(self, locale, accessLevel, Some(roomJID), Xmpp.nickByJid(jid), Some(jid))
   }
 
   def jidByNick(nick: String) = s"$roomJID/$nick"
@@ -132,7 +133,7 @@ class MucMessageHandler(locale: LocaleDefinition,
       text
     } else {
       var message = text
-      for (nick <- participants.keys.map(Protocol.nickByJid)) {
+      for (nick <- participants.keys.map(Xmpp.nickByJid)) {
         if (nick != recipient) {
           val quoted = Pattern.quote(nick)
           val pattern = s"(?<=\\W|^)$quoted(?=\\W|$$)"
