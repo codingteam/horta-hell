@@ -14,7 +14,7 @@ class Xmpp extends Actor with ActorLogging {
   private val connectionParams = ConnectionParameters(Configuration.server, Configuration.login, Configuration.password)
   private val supervisor = BackoffSupervisor.props(
     Backoff.onStop(
-      Props(classOf[XmppConnection], connectionParams),
+      Props(classOf[XmppConnection], connectionParams).withDispatcher("pinned-dispatcher"),
       childName = "connection",
       minBackoff = 5.seconds,
       maxBackoff = 120.seconds,

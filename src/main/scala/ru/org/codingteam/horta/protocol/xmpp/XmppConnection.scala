@@ -14,7 +14,6 @@ private case class DisconnectedMessage()
  */
 private class XmppConnection(params: ConnectionParameters) extends Actor with ActorLogging {
 
-  // TODO: Pin this actor to the single thread using custom dispatcher. ~ F
   private val connection = {
     val ConnectionParameters(server, login, password) = params
     log.info(s"Connecting to $server")
@@ -42,7 +41,6 @@ private class XmppConnection(params: ConnectionParameters) extends Actor with Ac
 
     super.postStop()
   }
-
 
   override def receive: Receive = ??? // TODO: Handle messages and send them to the parent.
 
