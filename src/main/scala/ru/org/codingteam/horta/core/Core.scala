@@ -7,7 +7,6 @@ import org.joda.time.DateTime
 import ru.org.codingteam.horta.database.{PersistentStore, RepositoryFactory}
 import ru.org.codingteam.horta.messages._
 import ru.org.codingteam.horta.plugins._
-import ru.org.codingteam.horta.protocol.IProtocol
 import ru.org.codingteam.horta.protocol.xmpp.{Xmpp, XmppProtocolWrapper}
 import ru.org.codingteam.horta.security._
 
