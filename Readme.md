@@ -11,7 +11,7 @@ some of horta's functions.
 
 Prerequisites
 -------------
-You should only install docker (boot2docker is a viable option too).
+The only prerequisite is [docker][] itself.
 
 Building the image
 ------------------
