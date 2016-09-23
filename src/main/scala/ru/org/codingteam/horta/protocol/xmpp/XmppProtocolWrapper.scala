@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.util.Timeout
 import ru.org.codingteam.horta.localization.LocaleDefinition
+import ru.org.codingteam.horta.messages.JoinRoom
 import ru.org.codingteam.horta.protocol._
 
 import scala.concurrent.duration._
@@ -20,8 +21,9 @@ class XmppProtocolWrapper(system: ActorSystem, actor: ActorRef) extends IProtoco
     system.stop(actor)
   }
 
-  override def joinRoom(roomId: RoomId, locale: LocaleDefinition): Unit = {
-    actor ! JoinRoom(roomId, locale)
+  override def joinRoom(roomId: RoomId, locale: LocaleDefinition, nickname: String, greeting: Option[String]): Unit = {
+    // TODO: Resend these messages on actor restarts? From the Xmpp actor himself or from here? ~ F
+    actor ! JoinRoom(roomId.id, locale, nickname, greeting)
   }
 
   override def getParticipants(roomId: RoomId): Future[Map[String, Participant]] = {

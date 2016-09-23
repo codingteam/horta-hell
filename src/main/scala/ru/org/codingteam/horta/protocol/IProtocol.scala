@@ -21,10 +21,12 @@ trait IProtocol {
    * Set up the protocol to join the room. The protocol will try to rejoin the room on errors with protocol-defined
    * interval.
    *
-   * @param roomId room identifier.
-   * @param locale locale used in the room.
+   * @param roomId   room identifier.
+   * @param locale   locale used in the room.
+   * @param nickname nickname of bot in the room.
+   * @param greeting greeting of the bot in the room.
    */
-  def joinRoom(roomId: RoomId, locale: LocaleDefinition): Unit
+  def joinRoom(roomId: RoomId, locale: LocaleDefinition, nickname: String, greeting: Option[String]): Unit
 
   /**
    * Get room participants.
