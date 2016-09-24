@@ -3,11 +3,13 @@ package ru.org.codingteam.horta.protocol.xmpp
 import akka.actor.{Actor, ActorLogging, ActorRef, Kill}
 import org.jivesoftware.smack._
 import org.jivesoftware.smack.packet.{Message, Packet}
-import org.jivesoftware.smackx.muc.{MultiUserChat, ParticipantStatusListener}
+import org.jivesoftware.smackx.muc.{MultiUserChat, Occupant, ParticipantStatusListener}
 import org.joda.time.DateTime
 import ru.org.codingteam.horta.core.Clock
 import ru.org.codingteam.horta.protocol.jabber.MucParticipantStatusListener
-import ru.org.codingteam.horta.protocol.{GlobalUserId, RoomId, RoomUserId}
+import ru.org.codingteam.horta.protocol.{GlobalUserId, Participant, RoomId, RoomUserId}
+
+import scala.collection.JavaConversions._
 
 private case class ConnectRoom(room: RoomId, nickname: String, greeting: Option[String])
 
@@ -64,9 +66,9 @@ private class XmppConnection(params: ConnectionParameters, parent: ActorRef) ext
   }
 
   /**
-   * A set of the active room JIDs to avoid joining the same room multiple times.
+   * A map of active rooms in form of (roomJid ⇒ MultiUserChat).
    */
-  private var activeRooms: Set[String] = Set()
+  private var rooms: Map[String, MultiUserChat] = Map()
 
   override def preStart(): Unit = {
     parent ! ConnectionReady()
@@ -82,7 +84,8 @@ private class XmppConnection(params: ConnectionParameters, parent: ActorRef) ext
 
   override def receive: Receive = {
     // Messages from Xmpp:
-    case ConnectRoom(roomId, nickname, greeting) => joinRoom(roomId.id, nickname, greeting)
+    case ConnectRoom(RoomId(roomId), nickname, greeting) => joinRoom(roomId, nickname, greeting)
+    case GetParticipants(RoomId(roomId)) => sender ! getParticipants(roomId)
   }
 
   private def roomMessageListener(roomJid: String): PacketListener = new PacketListener {
@@ -107,7 +110,7 @@ private class XmppConnection(params: ConnectionParameters, parent: ActorRef) ext
     new MucParticipantStatusListener(muc, parent)
 
   private def joinRoom(roomJid: String, nickname: String, greeting: Option[String]): Unit = {
-    if (!activeRooms.contains(roomJid)) {
+    if (!rooms.contains(roomJid)) {
       val muc = new MultiUserChat(connection, roomJid)
       muc.addMessageListener(roomMessageListener(roomJid))
       muc.addParticipantStatusListener(roomParticipantStatusListener(muc))
@@ -120,7 +123,22 @@ private class XmppConnection(params: ConnectionParameters, parent: ActorRef) ext
         case None =>
       }
 
-      activeRooms += roomJid
+      rooms += roomJid -> muc
     }
+  }
+
+  private def getParticipants(roomJid: String): Map[String, Participant] = {
+    rooms.get(roomJid) match {
+      case Some(muc) =>
+        muc.getParticipants.toStream.map(o => (o.getNick, toParticipant(roomJid, o))).toMap
+      case None => Map()
+    }
+  }
+
+  private def toParticipant(roomJid: String, o: Occupant): Participant = {
+    val id = RoomUserId(RoomId(roomJid), o.getJid)
+    val affiliation = Xmpp.decodeAffiliation(o.getAffiliation)
+    val role = Xmpp.decodeRole(o.getRole)
+    Participant(id, affiliation, role)
   }
 }

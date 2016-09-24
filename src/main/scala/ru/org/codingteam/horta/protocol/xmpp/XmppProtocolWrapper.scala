@@ -27,7 +27,7 @@ class XmppProtocolWrapper(system: ActorSystem, actor: ActorRef) extends IProtoco
   }
 
   override def getParticipants(roomId: RoomId): Future[Map[String, Participant]] = {
-    actor.ask(GetParticipants).mapTo[Map[String, Participant]]
+    actor.ask(GetParticipants(roomId)).mapTo[Map[String, Participant]]
   }
 
   override def sendRoomMessage(roomId: RoomId, message: String): Future[Unit] = {

@@ -1,11 +1,13 @@
 package ru.org.codingteam.horta.protocol.xmpp
 
 import akka.actor.{Actor, ActorLogging, Props}
-import akka.pattern.{Backoff, BackoffSupervisor}
+import akka.pattern.{Backoff, BackoffSupervisor, ask, pipe}
+import akka.util.Timeout
 import org.jivesoftware.smack.util.StringUtils
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.localization.LocaleDefinition
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.protocol.jabber._
 import ru.org.codingteam.horta.protocol.{RoomId, RoomUserId}
 import ru.org.codingteam.horta.security.{CommonAccess, Credential, GlobalAccess}
 
@@ -16,7 +18,10 @@ import scala.concurrent.duration._
  */
 class Xmpp extends Actor with ActorLogging {
 
+  import context.dispatcher
   import ru.org.codingteam.horta.protocol.xmpp.Xmpp.XmppRoomDescriptor
+
+  implicit val timeout = Timeout(5.minutes)
 
   private val core = context.actorSelection("/user/core")
 
@@ -40,7 +45,7 @@ class Xmpp extends Actor with ActorLogging {
       val descriptor = XmppRoomDescriptor(locale, botName, greeting)
       rooms += roomJID -> descriptor
       connectRoom(roomJID, descriptor)
-    case GetParticipants() => ???
+    case m: GetParticipants => pipe(connection.ask(m)).to(sender)
     case SendRoomMessage(roomId, text) => ???
     case SendPrivateRoomMessage(userId, text) => ???
     case SendDirectMessage(userId, text) => ???
@@ -98,5 +103,17 @@ object Xmpp {
 
   def nickByJid(jid: String) = {
     StringUtils.parseResource(jid)
+  }
+
+  def decodeAffiliation(affiliationName: String) = affiliationName match {
+    case "owner" => Owner
+    case "admin" => Admin
+    case "none" => NoneAffiliation
+    case _ => User // TODO: Check the real value for user if it exist. Currently I have no time to experiment. ~ F
+  }
+
+  def decodeRole(roleName: String) = roleName match {
+    case "moderator" => Moderator
+    case "participant" => Participant
   }
 }

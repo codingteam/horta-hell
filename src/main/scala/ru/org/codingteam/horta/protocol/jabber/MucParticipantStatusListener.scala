@@ -1,28 +1,17 @@
 package ru.org.codingteam.horta.protocol.jabber
 
-import org.jivesoftware.smackx.muc.{MultiUserChat, DefaultParticipantStatusListener}
 import akka.actor.ActorRef
+import org.jivesoftware.smackx.muc.{DefaultParticipantStatusListener, MultiUserChat}
 import ru.org.codingteam.horta.messages._
+import ru.org.codingteam.horta.protocol.xmpp.Xmpp
 
 class MucParticipantStatusListener(muc: MultiUserChat, room: ActorRef) extends DefaultParticipantStatusListener {
 
   // TODO: Test for changing the user status from visitor to participant and back.
   override def joined(participant: String) {
     val occupant = muc.getOccupant(participant)
-    val affiliationName = occupant.getAffiliation
-    val roleName = occupant.getRole
-
-    val affiliation = affiliationName match {
-      case "owner" => Owner
-      case "admin" => Admin
-      case "none" => NoneAffiliation
-      case _ => User // TODO: Check the real value for user if it exist. Currently I have no time to experiment. ~ F
-    }
-
-    val role = roleName match {
-      case "moderator" => Moderator
-      case "participant" => Participant
-    }
+    val affiliation = Xmpp.decodeAffiliation(occupant.getAffiliation)
+    val role = Xmpp.decodeRole(occupant.getRole)
 
     room ! UserJoined(participant, affiliation, role)
   }
