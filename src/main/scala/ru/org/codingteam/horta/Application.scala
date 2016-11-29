@@ -5,6 +5,7 @@ import java.nio.file.Paths
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.StrictLogging
+import org.jivesoftware.smack.SmackConfiguration
 import ru.org.codingteam.horta.configuration.Configuration
 import ru.org.codingteam.horta.core.Core
 import ru.org.codingteam.horta.events.{EventCollector, TwitterEndpoint}
@@ -54,6 +55,8 @@ object Application extends App with StrictLogging {
   val protocols = List(Props[JabberProtocol])
 
   initializeConfiguration(args)
+
+  SmackConfiguration.setPacketReplyTimeout(Configuration.xmppTimeout.toMillis.toInt)
 
   val system = ActorSystem("CodingteamSystem", ConfigFactory.parseResources("application.conf"))
   val core = system.actorOf(Props(new Core(plugins, protocols)), "core")

@@ -66,7 +66,7 @@ class JabberProtocol() extends Actor with ActorLogging {
         muc.addMessageListener(new MucMessageListener(jid, actor, log))
         muc.addParticipantStatusListener(new MucParticipantStatusListener(muc, actor))
 
-        muc.join(nickname, null, null, Configuration.xmppTimeout.toMillis)
+        muc.join(nickname)
         log.info(s"Joined room $jid")
 
         greeting match {
