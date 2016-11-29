@@ -44,10 +44,10 @@ object Configuration {
   lazy val login = properties.getProperty("login")
   lazy val password = properties.getProperty("password")
   lazy val server = properties.getProperty("server")
-  lazy val xmppTimeout = {
-    val ms = Option(properties.getProperty("xmpp.timeout_ms")).getOrElse("5000")
-    Integer.parseInt(ms).milliseconds
-  }
+  lazy val xmppTimeout: FiniteDuration =
+    Option(properties.getProperty("xmpp.timeout_ms"))
+      .map(Integer.parseInt)
+      .getOrElse(5000).milliseconds
 
   lazy val dftName = properties.getProperty("nickname")
   lazy val dftMessage = properties.getProperty("message")
