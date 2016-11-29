@@ -6,6 +6,9 @@ import java.util.Properties
 
 import ru.org.codingteam.horta.localization.LocaleDefinition
 
+import scala.concurrent.duration._
+import scala.language.postfixOps
+
 object Configuration {
 
   def initialize(path: Path): Unit = {
@@ -19,7 +22,7 @@ object Configuration {
   private def openReader(): Reader = {
     configContent.map(content => new StringReader(content))
       .getOrElse(configPath.map(path => new InputStreamReader(new FileInputStream(path.toFile), "UTF8"))
-      .getOrElse(sys.error(s"Configuration not found at '$configPath'.")))
+        .getOrElse(sys.error(s"Configuration not found at '$configPath'.")))
   }
 
   private var configPath: Option[Path] = None
@@ -41,6 +44,10 @@ object Configuration {
   lazy val login = properties.getProperty("login")
   lazy val password = properties.getProperty("password")
   lazy val server = properties.getProperty("server")
+  lazy val xmppTimeout = {
+    val ms = Option(properties.getProperty("xmpp.timeout_ms")).getOrElse("5000")
+    Integer.parseInt(ms).milliseconds
+  }
 
   lazy val dftName = properties.getProperty("nickname")
   lazy val dftMessage = properties.getProperty("message")

@@ -4,6 +4,8 @@ server=jabber.ru
 nickname=horta hell
 message=Hell installed!
 
+xmpp.join_timeout_ms=30000
+
 owner=example@example.org
 
 rooms=room1,room2,room3
