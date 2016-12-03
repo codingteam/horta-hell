@@ -154,22 +154,6 @@ class JabberProtocol() extends Actor with ActorLogging {
 
     val configuration = new ConnectionConfiguration(server)
     configuration.setReconnectionAllowed(false)
-    configuration.setSocketFactory(new SocketFactory {
-      override def createSocket(host: String, port: Int): Socket = {
-        val socket = new Socket(host, port)
-        socket.setSoTimeout(Configuration.xmppTimeout.toMillis.toInt)
-        socket
-      }
-
-      // These aren't used by Smack, no point to implement them
-      override def createSocket(host: String, port: Int, localAddress: InetAddress, localPort: Int): Socket = error()
-
-      override def createSocket(host: InetAddress, port: Int): Socket = error()
-
-      override def createSocket(host: InetAddress, port: Int, inetAddress1: InetAddress, i1: Int): Socket = error()
-
-      private def error() = sys.error("Not supported")
-    })
 
     val connection = new XMPPConnection(configuration)
     val chatManager = connection.getChatManager
