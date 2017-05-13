@@ -1,4 +1,4 @@
-FROM openjdk:8u102
+FROM openjdk:8u111
 MAINTAINER friedrich@fornever.me
 RUN apt-get update && apt-get install -y supervisor
 
