@@ -1,4 +1,4 @@
-horta hell [![BuildStatus](https://travis-ci.org/codingteam/horta-hell.png?branch=develop)](https://travis-ci.org/codingteam/horta-hell)
+horta hell [![Status Aquana][status-aquana]][andivionian-status-classifier] [![BuildStatus](https://travis-ci.org/codingteam/horta-hell.png?branch=develop)](https://travis-ci.org/codingteam/horta-hell)
 ==========
 
 horta hell is XMPP bot. It is based on the Akka framework.
@@ -27,8 +27,7 @@ application management site][twitter-new-app], and generate access token there.
 
 ### Deployment
 
-Deployment process management is the purpose of [horta-foundation][] project.
-It is the recommended way of horta deployment.
+For production deployments, see [Docker deployment][docs/docker-deployment].
 
 For the development purposes, use `sbt run` command from terminal or any
 compatible IDE.
@@ -108,6 +107,11 @@ If you want to write new plugin for Horta, [read the following documentation](do
 Report any bugs to [the issues list](https://github.com/codingteam/horta-hell/issues). You may ask for support in our
 XMPP conference: `codingteam@conference.jabber.ru`.
 
+[docs/docker-deployment]: docs/Docker-deployment.md
+
+[andivionian-status-classifier]: https://github.com/ForNeVeR/andivionian-status-classifier#status-aquana-
 [issue-366]: https://github.com/codingteam/horta-hell/issues/366
 [horta-foundation]: https://github.com/codingteam/horta-foundation
 [twitter-new-app]: https://apps.twitter.com/app/new
+
+[status-aquana]: https://img.shields.io/badge/status-aquana-yellowgreen.svg

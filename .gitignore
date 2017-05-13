@@ -1,7 +1,9 @@
-*~
-target/
 /.idea/
-*.iml
+/src/docker/horta-hell.jar
 /*.db
 /horta.properties
 
+target/
+
+*~
+*.iml
