@@ -1,6 +1,8 @@
 horta hell [![Status Aquana][status-aquana]][andivionian-status-classifier] [![BuildStatus](https://travis-ci.org/codingteam/horta-hell.png?branch=develop)](https://travis-ci.org/codingteam/horta-hell)
 ==========
 
+[Docker Hub page][docker-hub]
+
 horta hell is XMPP bot. It is based on the Akka framework.
 
 Using
@@ -110,6 +112,7 @@ XMPP conference: `codingteam@conference.jabber.ru`.
 [docs/docker-deployment]: docs/Docker-deployment.md
 
 [andivionian-status-classifier]: https://github.com/ForNeVeR/andivionian-status-classifier#status-aquana-
+[docker-hub]: https://hub.docker.com/r/revenrof/horta-hell/
 [issue-366]: https://github.com/codingteam/horta-hell/issues/366
 [horta-foundation]: https://github.com/codingteam/horta-foundation
 [twitter-new-app]: https://apps.twitter.com/app/new

@@ -5,6 +5,9 @@ There's a [Docker][docker] environment provided for reliable production
 deployment of horta-hell. This document describes how to deploy horta-hell into
 a local Docker container.
 
+If you want to publish your own Docker package, [consult the
+documentation][docs/docker-publish].
+
 Prerequisites
 -------------
 
@@ -71,6 +74,7 @@ The recommended way of upgrading is to [rebuild and recreate the whole
 container][so-docker-upgrade]. Make sure your data is stored on an external data
 volume, so it's fully preserved on container rebuild!
 
+[docs/docker-publish]: How-to-publish-Docker-image.md
 [manual]: ../README.md
 [manual/build]: ../README.md#building
 [run-container-ps1]: ../src/docker/Run-Container.ps1
